@@ -1,0 +1,131 @@
+/**
+ * MIDH Studio Login Screen Customization
+ * Palette officielle : Justice & Dignité (Vert forêt, fond crème/lin, carte épurée)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap');
+
+body.login {
+  background: linear-gradient(135deg, #f0f5f0 0%, #e5e9e4 100%) !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+}
+
+#login {
+  width: 100% !important;
+  max-width: 420px !important;
+  padding: 24px !important;
+}
+
+/* Remplacement du logo WordPress par le logo du MIDH */
+#login h1 a {
+  background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDqleL8xzGZSLZrm2GJ1CkOLa3XtfT-YB-qju_J3cgaA7uVqvANt-B6jBuOtXUvm3yFvyb03jR7ahcjyvlLOZEpRfv0bNvT7SNgtz-lguwRFFE9hFySm4XIkh67F3xF4EZodlXLuBhLjXS00O1IcyEXBpdDKkQNx8da-SITyDTmbfgXfQD7uv3cGb3IEew3hoQXcaXCdv7J5wUJWBfeVCsRzWifeF4jh7ldsz4l74QWSxnSTY_Iz9vjMSu9ojWTkBmGmA') !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  width: 100% !important;
+  height: 70px !important;
+  margin-bottom: 24px !important;
+}
+
+/* Titre sous le logo */
+#login h1::after {
+  content: "Portail Administratif & Rédactionnel";
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #3f4a3c;
+  margin-top: 8px;
+  letter-spacing: -0.01em;
+}
+
+/* Boîte de connexion */
+#loginform {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  border: 1px solid #becab9 !important;
+  box-shadow: 0 10px 30px -5px rgba(24, 29, 26, 0.08), 0 4px 6px -2px rgba(24, 29, 26, 0.03) !important;
+  padding: 32px !important;
+}
+
+#loginform label {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #181d1a !important;
+  margin-bottom: 6px !important;
+}
+
+#loginform input[type="text"],
+#loginform input[type="password"] {
+  border: 1.5px solid #becab9 !important;
+  border-radius: 8px !important;
+  background: #f6faf5 !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+#loginform input[type="text"]:focus,
+#loginform input[type="password"]:focus {
+  border-color: #006b1f !important;
+  box-shadow: 0 0 0 3px rgba(0, 107, 31, 0.15) !important;
+  background: #ffffff !important;
+  outline: none !important;
+}
+
+/* Bouton Se connecter */
+#wp-submit {
+  background: #006b1f !important;
+  border-color: #006b1f !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  padding: 10px 24px !important;
+  height: auto !important;
+  box-shadow: 0 4px 12px rgba(0, 107, 31, 0.25) !important;
+  transition: all 0.2s ease !important;
+  width: 100% !important;
+  margin-top: 16px !important;
+  float: none !important;
+}
+
+#wp-submit:hover, #wp-submit:focus {
+  background: #0c872b !important;
+  border-color: #0c872b !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Liens en dessous */
+.login #nav, .login #backtoblog {
+  text-align: center !important;
+  padding: 0 !important;
+  margin: 16px 0 0 0 !important;
+}
+
+.login #nav a, .login #backtoblog a {
+  color: #3d6753 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+}
+
+.login #nav a:hover, .login #backtoblog a:hover {
+  color: #006b1f !important;
+  text-decoration: underline !important;
+}
+
+/* Pied de page institutionnel */
+body.login::after {
+  content: "Mouvement Ivoirien des Droits Humains (MIDH) • Fondé en 2000 • Cocody Angré";
+  font-size: 12px;
+  color: #6f7a6b;
+  margin-top: 24px;
+  text-align: center;
+}

@@ -1,0 +1,8 @@
+# Dépendances et builds générés
+node_modules/
+.next/
+dist/
+build/
+coverage/
+security-reports/
+*.min.js

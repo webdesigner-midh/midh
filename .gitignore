@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Environment variables
+.env*.local
+.env
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+*.pem
+
+# WordPress local storage
+wordpress/db_data/
+wordpress/wp_data/
+
+# Temporary and heavy assets
+screen.png
+security-reports/
+*.tsbuildinfo

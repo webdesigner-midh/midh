@@ -1,0 +1,1175 @@
+/**
+ * MIDH Studio Theme - Custom Admin Styling for WordPress CMS
+ * Palette officielle : Justice & Dignité (Material Design 3 / Stitch MIDH)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
+
+:root {
+  --midh-primary: #006b1f;
+  --midh-primary-container: #0c872b;
+  --midh-on-primary: #ffffff;
+  --midh-secondary: #3d6753;
+  --midh-secondary-container: #bcead1;
+  --midh-surface: #f6faf5;
+  --midh-surface-dim: #d7dbd6;
+  --midh-surface-container: #ebefea;
+  --midh-surface-high: #e5e9e4;
+  --midh-surface-lowest: #ffffff;
+  --midh-on-surface: #181d1a;
+  --midh-on-surface-variant: #3f4a3c;
+  --midh-outline: #6f7a6b;
+  --midh-outline-variant: #becab9;
+  --midh-dark-sidebar: #131714;
+  --midh-dark-sidebar-hover: #1b221d;
+  --midh-radius-sm: 8px;
+  --midh-radius-md: 12px;
+  --midh-radius-lg: 16px;
+  --midh-shadow-soft: 0 4px 20px -2px rgba(24, 29, 26, 0.05), 0 2px 6px -1px rgba(24, 29, 26, 0.03);
+  --midh-shadow-elevated: 0 10px 25px -5px rgba(0, 107, 31, 0.08), 0 8px 10px -6px rgba(0, 107, 31, 0.04);
+}
+
+/* Global Font & Reset */
+body.wp-admin {
+  background-color: var(--midh-surface) !important;
+  color: var(--midh-on-surface) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .wp-heading-inline {
+  font-family: 'Manrope', 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--midh-on-surface) !important;
+}
+
+/* ==========================================================
+   1. BARRE SUPÉRIEURE (ADMIN BAR)
+   ========================================================== */
+html.wp-toolbar {
+  padding-top: 48px !important;
+}
+
+#wpadminbar {
+  background: var(--midh-surface-lowest) !important;
+  border-bottom: 1px solid var(--midh-outline-variant) !important;
+  height: 48px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+  z-index: 99999 !important;
+}
+
+/* Onglets d'aide et options de l'écran (Screen Options & Aide) parfaitement alignés et visibles */
+#screen-meta-links {
+  top: 48px !important;
+  z-index: 100 !important;
+  margin: 0 24px 0 0 !important;
+}
+
+#screen-meta-links .screen-meta-toggle {
+  background: var(--midh-surface-lowest) !important;
+  border: 1px solid var(--midh-outline-variant) !important;
+  border-top: none !important;
+  border-radius: 0 0 var(--midh-radius-sm) var(--midh-radius-sm) !important;
+  box-shadow: var(--midh-shadow-soft) !important;
+}
+
+#screen-meta-links .show-settings {
+  color: var(--midh-on-surface-variant) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 6px 14px !important;
+  height: auto !important;
+}
+
+#screen-meta-links .show-settings:hover,
+#screen-meta-links .show-settings:focus {
+  color: var(--midh-primary) !important;
+}
+
+#screen-meta {
+  margin-top: 48px !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--midh-outline-variant) !important;
+  border-radius: 0 0 var(--midh-radius-md) var(--midh-radius-md) !important;
+}
+
+#wpadminbar .quicklinks > ul > li > a,
+#wpadminbar .quicklinks .ab-empty-item,
+#wpadminbar a.ab-item,
+#wpadminbar .ab-icon,
+#wpadminbar .ab-icon:before,
+#wpadminbar .ab-item:before {
+  color: #181d1a !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+#wpadminbar .quicklinks > ul > li > a,
+#wpadminbar .quicklinks .ab-empty-item {
+  height: 48px !important;
+  line-height: 48px !important;
+}
+
+#wpadminbar .quicklinks > ul > li:hover > a,
+#wpadminbar .quicklinks > ul > li.menupop.hover > .ab-item,
+#wpadminbar .quicklinks > ul > li:hover .ab-icon:before {
+  background: var(--midh-surface-container) !important;
+  color: var(--midh-primary) !important;
+}
+
+/* Élimination totale de tout hover noir dans la barre supérieure */
+#wpadminbar * {
+  background-color: transparent;
+}
+
+#wpadminbar .quicklinks > ul > li:hover,
+#wpadminbar .quicklinks > ul > li.hover,
+#wpadminbar .quicklinks .menupop.hover,
+#wpadminbar .quicklinks .ab-top-menu > li:hover,
+#wpadminbar .quicklinks .ab-top-menu > li.hover {
+  background-color: transparent !important;
+}
+
+#wpadminbar #wp-admin-bar-wp-logo,
+#wpadminbar #wp-admin-bar-search,
+#wpadminbar .screen-reader-shortcut {
+  display: none !important;
+}
+
+/* Bouton 1 : Tableau de bord direct (Accueil CMS) */
+#wpadminbar #wp-admin-bar-midh-dashboard-home a {
+  background: var(--midh-surface-container) !important;
+  color: var(--midh-on-surface) !important;
+  border-radius: var(--midh-radius-sm) !important;
+  border: 1px solid var(--midh-outline-variant) !important;
+  margin: 7px 8px 7px 12px !important;
+  height: 34px !important;
+  line-height: 32px !important;
+  padding: 0 14px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+#wpadminbar #wp-admin-bar-midh-dashboard-home a:hover {
+  background: #ffffff !important;
+  border-color: var(--midh-primary) !important;
+  color: var(--midh-primary) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Bouton 2 : Voir le site public Next.js */
+#wpadminbar #wp-admin-bar-midh-live-site a {
+  background: var(--midh-primary) !important;
+  color: #ffffff !important;
+  border-radius: var(--midh-radius-sm) !important;
+  border: 1px solid var(--midh-primary) !important;
+  margin: 7px 8px !important;
+  height: 34px !important;
+  line-height: 32px !important;
+  padding: 0 14px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+#wpadminbar #wp-admin-bar-midh-live-site a:hover {
+  background: var(--midh-primary-container) !important;
+  border-color: var(--midh-primary-container) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 107, 31, 0.25) !important;
+}
+
+/* ==========================================================
+   2. MENU LATÉRAL (SIDEBAR) & INTÉGRATION ACCORDÉON
+   ========================================================== */
+#adminmenuback, #adminmenuwrap, #adminmenu {
+  background-color: var(--midh-dark-sidebar) !important;
+  width: 250px !important;
+  transition: width 0.2s ease !important;
+}
+
+#wpcontent, #wpfooter {
+  margin-left: 250px !important;
+  transition: margin-left 0.2s ease !important;
+}
+
+/* ==========================================================
+   2.0. ÉTAT DU MENU REPLIÉ (FOLDED / COLLAPSED)
+   ========================================================== */
+body.folded #adminmenuback, 
+body.folded #adminmenuwrap, 
+body.folded #adminmenu {
+  width: 64px !important;
+}
+
+body.folded #wpcontent, 
+body.folded #wpfooter {
+  margin-left: 64px !important;
+}
+
+/* Logo replié */
+body.folded #adminmenu::before {
+  content: "MIDH" !important;
+  font-size: 11px !important;
+  padding: 16px 8px !important;
+  text-align: center !important;
+  letter-spacing: 0.05em !important;
+}
+
+body.folded #adminmenu li.menu-top {
+  margin: 4px 6px !important;
+}
+
+body.folded #adminmenu a.menu-top {
+  padding: 8px 0 !important;
+  text-align: center !important;
+}
+
+body.folded #adminmenu div.wp-menu-name {
+  display: none !important;
+}
+
+body.folded #adminmenu div.wp-menu-image {
+  float: none !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Sous-menus en popover propre quand le menu est replié */
+body.folded #adminmenu li.menu-top:hover ul.wp-submenu,
+body.folded #adminmenu li.opensub ul.wp-submenu {
+  display: block !important;
+  position: absolute !important;
+  left: 64px !important;
+  top: 0 !important;
+  width: 200px !important;
+  background-color: #1a201c !important;
+  border-radius: var(--midh-radius-sm) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+  z-index: 99999 !important;
+}
+
+body.folded #adminmenu li.menu-top:hover ul.wp-submenu a {
+  display: block !important;
+  padding: 8px 16px !important;
+  text-align: left !important;
+}
+
+/* Bouton Replier le menu bien stylisé */
+#collapse-button {
+  color: #a4b3a7 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+#collapse-button:hover {
+  color: #ffffff !important;
+  background-color: var(--midh-dark-sidebar-hover) !important;
+}
+
+#collapse-button .collapse-button-icon:after {
+  color: #a4b3a7 !important;
+}
+
+#collapse-button:hover .collapse-button-icon:after {
+  color: #ffffff !important;
+}
+
+/* Logo de marque en haut du menu normal */
+#adminmenu::before {
+  content: "MIDH STUDIO";
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  padding: 24px 20px 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(0, 107, 31, 0.3) 0%, transparent 100%);
+}
+
+#adminmenu li.menu-top {
+  margin: 3px 12px !important;
+}
+
+#adminmenu a.menu-top {
+  border-radius: var(--midh-radius-sm) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: #c4d3c7 !important;
+  padding: 8px 12px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#adminmenu a.menu-top:hover,
+#adminmenu li.menu-top:hover > a {
+  background: var(--midh-dark-sidebar-hover) !important;
+  color: #ffffff !important;
+}
+
+/* Éliminer tout violet/bleu legacy WordPress au survol ou focus */
+#adminmenu li.menu-top:hover,
+#adminmenu li.opensub > a.menu-top,
+#adminmenu li > a.menu-top:focus {
+  background-color: var(--midh-dark-sidebar-hover) !important;
+  color: #ffffff !important;
+}
+
+/* Élément Actif (Sélectionné) */
+#adminmenu li.current > a.menu-top,
+#adminmenu li.wp-has-current-submenu > a.menu-top {
+  background: var(--midh-primary) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(0, 107, 31, 0.3) !important;
+}
+
+#adminmenu li.current div.wp-menu-image:before,
+#adminmenu li.wp-has-current-submenu div.wp-menu-image:before {
+  color: #ffffff !important;
+}
+
+#adminmenu .wp-menu-image:before {
+  color: #9cb0a0 !important;
+}
+
+/* Flèche de sélection WordPress supprimée */
+#adminmenu li.wp-has-current-submenu > a.menu-top:after {
+  display: none !important;
+}
+
+/* Séparateurs */
+#adminmenu li.wp-menu-separator {
+  background: rgba(255, 255, 255, 0.06) !important;
+  height: 1px !important;
+  margin: 12px 16px !important;
+}
+
+/* ==========================================================
+   2.1. SOUS-MENUS : FLUIDES DANS LA SIDEBAR (NON FIGÉS PAR-DESSUS LA PAGE)
+   ========================================================== */
+
+/* 1. Sous-menu du menu actif : intégré verticalement DANS la sidebar */
+#adminmenu li.wp-has-current-submenu ul.wp-submenu {
+  display: block !important;
+  position: static !important;
+  float: none !important;
+  width: auto !important;
+  margin: 4px 0 8px 12px !important;
+  padding: 4px 0 4px 12px !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-left: 2px solid var(--midh-primary) !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-radius: 0 var(--midh-radius-sm) var(--midh-radius-sm) 0 !important;
+  box-shadow: none !important;
+  top: auto !important;
+  left: auto !important;
+}
+
+#adminmenu li.wp-has-current-submenu ul.wp-submenu .wp-submenu-head {
+  display: none !important;
+}
+
+#adminmenu li.wp-has-current-submenu ul.wp-submenu a {
+  color: #c4d3c7 !important;
+  font-size: 13px !important;
+  padding: 6px 12px !important;
+  font-weight: 500 !important;
+  display: block !important;
+  border-radius: 4px !important;
+  margin: 2px 4px !important;
+}
+
+#adminmenu li.wp-has-current-submenu ul.wp-submenu a:hover,
+#adminmenu li.wp-has-current-submenu ul.wp-submenu li.current a {
+  color: #ffffff !important;
+  background-color: var(--midh-dark-sidebar-hover) !important;
+  font-weight: 600 !important;
+}
+
+#adminmenu li.wp-has-current-submenu ul.wp-submenu li.current a {
+  color: #71dd76 !important;
+}
+
+/* 2. Sous-menus au survol pour les autres items (non actifs) : propre popover à droite */
+#adminmenu li:not(.wp-has-current-submenu) ul.wp-submenu {
+  display: none;
+  background-color: #1a201c !important;
+  border-radius: var(--midh-radius-sm) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+  left: 246px !important;
+  padding: 6px 0 !important;
+  min-width: 190px !important;
+  z-index: 9999 !important;
+}
+
+#adminmenu li:not(.wp-has-current-submenu):hover ul.wp-submenu,
+#adminmenu li:not(.wp-has-current-submenu).opensub ul.wp-submenu {
+  display: block !important;
+}
+
+#adminmenu li:not(.wp-has-current-submenu) ul.wp-submenu .wp-submenu-head {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 8px 16px 6px 16px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  margin-bottom: 4px !important;
+}
+
+#adminmenu li:not(.wp-has-current-submenu) ul.wp-submenu a {
+  color: #d1ded4 !important;
+  font-size: 13px !important;
+  padding: 7px 16px !important;
+  font-weight: 500 !important;
+  display: block !important;
+}
+
+#adminmenu li:not(.wp-has-current-submenu) ul.wp-submenu a:hover {
+  color: #71dd76 !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ==========================================================
+   3. CARTES, TABLES ET FORMULAIRES
+   ========================================================== */
+.wrap {
+  margin: 28px 24px 40px 24px !important;
+  max-width: 1400px;
+}
+
+.wp-list-table {
+  background: var(--midh-surface-lowest) !important;
+  border-radius: var(--midh-radius-md) !important;
+  border: 1px solid var(--midh-outline-variant) !important;
+  overflow: hidden !important;
+  box-shadow: var(--midh-shadow-soft) !important;
+}
+
+.wp-list-table thead th {
+  background: var(--midh-surface-container) !important;
+  color: var(--midh-on-surface) !important;
+  font-weight: 700 !important;
+  font-size: 12.5px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  border-bottom: 1px solid var(--midh-outline-variant) !important;
+  padding: 12px 14px !important;
+}
+
+.wp-list-table tbody tr:hover {
+  background-color: #f7faf7 !important;
+}
+
+/* Boutons */
+.button, .button-primary, .button-secondary {
+  border-radius: var(--midh-radius-sm) !important;
+  font-weight: 600 !important;
+  font-family: 'Inter', sans-serif !important;
+  padding: 6px 16px !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.button-primary {
+  background: var(--midh-primary) !important;
+  border-color: var(--midh-primary) !important;
+  color: #ffffff !important;
+}
+
+.button-primary:hover, .button-primary:focus {
+  background: var(--midh-primary-container) !important;
+  border-color: var(--midh-primary-container) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 107, 31, 0.2) !important;
+}
+
+/* Champs de saisie */
+input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="search"], textarea, select {
+  border: 1.5px solid var(--midh-outline-variant) !important;
+  border-radius: var(--midh-radius-sm) !important;
+  background-color: var(--midh-surface-lowest) !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  color: var(--midh-on-surface) !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--midh-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 107, 31, 0.15) !important;
+  outline: none !important;
+}
+
+/* ==========================================================
+   4. DASHBOARD HUB SUR-MESURE (Accueillir les Admins)
+   ========================================================== */
+#dashboard-widgets-wrap {
+  margin-top: 20px;
+}
+
+#midh_dashboard_hub_widget {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#midh_dashboard_hub_widget .postbox-header {
+  display: none !important;
+}
+
+#midh_dashboard_hub_widget .inside {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.midh-hub-banner {
+  background: linear-gradient(135deg, #004d15 0%, #006b1f 60%, #3d6753 100%);
+  border-radius: var(--midh-radius-lg);
+  padding: 32px 36px;
+  color: #ffffff;
+  margin-bottom: 24px;
+  box-shadow: var(--midh-shadow-elevated);
+  position: relative;
+  overflow: hidden;
+}
+
+.midh-hub-banner::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.midh-hub-banner h2 {
+  color: #ffffff !important;
+  font-size: 26px !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.midh-hub-banner p {
+  color: #d8f5dc !important;
+  font-size: 15px !important;
+  margin: 0 0 20px 0 !important;
+  max-width: 650px;
+  line-height: 1.5;
+}
+
+.midh-hub-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.midh-hub-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  color: #006b1f !important;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--midh-radius-sm);
+  text-decoration: none;
+  font-size: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.midh-hub-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  color: #004d15 !important;
+}
+
+.midh-hub-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--midh-radius-sm);
+  text-decoration: none;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: background 0.2s ease;
+}
+
+.midh-hub-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Grille de cartes statistiques */
+.midh-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.midh-stat-card {
+  background: var(--midh-surface-lowest);
+  border: 1px solid var(--midh-outline-variant);
+  border-radius: var(--midh-radius-md);
+  padding: 22px;
+  box-shadow: var(--midh-shadow-soft);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.midh-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--midh-primary);
+}
+
+.midh-stat-label {
+  font-size: 13px;
+  color: var(--midh-on-surface-variant);
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.midh-stat-value {
+  font-family: 'Manrope', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--midh-primary);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.midh-stat-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--midh-secondary);
+  text-decoration: none;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.midh-stat-link:hover {
+  color: var(--midh-primary);
+  text-decoration: underline;
+}
+
+/* ==========================================================
+   5. NETTOYAGE VISUEL COMPLET DES AVIS & ALERTES
+   ========================================================== */
+#wpfooter {
+  border-top: 1px solid var(--midh-outline-variant) !important;
+  padding: 18px 24px !important;
+  color: var(--midh-on-surface-variant) !important;
+  font-size: 12.5px !important;
+}
+
+#wpfooter a {
+  color: var(--midh-primary) !important;
+  font-weight: 600;
+}
+
+/* Masquer radicalement toutes les alertes WordPress parasites */
+.update-nag, 
+.notice.update-nag, 
+#welcome-panel,
+.notice.notice-warning,
+.notice,
+.error,
+.updated,
+#dashboard_site_health,
+#dashboard_right_now {
+  display: none !important;
+}
+
+/* ==========================================================
+   6. NEWSROOM STUDIO & ARTICLES LIST TABLE MODERNIZATION
+   ========================================================== */
+
+/* Masquage de l'en-tête natif standard sur la liste des articles */
+body.post-type-post.edit-php .wrap > h1.wp-heading-inline,
+body.post-type-post.edit-php .wrap > .page-title-action,
+body.post-type-post.edit-php .wrap > hr.wp-header-end {
+  display: none !important;
+}
+
+/* Bannière d'en-tête Newsroom Studio MIDH */
+.midh-newsroom-banner {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0B3827 0%, #006b1f 100%) !important;
+  border-radius: var(--midh-radius-lg);
+  padding: 24px 30px;
+  margin: 20px 0 24px 0;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 107, 31, 0.25), 0 4px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.midh-newsroom-banner::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.midh-newsroom-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+.midh-newsroom-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.midh-newsroom-icon .dashicons {
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+}
+
+.midh-newsroom-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 3px 12px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 6px;
+  color: #ffffff;
+}
+
+.midh-newsroom-info h2 {
+  font-family: 'Manrope', 'Inter', sans-serif !important;
+  font-size: 23px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin: 0 0 6px 0 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+}
+
+.midh-newsroom-info p {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.45;
+}
+
+.midh-newsroom-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 1;
+}
+
+.midh-newsroom-kpis {
+  display: flex;
+  gap: 12px;
+}
+
+.midh-newsroom-kpi {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 8px 18px;
+  text-align: center;
+  min-width: 76px;
+}
+
+.midh-kpi-val {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.midh-kpi-lbl {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.midh-newsroom-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.midh-banner-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  line-height: 1;
+}
+
+.midh-banner-btn .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.midh-banner-btn-primary {
+  background: #ffffff;
+  color: #006b1f !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.midh-banner-btn-primary:hover {
+  background: #f0fdf4;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  color: #0B3827 !important;
+}
+
+.midh-banner-btn-secondary {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff !important;
+}
+
+.midh-banner-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-2px);
+  color: #ffffff !important;
+}
+
+@media screen and (max-width: 1200px) {
+  .midh-newsroom-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .midh-newsroom-banner-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* ==========================================================
+   TABLEAUX MODERNISÉS (WP-LIST-TABLE)
+   ========================================================== */
+.wp-list-table {
+  border: 1px solid var(--midh-outline-variant) !important;
+  border-radius: var(--midh-radius-md) !important;
+  overflow: hidden !important;
+  box-shadow: var(--midh-shadow-soft) !important;
+  background: #ffffff !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.wp-list-table thead th,
+.wp-list-table tfoot th {
+  background: var(--midh-surface-container) !important;
+  color: var(--midh-on-surface-variant) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 13px 16px !important;
+  border-bottom: 1px solid var(--midh-outline-variant) !important;
+  border-top: none !important;
+}
+
+.wp-list-table thead th a,
+.wp-list-table tfoot th a {
+  color: var(--midh-on-surface-variant) !important;
+}
+
+.wp-list-table tbody tr {
+  background: #ffffff !important;
+  transition: background 0.15s ease !important;
+}
+
+.wp-list-table tbody tr:nth-child(even) {
+  background: #fafcfa !important;
+}
+
+.wp-list-table tbody tr:hover {
+  background: #f1f8f3 !important;
+}
+
+.wp-list-table tbody td {
+  padding: 14px 16px !important;
+  vertical-align: middle !important;
+  border-top: 1px solid #edf1eb !important;
+  font-size: 13.5px !important;
+  color: var(--midh-on-surface) !important;
+}
+
+/* Colonne Visuel Miniature */
+th.column-midh_thumbnail,
+td.column-midh_thumbnail {
+  width: 84px !important;
+  text-align: center !important;
+  padding: 10px 8px !important;
+}
+
+.midh-table-thumb-wrap {
+  width: 70px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #eef2eb;
+  border: 1px solid #d7dbd6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.midh-table-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+.midh-table-thumb-wrap:hover .midh-table-thumb {
+  transform: scale(1.1);
+}
+
+.midh-table-thumb-empty {
+  color: #92a08e;
+  background: #f3f6f1;
+}
+
+.midh-table-thumb-empty .dashicons {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+/* Colonne Titre & Actions */
+.wp-list-table .row-title {
+  font-family: 'Manrope', 'Inter', sans-serif !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  color: #181d1a !important;
+  line-height: 1.4 !important;
+  text-decoration: none !important;
+}
+
+.wp-list-table .row-title:hover {
+  color: var(--midh-primary) !important;
+}
+
+.row-actions {
+  font-size: 11.5px !important;
+  margin-top: 6px !important;
+  color: #8b9987 !important;
+}
+
+.row-actions span a {
+  font-weight: 500;
+}
+
+.midh-row-action-nextjs {
+  color: #006b1f !important;
+  font-weight: 700 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 107, 31, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.midh-row-action-nextjs .dashicons {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+}
+
+.midh-row-action-nextjs:hover {
+  background: #006b1f !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+/* Badges de Catégories et Domaines thématiques */
+td.column-categories a,
+.midh-domain-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  margin: 2px 4px 2px 0;
+  transition: all 0.2s ease;
+  line-height: 1.3;
+}
+
+td.column-categories a {
+  background: #ecfdf5;
+  color: #006b1f !important;
+  border: 1px solid #a7f3d0;
+}
+
+td.column-categories a:hover {
+  background: #006b1f;
+  color: #ffffff !important;
+  border-color: #006b1f;
+}
+
+.midh-domain-badge {
+  background: #f1f5f9;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1;
+}
+
+.midh-domain-badge:hover {
+  background: #334155;
+  color: #ffffff !important;
+  border-color: #334155;
+}
+
+.midh-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #006b1f;
+  display: inline-block;
+}
+
+.midh-domain-badge:hover .midh-badge-dot {
+  background: #ffffff;
+}
+
+.midh-empty-badge {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Filtres, Vues & Recherche */
+.subsubsub {
+  font-size: 13px !important;
+  margin-bottom: 14px !important;
+}
+
+.subsubsub li a {
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  transition: background 0.15s ease !important;
+}
+
+.subsubsub li a.current {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  background: var(--midh-primary) !important;
+}
+
+.search-box input[type="search"] {
+  border-radius: 20px !important;
+  border: 1px solid var(--midh-outline-variant) !important;
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.2s ease !important;
+}
+
+.search-box input[type="search"]:focus {
+  border-color: var(--midh-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 107, 31, 0.15) !important;
+  outline: none !important;
+}
+
+.tablenav .actions select {
+  border-radius: var(--midh-radius-sm) !important;
+  border: 1px solid var(--midh-outline-variant) !important;
+  padding: 4px 10px !important;
+  font-size: 12.5px !important;
+  background-color: #ffffff !important;
+}
+
+.tablenav .actions .button {
+  border-radius: var(--midh-radius-sm) !important;
+  border: 1px solid var(--midh-outline-variant) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  background: #ffffff !important;
+}
+
+.tablenav .actions .button:hover {
+  background: var(--midh-surface-container) !important;
+  color: var(--midh-primary) !important;
+  border-color: var(--midh-primary) !important;
+}
+

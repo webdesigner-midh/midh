@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: midh_wordpress_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: midh_secure_root_password_2026
+      MYSQL_DATABASE: midh_wordpress
+      MYSQL_USER: midh_user
+      MYSQL_PASSWORD: midh_password_2026
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  wordpress:
+    image: wordpress:6.7-php8.2-apache
+    container_name: midh_wordpress_app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: midh_wordpress
+      WORDPRESS_DB_USER: midh_user
+      WORDPRESS_DB_PASSWORD: midh_password_2026
+      WORDPRESS_TABLE_PREFIX: wp_midh_
+    volumes:
+      - ./plugins/midh-headless-core:/var/www/html/wp-content/plugins/midh-headless-core
+      - wp_data:/var/www/html
+
+volumes:
+  db_data:
+  wp_data:
