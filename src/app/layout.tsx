@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import GoogleTranslate from '@/components/common/GoogleTranslate';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({
     <html lang="fr">
       <body className="bg-background font-body-md text-on-surface antialiased flex flex-col min-h-screen">
         <Header />
+        <GoogleTranslate />
         <main className="w-full pt-[72px] sm:pt-[104px] bg-background flex-grow">
           {children}
         </main>

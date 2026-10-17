@@ -2,12 +2,31 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { switchLanguage } from '@/components/common/GoogleTranslate';
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lang, setLang] = useState<'FR' | 'EN'>('FR');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('midh_lang');
+      const hasEnCookie = document.cookie.includes('googtrans=/fr/en');
+      if (saved === 'EN' || hasEnCookie) {
+        setLang('EN');
+      } else {
+        setLang('FR');
+      }
+    }
+  }, []);
+
+  const handleLanguageChange = (target: 'FR' | 'EN') => {
+    if (target === lang) return;
+    setLang(target);
+    switchLanguage(target);
+  };
 
   const navLinks = [
     { href: '/', label: 'Accueil' },
@@ -106,11 +125,11 @@ export default function Header() {
 
             <span className="text-white/30">•</span>
 
-            {/* Sélecteur de langue avec drapeaux interactifs (préparation traduction automatique) */}
+            {/* Sélecteur de langue avec drapeaux interactifs (traduction automatique FR / EN) */}
             <div className="flex items-center gap-1 bg-black/20 p-0.5 rounded-full border border-white/10" role="group" aria-label="Choix de la langue">
               <button
                 type="button"
-                onClick={() => setLang('FR')}
+                onClick={() => handleLanguageChange('FR')}
                 aria-pressed={lang === 'FR'}
                 title="Passer le site en Français"
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold transition-all ${
@@ -130,9 +149,9 @@ export default function Header() {
 
               <button
                 type="button"
-                onClick={() => setLang('EN')}
+                onClick={() => handleLanguageChange('EN')}
                 aria-pressed={lang === 'EN'}
-                title="Switch website to English (Automated translation ready)"
+                title="Switch website to English (Automated translation to American English)"
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold transition-all ${
                   lang === 'EN'
                     ? 'bg-white text-[#0B3827] shadow-xs'
@@ -277,6 +296,31 @@ export default function Header() {
                     <img src={social.icon} alt={social.name} className="w-full h-full object-contain" />
                   </a>
                 ))}
+              </div>
+
+              {/* Sélecteur de langue mobile */}
+              <div className="flex items-center justify-between px-3 py-2 bg-surface-container rounded-lg border border-outline-variant/20">
+                <span className="text-xs font-semibold text-on-surface">Langue d&apos;affichage</span>
+                <div className="flex items-center gap-1 bg-white p-0.5 rounded-full border border-outline-variant/30">
+                  <button
+                    type="button"
+                    onClick={() => handleLanguageChange('FR')}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                      lang === 'FR' ? 'bg-[#0B3827] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🇫🇷 FR</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleLanguageChange('EN')}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                      lang === 'EN' ? 'bg-[#0B3827] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🇺🇸 EN</span>
+                  </button>
+                </div>
               </div>
 
               <div className="p-3 bg-surface-container rounded-lg text-caption text-tertiary flex flex-col gap-1">

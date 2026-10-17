@@ -174,3 +174,41 @@
   color: #0c872b;
 }
 
+/* ==========================================================================
+   Google Translate Headless & Clean Styling
+   ========================================================================== */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+#google_translate_element {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.skiptranslate:not(.allow-skiptranslate) {
+  display: none !important;
+}
+
+font[style] {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
