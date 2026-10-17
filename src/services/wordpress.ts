@@ -33,6 +33,11 @@ function getWordPressBaseUrl(): string {
 
 const WORDPRESS_URL = getWordPressBaseUrl();
 
+function sanitizeUrl(url?: string): string {
+  if (!url) return '';
+  return url.replace(/http:\/\/midh-cms\.local/g, 'https://cms.midh-ci.org');
+}
+
 /**
  * Effectue un appel sécurisé vers l'API REST WordPress avec timeout et gestion gracieuse d'erreur
  */
@@ -44,7 +49,9 @@ async function fetchWordPressAPI<T>(endpoint: string, options?: RequestInit): Pr
   // Nettoyage de l'URL de base pour supporter aussi bien https://cms.midh-ci.org que https://cms.midh-ci.org/wp-json
   const cleanBase = WORDPRESS_URL.replace(/\/+$/, '').replace(/\/wp-json\/?$/, '');
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${cleanBase}${cleanEndpoint}`;
+  const separator = cleanEndpoint.includes('?') ? '&' : '?';
+  // Cache buster pour contourner le cache Nginx/Varnish agressif de l'hébergeur LWS
+  const url = `${cleanBase}${cleanEndpoint}${separator}_t=${Date.now()}`;
 
   const isDev = process.env.NODE_ENV === 'development';
   // En dev : pas de cache pour synchronisation instantanée dès publication dans WordPress
@@ -140,7 +147,7 @@ export async function getProjects(): Promise<MIDHProject[]> {
         slug: item.slug,
         excerpt: cleanExcerpt,
         content: rawContent,
-        coverImage: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || item.meta?.cover_image,
+        coverImage: sanitizeUrl(item._embedded?.['wp:featuredmedia']?.[0]?.source_url || item.meta?.cover_image),
         status: item.meta?.status || 'actif',
         statusLabel: item.meta?.status_label || 'Projet actif',
         domain: item.meta?.domain || 'bonne-gouvernance',
@@ -191,7 +198,7 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
         slug: post.slug,
         excerpt: post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '',
         content: post.content?.rendered || '',
-        featuredImage: post._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+        featuredImage: sanitizeUrl(post._embedded?.['wp:featuredmedia']?.[0]?.source_url),
         date: post.date,
         formattedDate,
         author: post._embedded?.author?.[0]?.name || 'MIDH',
@@ -228,7 +235,10 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
   // 1. Tente d'abord l'endpoint optimisé MIDH Core
   const customDocs = await fetchWordPressAPI<MIDHDocument[]>('/wp-json/midh/v1/documents');
   if (customDocs && Array.isArray(customDocs) && customDocs.length > 0) {
-    return customDocs;
+    return customDocs.map((doc) => ({
+      ...doc,
+      fileUrl: sanitizeUrl(doc.fileUrl),
+    }));
   }
 
   // 2. Tente l'endpoint REST standard WP CPT
@@ -239,7 +249,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
       title: doc.title?.rendered || 'Document',
       slug: doc.slug,
       excerpt: doc.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '',
-      fileUrl: doc.meta?.file_url || '#',
+      fileUrl: sanitizeUrl(doc.meta?.file_url || '#'),
       fileSize: doc.meta?.file_size || 'PDF',
       fileFormat: doc.meta?.file_format || 'PDF',
       category: doc.meta?.category || 'rapport_annuel',
@@ -289,7 +299,7 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
         id: m.id,
         fullName: rawTitle,
         role,
-        photoUrl: photoUrl || '',
+        photoUrl: sanitizeUrl(photoUrl || ''),
         biography,
         email: m.meta?.email || '',
         linkedin: m.meta?.linkedin || '',
@@ -344,7 +354,10 @@ export async function getSections(): Promise<MIDHSection[]> {
 export async function getHeroSlides(): Promise<MIDHHeroSlide[]> {
   const wpSlides = await fetchWordPressAPI<MIDHHeroSlide[]>('/wp-json/midh/v1/slides');
   if (wpSlides && Array.isArray(wpSlides) && wpSlides.length > 0) {
-    const valid = wpSlides.filter((s) => s.title && s.image);
+    const valid = wpSlides.map((s) => ({
+      ...s,
+      image: sanitizeUrl(s.image),
+    })).filter((s) => s.title && s.image);
     if (valid.length > 0) {
       return valid;
     }
