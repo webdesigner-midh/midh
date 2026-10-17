@@ -47,7 +47,7 @@ export default function Header() {
                   rel="noopener noreferrer"
                   title={`Suivez le MIDH sur ${social.name}`}
                   aria-label={social.name}
-                  className="w-6 h-6 rounded-md bg-white/10 hover:bg-white border border-white/20 hover:border-white shadow-2xs hover:scale-110 active:scale-95 transition-all flex items-center justify-center p-1 group shrink-0"
+                  className="w-6 h-6 rounded-md bg-white hover:bg-emerald-50 shadow-xs hover:scale-110 active:scale-95 transition-all flex items-center justify-center p-1 group shrink-0"
                 >
                   <img
                     src={social.icon}
