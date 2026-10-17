@@ -22,7 +22,7 @@ import {
   PublicationCategory,
 } from '@/types/wordpress';
 
-const WORDPRESS_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || '';
+const WORDPRESS_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '';
 
 /**
  * Effectue un appel sécurisé vers l'API REST WordPress avec timeout et gestion gracieuse d'erreur
@@ -32,7 +32,8 @@ async function fetchWordPressAPI<T>(endpoint: string, options?: RequestInit): Pr
     return null;
   }
 
-  const cleanBase = WORDPRESS_URL.replace(/\/+$/, '');
+  // Nettoyage de l'URL de base pour supporter aussi bien https://cms.midh-ci.org que https://cms.midh-ci.org/wp-json
+  const cleanBase = WORDPRESS_URL.replace(/\/+$/, '').replace(/\/wp-json\/?$/, '');
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${cleanBase}${cleanEndpoint}`;
 
