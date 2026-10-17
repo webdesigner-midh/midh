@@ -18,6 +18,13 @@ export default function Header() {
     { href: '/contact', label: 'Contact' },
   ];
 
+  const socialLinks = [
+    { name: 'Facebook', href: 'https://facebook.com/midh.ci', icon: '/icons/facebook.png' },
+    { name: 'Instagram', href: 'https://instagram.com/midh.ci', icon: '/icons/instagram.png' },
+    { name: 'TikTok', href: 'https://tiktok.com/@midh.ci', icon: '/icons/tiktok.png' },
+    { name: 'YouTube', href: 'https://youtube.com/@midh-ci', icon: '/icons/youtube.png' },
+  ];
+
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
@@ -193,9 +200,26 @@ export default function Header() {
             <span className="hidden sm:inline">Faire un don</span>
           </Link>
 
-          {/* Pastille visuelle régalienne */}
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary flex items-center justify-center shrink-0 text-white font-bold text-xs" title="République de Côte d'Ivoire">
-            CI
+          {/* Réseaux sociaux officiels (remplacement de l'ancienne pastille CI) */}
+          <div className="hidden sm:flex items-center gap-1.5 pl-2 border-l border-outline-variant/30 shrink-0" aria-label="Réseaux sociaux du MIDH">
+            {socialLinks.map((social) => (
+              <a
+                key={social.name}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Page officielle ${social.name} du MIDH`}
+                aria-label={social.name}
+                className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/40 shadow-2xs hover:shadow-xs hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-1.5 group shrink-0"
+              >
+                <img
+                  src={social.icon}
+                  alt={social.name}
+                  className="w-full h-full object-contain transition-transform group-hover:scale-110"
+                  loading="lazy"
+                />
+              </a>
+            ))}
           </div>
 
           {/* Déclencheur menu mobile */}
@@ -242,10 +266,27 @@ export default function Header() {
                 <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
                 <span>Faire un don au MIDH</span>
               </Link>
+              
+              {/* Réseaux sociaux mobile */}
+              <div className="flex items-center justify-center gap-3 py-2 border-t border-surface-container">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-xl bg-surface-container hover:bg-white border border-outline-variant/40 flex items-center justify-center p-2 transition-transform active:scale-95 shadow-2xs"
+                    aria-label={social.name}
+                  >
+                    <img src={social.icon} alt={social.name} className="w-full h-full object-contain" />
+                  </a>
+                ))}
+              </div>
+
               <div className="p-3 bg-surface-container rounded-lg text-caption text-tertiary flex flex-col gap-1">
                 <span>Téléphone / WhatsApp : +225 01 01 49 87 39</span>
                 <span>Email : contact@midh-ci.org</span>
-                <span>Siège : Abidjan, Cocody Angré, Carrefour les Oscars</span>
+                <span>Siège : Abidjan, Cocody Angré, Carrefour Duncan</span>
               </div>
             </div>
           </nav>
