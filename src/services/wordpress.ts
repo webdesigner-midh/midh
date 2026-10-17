@@ -33,9 +33,25 @@ function getWordPressBaseUrl(): string {
 
 const WORDPRESS_URL = getWordPressBaseUrl();
 
+function decodeHtml(html?: string): string {
+  if (!html) return '';
+  return html
+    .replace(/&rsquo;/g, "’")
+    .replace(/&#8217;/g, "’")
+    .replace(/&lsquo;/g, "‘")
+    .replace(/&ldquo;/g, "“")
+    .replace(/&rdquo;/g, "”")
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&hellip;/g, '…');
+}
+
 function sanitizeUrl(url?: string): string {
   if (!url) return '';
-  return url.replace(/http:\/\/midh-cms\.local/g, 'https://cms.midh-ci.org');
+  return url
+    .replace(/http:\/\/midh-cms\.local/g, 'https://cms.midh-ci.org')
+    .replace(/\\+$/, '');
 }
 
 /**
@@ -143,7 +159,7 @@ export async function getProjects(): Promise<MIDHProject[]> {
 
       return {
         id: item.id,
-        title: item.title?.rendered || 'Projet sans titre',
+        title: decodeHtml(item.title?.rendered || 'Projet sans titre'),
         slug: item.slug,
         excerpt: cleanExcerpt,
         content: rawContent,
@@ -194,7 +210,7 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
 
       return {
         id: post.id,
-        title: post.title?.rendered || 'Sans titre',
+        title: decodeHtml(post.title?.rendered || 'Sans titre'),
         slug: post.slug,
         excerpt: post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '',
         content: post.content?.rendered || '',
@@ -237,6 +253,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
   if (customDocs && Array.isArray(customDocs) && customDocs.length > 0) {
     return customDocs.map((doc) => ({
       ...doc,
+      title: decodeHtml(doc.title),
       fileUrl: sanitizeUrl(doc.fileUrl),
     }));
   }
@@ -246,7 +263,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
   if (wpDocs && Array.isArray(wpDocs) && wpDocs.length > 0) {
     return wpDocs.map((doc) => ({
       id: doc.id,
-      title: doc.title?.rendered || 'Document',
+      title: decodeHtml(doc.title?.rendered || 'Document'),
       slug: doc.slug,
       excerpt: doc.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '',
       fileUrl: sanitizeUrl(doc.meta?.file_url || '#'),
@@ -356,6 +373,7 @@ export async function getHeroSlides(): Promise<MIDHHeroSlide[]> {
   if (wpSlides && Array.isArray(wpSlides) && wpSlides.length > 0) {
     const valid = wpSlides.map((s) => ({
       ...s,
+      title: decodeHtml(s.title),
       image: sanitizeUrl(s.image),
     })).filter((s) => s.title && s.image);
     if (valid.length > 0) {
