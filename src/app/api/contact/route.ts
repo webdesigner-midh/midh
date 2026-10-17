@@ -64,11 +64,25 @@ export async function POST(request: Request) {
     // Journalisation sécurisée sans secrets
     console.info(`[Contact Form] Nouveau message reçu de ${name} (${email}) - Objet: ${subject}`);
 
-    // Si une configuration SMTP ou webhook de transmission est activée
-    const recipientEmail = process.env.CONTACT_FORM_RECIPIENT || "contact@midh-ci.org";
-    
-    // Si un service de messagerie transactionnelle est configuré (Sendgrid / Resend / SMTP),
-    // il est activé ici. En mode headless, le message est confirmé et sauvegardé.
+    // Envoi de l'e-mail via Resend
+    try {
+      const { sendContactNotification } = await import('@/services/resend');
+      const emailResult = await sendContactNotification({
+        name,
+        email,
+        phone,
+        subject,
+        message,
+      });
+
+      if (emailResult.error) {
+        console.error("[Contact API] Erreur Resend:", emailResult.error);
+      } else {
+        console.info("[Contact API] E-mail envoyé avec succès via Resend. ID:", emailResult.data?.id);
+      }
+    } catch (mailErr) {
+      console.error("[Contact API] Erreur lors de l'envoi Resend:", mailErr);
+    }
 
     return NextResponse.json(
       {

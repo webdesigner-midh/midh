@@ -71,6 +71,29 @@ export async function POST(request: Request) {
 
     console.info(`[Bénévolat MIDH] Nouvelle adhésion reçue : ${prenom} ${nom} (${email}) - Tél : ${phone} - Lieu : ${location} - Domaine : ${domain || 'Non spécifié'}`);
 
+    // Envoi de l'e-mail via Resend
+    try {
+      const { sendVolunteerNotification } = await import('@/services/resend');
+      const emailResult = await sendVolunteerNotification({
+        nom,
+        prenom,
+        email,
+        phone,
+        location,
+        domain,
+        availability,
+        message,
+      });
+
+      if (emailResult.error) {
+        console.error("[Bénévolat API] Erreur Resend:", emailResult.error);
+      } else {
+        console.info("[Bénévolat API] E-mail envoyé avec succès via Resend. ID:", emailResult.data?.id);
+      }
+    } catch (mailErr) {
+      console.error("[Bénévolat API] Erreur lors de l'envoi Resend:", mailErr);
+    }
+
     return NextResponse.json(
       {
         success: true,
