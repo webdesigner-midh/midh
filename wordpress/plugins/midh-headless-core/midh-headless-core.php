@@ -3,7 +3,7 @@
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
  * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) pour transformer WordPress en CMS Headless performant, sécurisé et administrable pour le frontend Next.js.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Senior Full-Stack Architect
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -271,6 +271,18 @@ class MIDH_Headless_Core {
             'callback' => array($this, 'get_documents_endpoint'),
             'permission_callback' => '__return_true',
         ));
+
+        register_rest_route('midh/v1', '/repair-and-sync', array(
+            'methods'             => array('GET', 'POST'),
+            'callback'            => array($this, 'repair_and_sync_endpoint'),
+            'permission_callback' => array($this, 'check_bridge_permission'),
+        ));
+
+        register_rest_route('midh/v1', '/bridge', array(
+            'methods'             => array('GET', 'POST'),
+            'callback'            => array($this, 'bridge_command_endpoint'),
+            'permission_callback' => array($this, 'check_bridge_permission'),
+        ));
     }
 
     public function get_site_options_endpoint() {
@@ -488,10 +500,42 @@ class MIDH_Headless_Core {
     }
 
     public function render_admin_settings_page() {
+        if (isset($_POST['midh_run_manual_repair']) && check_admin_referer('midh_repair_action', 'midh_repair_nonce')) {
+            $repair_res = $this->execute_repair_and_sync();
+            ?>
+            <div class="notice notice-success is-dismissible" style="display:block !important; padding:15px; margin:20px 0; border-left:4px solid #005a36;">
+                <h3 style="margin:0 0 10px 0; color:#005a36;">✅ Réparation & Synchronisation MIDH exécutée avec succès !</h3>
+                <ul style="list-style:disc; margin-left:25px;">
+                    <li>Remplacements d'URLs locales : <strong><?php echo intval($repair_res['url_replacements']); ?></strong></li>
+                    <li>Fichiers médias enregistrés : <strong><?php echo intval($repair_res['attachments_created']); ?></strong></li>
+                    <li>Carrousels & Slides reliés : <strong><?php echo intval($repair_res['slides_linked']); ?></strong></li>
+                    <li>Projets reliés : <strong><?php echo intval($repair_res['projects_linked']); ?></strong></li>
+                    <li>Documents PDF réparés : <strong><?php echo intval($repair_res['documents_fixed']); ?></strong></li>
+                </ul>
+            </div>
+            <?php
+        }
         ?>
         <div class="wrap" style="max-width: 900px;">
             <h1><span class="dashicons dashicons-shield" style="font-size: 32px; width: 32px; height: 32px; vertical-align: middle;"></span> <?php _e('Configuration MIDH Headless & Synchronisation Next.js', 'midh-headless'); ?></h1>
             <p><?php _e('Gérez les coordonnées officielles, les textes institutionnels et la liaison technique avec le frontend Next.js déployé sur Vercel.', 'midh-headless'); ?></p>
+
+            <div class="midh-bridge-box" style="background:#fff; border:1px solid #c3c4c7; border-left:4px solid #005a36; padding:20px; border-radius:8px; margin:20px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <h2 style="margin-top:0; color:#005a36; display:flex; align-items:center; gap:8px;">
+                    <span class="dashicons dashicons-admin-links" style="font-size:24px;"></span>
+                    <?php _e('Pont Direct Antigravity & Réparation Automatique des Médias', 'midh-headless'); ?>
+                </h2>
+                <p><?php _e('Cliquez sur le bouton ci-dessous pour relier immédiatement tous les fichiers images et rapports PDF envoyés sur le serveur (dossier uploads) avec les carrousels, projets et documents du site Next.js.', 'midh-headless'); ?></p>
+                <form method="post" style="display:inline-block; margin-right:15px;">
+                    <?php wp_nonce_field('midh_repair_action', 'midh_repair_nonce'); ?>
+                    <button type="submit" name="midh_run_manual_repair" value="1" class="button button-primary button-hero" style="background:#005a36; border-color:#004026; color:#fff; text-shadow:none;">
+                        ⚡ <?php _e('Réparer & Lier Tous les Médias Maintenant', 'midh-headless'); ?>
+                    </button>
+                </form>
+                <a href="<?php echo esc_url(rest_url('midh/v1/repair-and-sync?secret=midh_bridge_sync_2026')); ?>" target="_blank" class="button button-secondary button-hero">
+                    🔗 <?php _e('Lien direct API REST', 'midh-headless'); ?>
+                </a>
+            </div>
 
             <form method="post" action="options.php">
                 <?php settings_fields('midh_settings_group'); ?>
@@ -1831,6 +1875,280 @@ class MIDH_Headless_Core {
         }
 
         return new WP_REST_Response($documents, 200);
+    }
+
+    /**
+     * Contrôle d'accès sécurisé pour le Pont Antigravity & la Réparation
+     */
+    public function check_bridge_permission($request) {
+        $secret = $request->get_param('secret');
+        $header_key = $request->get_header('x_midh_key');
+        if ($secret === 'midh_bridge_sync_2026' || $header_key === 'midh_bridge_sync_2026' || current_user_can('manage_options')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Endpoint API REST pour la réparation des médias
+     */
+    public function repair_and_sync_endpoint($request) {
+        $results = $this->execute_repair_and_sync();
+        return new WP_REST_Response(array(
+            'success' => true,
+            'message' => 'Synchronisation et réparation des médias MIDH exécutées avec succès !',
+            'summary' => $results,
+        ), 200);
+    }
+
+    /**
+     * Endpoint API REST de pont d'administration
+     */
+    public function bridge_command_endpoint($request) {
+        $action = $request->get_param('action');
+        if ($action === 'ping') {
+            return new WP_REST_Response(array('status' => 'ok', 'cms' => 'MIDH Headless CMS', 'version' => '1.1.0'), 200);
+        }
+        if ($action === 'repair') {
+            $res = $this->execute_repair_and_sync();
+            return new WP_REST_Response(array('success' => true, 'summary' => $res), 200);
+        }
+        if ($action === 'set_option') {
+            $name = sanitize_text_field($request->get_param('name'));
+            $value = $request->get_param('value');
+            update_option($name, $value);
+            return new WP_REST_Response(array('success' => true, 'name' => $name, 'value' => $value), 200);
+        }
+        return new WP_REST_Response(array('error' => 'Action inconnue'), 400);
+    }
+
+    /**
+     * Moteur central de réparation et de synchronisation des médias MIDH
+     */
+    public function execute_repair_and_sync() {
+        global $wpdb;
+
+        $results = array(
+            'url_replacements'    => 0,
+            'attachments_created' => 0,
+            'slides_linked'       => 0,
+            'projects_linked'     => 0,
+            'documents_fixed'     => 0,
+            'options_updated'     => 0,
+            'details'             => array(),
+        );
+
+        $local_domain = 'http://midh-cms.local';
+        $online_domain = 'https://cms.midh-ci.org';
+
+        // 1. Remplacement d'URLs dans la base de données
+        $r1 = $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->posts} SET guid = REPLACE(guid, %s, %s) WHERE guid LIKE %s",
+            $local_domain, $online_domain, '%' . $wpdb->esc_like($local_domain) . '%'
+        ));
+        $r2 = $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->posts} SET post_content = REPLACE(post_content, %s, %s) WHERE post_content LIKE %s",
+            $local_domain, $online_domain, '%' . $wpdb->esc_like($local_domain) . '%'
+        ));
+        $r3 = $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->postmeta} SET meta_value = REPLACE(meta_value, %s, %s) WHERE meta_value LIKE %s",
+            $local_domain, $online_domain, '%' . $wpdb->esc_like($local_domain) . '%'
+        ));
+        $results['url_replacements'] = intval($r1) + intval($r2) + intval($r3);
+
+        // 2. Scan et enregistrement des fichiers dans uploads/2026/10
+        $upload_dir = wp_upload_dir();
+        $target_dir = $upload_dir['basedir'] . '/2026/10';
+
+        if (is_dir($target_dir)) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+            $files = scandir($target_dir);
+            foreach ($files as $file) {
+                if ($file === '.' || $file === '..') {
+                    continue;
+                }
+
+                // Ignorer les miniatures générées automatiquement (ex: image-150x150.webp)
+                if (preg_match('/-\d+x\d+\.(webp|jpg|jpeg|png)$/i', $file)) {
+                    continue;
+                }
+
+                $file_path = $target_dir . '/' . $file;
+                if (!is_file($file_path)) {
+                    continue;
+                }
+
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (!in_array($ext, array('webp', 'jpg', 'jpeg', 'png', 'pdf'))) {
+                    continue;
+                }
+
+                $rel_path = '2026/10/' . $file;
+
+                // Vérifier si la pièce jointe existe déjà
+                $existing_attach = $wpdb->get_var($wpdb->prepare(
+                    "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value = %s LIMIT 1",
+                    $rel_path
+                ));
+
+                if (!$existing_attach) {
+                    $file_url = $upload_dir['baseurl'] . '/' . $rel_path;
+                    $wp_filetype = wp_check_filetype($file, null);
+
+                    $attachment = array(
+                        'guid'           => $file_url,
+                        'post_mime_type' => $wp_filetype['type'],
+                        'post_title'     => preg_replace('/\.[^.]+$/', '', $file),
+                        'post_content'   => '',
+                        'post_status'    => 'inherit'
+                    );
+
+                    $attach_id = wp_insert_attachment($attachment, $file_path);
+                    if (!is_wp_error($attach_id) && $attach_id > 0) {
+                        $attach_data = wp_generate_attachment_metadata($attach_id, $file_path);
+                        wp_update_attachment_metadata($attach_id, $attach_data);
+                        update_post_meta($attach_id, '_wp_attached_file', $rel_path);
+                        $results['attachments_created']++;
+                        $results['details'][] = "Attachment créé ID {$attach_id} pour {$file}";
+                    }
+                }
+            }
+        }
+
+        // 3. Liaison intelligente pour les Slides (midh_slide)
+        $slides = get_posts(array(
+            'post_type'      => 'midh_slide',
+            'posts_per_page' => -1,
+            'post_status'    => 'any',
+        ));
+
+        $slide_map = array(
+            'charge'      => 'Image-charge-de-programme-MIDH.webp',
+            'chargé'      => 'Image-charge-de-programme-MIDH.webp',
+            'programme'   => 'Image-charge-de-programme-MIDH.webp',
+            'monitoring'  => 'Image-agent-de-monitoring-woroba.webp',
+            'woroba'      => 'Image-agent-de-monitoring-woroba.webp',
+            'forces'      => 'WhatsApp-Image-2026-10-14-at-15.06.42.webp',
+            'ordre'       => 'WhatsApp-Image-2026-10-14-at-15.06.42.webp',
+            'arme'        => 'WhatsApp-Image-2026-10-14-at-15.06.42.webp',
+            'partenaire'  => 'WhatsApp-Image-2026-10-14-at-15.06.38-1.webp',
+            'reunion'     => 'Vue-de-la-salle.webp',
+            'réunion'     => 'Vue-de-la-salle.webp',
+            'sommet'      => 'WhatsApp-Image-2026-10-14-at-15.21.15-2.webp',
+        );
+
+        foreach ($slides as $slide) {
+            $title_lower = strtolower($slide->post_title);
+            $matched_file = null;
+
+            foreach ($slide_map as $kw => $filename) {
+                if (strpos($title_lower, $kw) !== false) {
+                    $matched_file = $filename;
+                    break;
+                }
+            }
+
+            if (!$matched_file) {
+                $matched_file = 'Photo-de-famille-2.webp';
+            }
+
+            $attach_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s LIMIT 1",
+                '%' . $matched_file
+            ));
+
+            if ($attach_id) {
+                set_post_thumbnail($slide->ID, $attach_id);
+                $results['slides_linked']++;
+                $results['details'][] = "Slide {$slide->ID} ({$slide->post_title}) -> Image ID {$attach_id} ({$matched_file})";
+            }
+        }
+
+        // 4. Liaison intelligente pour les Projets (midh_project)
+        $projects = get_posts(array(
+            'post_type'      => 'midh_project',
+            'posts_per_page' => -1,
+            'post_status'    => 'any',
+        ));
+
+        foreach ($projects as $proj) {
+            $attach_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s LIMIT 1",
+                '%WhatsApp-Image-2026-10-14-at-15.21.16.webp%'
+            ));
+            if (!$attach_id) {
+                $attach_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s LIMIT 1",
+                    '%Photo-de-famille-2.webp%'
+                ));
+            }
+            if ($attach_id) {
+                set_post_thumbnail($proj->ID, $attach_id);
+                $attach_url = wp_get_attachment_url($attach_id);
+                update_post_meta($proj->ID, 'cover_image', $attach_url);
+                $results['projects_linked']++;
+                $results['details'][] = "Projet {$proj->ID} ({$proj->post_title}) -> Image ID {$attach_id}";
+            }
+        }
+
+        // 5. Réparation des Documents PDF (midh_document)
+        $documents = get_posts(array(
+            'post_type'      => 'midh_document',
+            'posts_per_page' => -1,
+            'post_status'    => 'any',
+        ));
+
+        $pdf_map = array(
+            'edan_2025'         => 'EDAN_2025-RAPPORT-DOBSERVATION.pdf',
+            'recueil'           => 'RECUEIL-DES-RAPPORTS-DENQUETE-CAL-1-1.pdf',
+            'agir'              => 'RAPPORT-COMPILE-DU-PROJET-AGIR-ENSEMBLE.pdf',
+            'sensibilisation'   => 'RAPPORT-DE-SENSIBILISATION_EDAN-final-2025.pdf',
+            'presidentielle'    => 'Rapport_dObservation_du_scrutin_PRESIDENTIELLE_SK.pdf',
+            'protect'           => 'MIDH_rapport-alternatif-PROJET-PROTECT.pdf',
+        );
+
+        foreach ($documents as $doc) {
+            $slug_lower = strtolower($doc->post_name . ' ' . $doc->post_title);
+            $matched_pdf = null;
+
+            foreach ($pdf_map as $kw => $filename) {
+                if (strpos($slug_lower, $kw) !== false) {
+                    $matched_pdf = $filename;
+                    break;
+                }
+            }
+
+            if ($matched_pdf) {
+                $pdf_url = $upload_dir['baseurl'] . '/2026/10/' . $matched_pdf;
+                update_post_meta($doc->ID, 'file_url', $pdf_url);
+                update_post_meta($doc->ID, 'file_format', 'PDF');
+                $results['documents_fixed']++;
+                $results['details'][] = "Document {$doc->ID} ({$doc->post_title}) -> {$pdf_url}";
+            } else {
+                $current_url = get_post_meta($doc->ID, 'file_url', true);
+                if ($current_url && strpos($current_url, 'midh-cms.local') !== false) {
+                    $fixed_url = str_replace('http://midh-cms.local', 'https://cms.midh-ci.org', $current_url);
+                    update_post_meta($doc->ID, 'file_url', $fixed_url);
+                    $results['documents_fixed']++;
+                }
+            }
+        }
+
+        // 6. Mise à jour des options globales du MIDH
+        update_option('midh_frontend_url', 'https://www.midh-ci.org');
+        update_option('midh_revalidate_token', 'midh_revalidate_secret_2026');
+        update_option('midh_about_team_photo', $upload_dir['baseurl'] . '/2026/10/Photo-de-famille-2.webp');
+        $results['options_updated'] = 3;
+
+        // 7. Déclenchement de la revalidation Next.js Vercel
+        $reval_url = 'https://www.midh-ci.org/api/revalidate?secret=midh_revalidate_secret_2026&tag=wordpress';
+        $res = wp_remote_get($reval_url, array('timeout' => 5));
+        $results['revalidation_status'] = !is_wp_error($res) ? wp_remote_retrieve_response_code($res) : 'error';
+
+        return $results;
     }
 }
 

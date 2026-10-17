@@ -704,17 +704,21 @@ input:focus, textarea:focus, select:focus {
   font-weight: 600;
 }
 
-/* Masquer radicalement toutes les alertes WordPress parasites */
+/* Masquer uniquement les alertes de mise à jour parasites sans bloquer les messages de succès */
 .update-nag, 
 .notice.update-nag, 
 #welcome-panel,
-.notice.notice-warning,
-.notice,
-.error,
-.updated,
 #dashboard_site_health,
 #dashboard_right_now {
   display: none !important;
+}
+
+/* Toujours afficher les alertes de succès et les mots de passe d'application */
+.notice.notice-success,
+.updated,
+.application-passwords-user-api-key,
+#application-passwords-section .notice {
+  display: block !important;
 }
 
 /* ==========================================================
