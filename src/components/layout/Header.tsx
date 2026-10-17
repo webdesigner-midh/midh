@@ -35,19 +35,37 @@ export default function Header() {
       {/* Barre d'information institutionnelle supérieure */}
       <div className="bg-[#0B3827] text-white hidden sm:block border-b border-white/10 shadow-xs">
         <div className="site-container flex items-center justify-between min-h-[36px] py-1 text-xs">
-          {/* Gauche : Nom organisation + Année de création + Siège */}
+          {/* Gauche : Réseaux sociaux officiels + Année de création + Siège */}
           <div className="flex items-center gap-2.5 overflow-hidden text-white/95">
-            <span className="flex items-center gap-1.5 font-semibold text-white shrink-0">
-              <span className="material-symbols-outlined text-[15px] text-emerald-300">verified</span>
-              <span>Mouvement Ivoirien des Droits Humains</span>
-            </span>
-            <span className="hidden xl:inline text-white/30">•</span>
+            {/* Réseaux sociaux du MIDH */}
+            <div className="flex items-center gap-1.5 shrink-0" aria-label="Réseaux sociaux officiels du MIDH">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Suivez le MIDH sur ${social.name}`}
+                  aria-label={social.name}
+                  className="w-6 h-6 rounded-md bg-white/10 hover:bg-white border border-white/20 hover:border-white shadow-2xs hover:scale-110 active:scale-95 transition-all flex items-center justify-center p-1 group shrink-0"
+                >
+                  <img
+                    src={social.icon}
+                    alt={social.name}
+                    className="w-full h-full object-contain"
+                    loading="lazy"
+                  />
+                </a>
+              ))}
+            </div>
+
+            <span className="text-white/30">•</span>
             <span className="hidden xl:inline text-white/85 truncate">
               Année de création : le 08 octobre 2000
             </span>
             <span className="hidden xl:inline text-white/30">/</span>
             <span className="hidden xl:inline text-white/85 truncate">
-              Siège : Abidjan, Cocody Angré, Carrefour les Oscars
+              Siège : Abidjan, Cocody Angré, Carrefour Duncan
             </span>
             {/* Affichage pour écrans moyens md/lg */}
             <span className="hidden md:inline xl:hidden text-white/30">•</span>
@@ -199,28 +217,6 @@ export default function Header() {
             <span className="material-symbols-outlined text-[18px]">volunteer_activism</span>
             <span className="hidden sm:inline">Faire un don</span>
           </Link>
-
-          {/* Réseaux sociaux officiels (remplacement de l'ancienne pastille CI) */}
-          <div className="hidden sm:flex items-center gap-1.5 pl-2 border-l border-outline-variant/30 shrink-0" aria-label="Réseaux sociaux du MIDH">
-            {socialLinks.map((social) => (
-              <a
-                key={social.name}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`Page officielle ${social.name} du MIDH`}
-                aria-label={social.name}
-                className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/40 shadow-2xs hover:shadow-xs hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-1.5 group shrink-0"
-              >
-                <img
-                  src={social.icon}
-                  alt={social.name}
-                  className="w-full h-full object-contain transition-transform group-hover:scale-110"
-                  loading="lazy"
-                />
-              </a>
-            ))}
-          </div>
 
           {/* Déclencheur menu mobile */}
           <button
