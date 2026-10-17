@@ -22,7 +22,16 @@ import {
   PublicationCategory,
 } from '@/types/wordpress';
 
-const WORDPRESS_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '';
+function getWordPressBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '';
+  if (envUrl && !envUrl.includes('.local')) {
+    return envUrl;
+  }
+  // En production ou par défaut si non configuré / si ancienne valeur .local
+  return 'https://cms.midh-ci.org';
+}
+
+const WORDPRESS_URL = getWordPressBaseUrl();
 
 /**
  * Effectue un appel sécurisé vers l'API REST WordPress avec timeout et gestion gracieuse d'erreur
