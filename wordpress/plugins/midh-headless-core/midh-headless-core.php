@@ -2,9 +2,9 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) pour transformer WordPress en CMS Headless performant, sécurisé et administrable pour le frontend Next.js.
- * Version: 1.1.0
- * Author: Senior Full-Stack Architect
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.2.0 avec Médiathèque & Galerie Photo-Vidéo, carrousel d'accueil et synchronisation Next.js.
+ * Version: 1.2.0
+ * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
  * Text Domain: midh-headless
@@ -2475,7 +2475,7 @@ class MIDH_Headless_Core {
     public function bridge_command_endpoint($request) {
         $action = $request->get_param('action');
         if ($action === 'ping') {
-            return new WP_REST_Response(array('status' => 'ok', 'cms' => 'MIDH Headless CMS', 'version' => '1.1.0'), 200);
+            return new WP_REST_Response(array('status' => 'ok', 'cms' => 'MIDH Headless CMS', 'version' => '1.2.0'), 200);
         }
         if ($action === 'repair') {
             $res = $this->execute_repair_and_sync();
