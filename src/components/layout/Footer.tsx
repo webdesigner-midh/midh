@@ -98,6 +98,11 @@ export default function Footer() {
               <Link href="/documents-rapports">Documents &amp; Rapports</Link>
             </li>
             <li className="hover:text-primary transition-colors">
+              <Link href="/galerie" className="font-semibold text-emerald-800 hover:text-emerald-950 flex items-center gap-1">
+                <span>📸 Médiathèque Photo &amp; Vidéo</span>
+              </Link>
+            </li>
+            <li className="hover:text-primary transition-colors">
               <Link href="/contact">Contact</Link>
             </li>
           </ul>
@@ -137,7 +142,7 @@ export default function Footer() {
           <div className="flex flex-col gap-space-sm font-body-sm text-body-sm text-tertiary">
             <div className="flex items-start gap-space-xs">
               <span className="material-symbols-outlined text-secondary shrink-0 text-[18px] mt-0.5">location_on</span>
-              <span>Siège : Abidjan, Cocody Angré, Carrefour les Oscars</span>
+              <span>Siège : Abidjan, Cocody Angré, Carrefour Duncan</span>
             </div>
             <div className="flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-secondary shrink-0 text-[18px]">call</span>
