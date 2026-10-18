@@ -85,36 +85,61 @@ export default async function NosActionsPage() {
               <div
                 key={proj.id}
                 id={proj.slug}
-                className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow"
+                className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 flex flex-col justify-between shadow-sm hover:shadow-md transition-all group"
               >
-                <div className="p-6 sm:p-8 flex flex-col gap-4">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <span className="px-3 py-1 rounded-full bg-secondary-container/60 text-secondary font-label-md text-label-md font-semibold">
-                      {proj.statusLabel}
-                    </span>
-                    {proj.period && (
-                      <span className="font-caption text-caption text-tertiary">
-                        Période : {proj.period}
+                <div>
+                  {/* Image mise en avant WordPress */}
+                  {proj.coverImage ? (
+                    <div className="relative h-56 sm:h-64 w-full overflow-hidden bg-surface-container">
+                      <img
+                        src={proj.coverImage}
+                        alt={proj.title}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="px-3 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md text-[#0B3827] font-label-md text-xs sm:text-label-md font-bold shadow-xs">
+                          {proj.statusLabel}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative h-44 sm:h-48 w-full bg-gradient-to-br from-[#f0f5f0] to-[#e2ebe2] flex flex-col items-center justify-center p-6 text-center text-tertiary">
+                      <span className="material-symbols-outlined text-[40px] text-primary/60 mb-2">assignment</span>
+                      <span className="px-3 py-1 rounded-full bg-surface-container-lowest/80 text-[#0B3827] font-label-md text-xs font-bold">
+                        {proj.statusLabel}
                       </span>
-                    )}
-                  </div>
-
-                  <Link href={`/nos-actions/${proj.slug}`} className="group">
-                    <h3 className="font-headline-sm text-lg sm:text-xl text-[#0B3827] font-bold leading-snug group-hover:text-primary transition-colors">
-                      {proj.title}
-                    </h3>
-                  </Link>
-
-                  <p className="font-body-md text-sm sm:text-base text-on-surface-variant leading-relaxed">
-                    {proj.excerpt || 'Programme d\'action sur le terrain mené par les équipes du MIDH.'}
-                  </p>
-
-                  {proj.location && (
-                    <div className="flex items-center gap-2 text-caption text-secondary font-medium pt-2">
-                      <span className="material-symbols-outlined text-[16px]">location_on</span>
-                      <span>Localités d&apos;intervention : {proj.location}</span>
                     </div>
                   )}
+
+                  <div className="p-6 sm:p-8 flex flex-col gap-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <span className="px-3 py-1 rounded-full bg-secondary-container/60 text-secondary font-label-md text-label-md font-semibold">
+                        {proj.statusLabel}
+                      </span>
+                      {proj.period && (
+                        <span className="font-caption text-caption text-tertiary">
+                          Période : {proj.period}
+                        </span>
+                      )}
+                    </div>
+
+                    <Link href={`/nos-actions/${proj.slug}`} className="group/title">
+                      <h3 className="font-headline-sm text-lg sm:text-xl text-[#0B3827] font-bold leading-snug group-hover/title:text-primary transition-colors">
+                        {proj.title}
+                      </h3>
+                    </Link>
+
+                    <p className="font-body-md text-sm sm:text-base text-on-surface-variant leading-relaxed line-clamp-3">
+                      {proj.excerpt || 'Programme d\'action sur le terrain mené par les équipes du MIDH.'}
+                    </p>
+
+                    {proj.location && (
+                      <div className="flex items-center gap-2 text-caption text-secondary font-medium pt-2">
+                        <span className="material-symbols-outlined text-[16px]">location_on</span>
+                        <span>Localités d&apos;intervention : {proj.location}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-5 sm:p-6 bg-surface-container-low border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-3">
