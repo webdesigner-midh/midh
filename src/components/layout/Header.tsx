@@ -33,6 +33,7 @@ export default function Header() {
     { href: '/a-propos', label: 'À propos' },
     { href: '/nos-actions', label: 'Nos actions' },
     { href: '/actualites', label: 'Actualités' },
+    { href: '/galerie', label: 'Galerie' },
     { href: '/documents-rapports', label: 'Documents & Rapports' },
     { href: '/contact', label: 'Contact' },
   ];
