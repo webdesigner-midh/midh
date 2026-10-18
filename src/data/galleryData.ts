@@ -1,24 +1,27 @@
 export interface GalleryPhoto {
   id: string;
   title: string;
-  category: 'terrain' | 'formation' | 'plaidoyer' | 'partenaires';
+  category: string;
   categoryLabel: string;
   imageUrl: string;
   date: string;
   location: string;
   description: string;
+  showOnHome?: boolean;
 }
 
 export interface GalleryVideo {
   id: string;
   title: string;
-  category: 'reportage' | 'plaidoyer' | 'formation' | 'declaration';
+  category: string;
   categoryLabel: string;
   videoUrl: string;
+  videoEmbed?: string;
   youtubeId?: string;
+  thumbnail?: string;
   date: string;
   duration?: string;
-  source: 'YouTube' | 'Facebook' | 'Télévision';
+  source: string;
   description: string;
 }
 

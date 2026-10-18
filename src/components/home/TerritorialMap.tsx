@@ -3,15 +3,19 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MIDHSection } from '@/types/wordpress';
-import { OFFICIAL_GALLERY_PHOTOS } from '@/data/galleryData';
+import { GalleryPhoto, OFFICIAL_GALLERY_PHOTOS } from '@/data/galleryData';
 
 interface TerritorialMapProps {
   sections: MIDHSection[];
+  initialPhotos?: GalleryPhoto[];
 }
 
-export default function TerritorialMap({ sections }: TerritorialMapProps) {
+export default function TerritorialMap({
+  sections,
+  initialPhotos = OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
+}: TerritorialMapProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = OFFICIAL_GALLERY_PHOTOS.slice(0, 6);
+  const slides = initialPhotos && initialPhotos.length > 0 ? initialPhotos : OFFICIAL_GALLERY_PHOTOS.slice(0, 6);
 
   // Défilement automatique doux toutes les 5 secondes
   useEffect(() => {

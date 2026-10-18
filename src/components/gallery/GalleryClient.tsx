@@ -1,21 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { GalleryPhoto, GalleryVideo, OFFICIAL_GALLERY_PHOTOS, OFFICIAL_GALLERY_VIDEOS } from '@/data/galleryData';
 
-export default function GalleryClient() {
+interface GalleryClientProps {
+  initialPhotos?: GalleryPhoto[];
+  initialVideos?: GalleryVideo[];
+}
+
+export default function GalleryClient({
+  initialPhotos = OFFICIAL_GALLERY_PHOTOS,
+  initialVideos = OFFICIAL_GALLERY_VIDEOS,
+}: GalleryClientProps) {
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
   
+  // Catégories dynamiques extraites des photos disponibles
+  const availableCategories = useMemo(() => {
+    const map = new Map<string, string>();
+    initialPhotos.forEach((p) => {
+      const key = p.category || 'autre';
+      const label = p.categoryLabel || p.category || 'Média';
+      if (!map.has(key)) {
+        map.set(key, label);
+      }
+    });
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
+  }, [initialPhotos]);
+
   // Pagination Photos (6 photos par page pour rapidité et légèreté)
   const PHOTOS_PER_PAGE = 6;
   const [photoPage, setPhotoPage] = useState(1);
   const [photoCategory, setPhotoCategory] = useState<string>('all');
 
   // Filtre photos par catégorie
-  const filteredPhotos = OFFICIAL_GALLERY_PHOTOS.filter((photo) => {
+  const filteredPhotos = initialPhotos.filter((photo) => {
     if (photoCategory === 'all') return true;
-    return photo.category === photoCategory;
+    return photo.category === photoCategory || photo.categoryLabel === photoCategory;
   });
 
   const totalPhotoPages = Math.ceil(filteredPhotos.length / PHOTOS_PER_PAGE);
@@ -113,13 +134,18 @@ export default function GalleryClient() {
             <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-outline-variant/30">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold text-tertiary uppercase tracking-wider mr-1">Filtre :</span>
-                {[
-                  { id: 'all', label: 'Toutes les photos' },
-                  { id: 'terrain', label: 'Terrain & Monitoring' },
-                  { id: 'formation', label: 'Formations' },
-                  { id: 'plaidoyer', label: 'Plaidoyers & Presse' },
-                  { id: 'partenaires', label: 'Partenariats' },
-                ].map((cat) => (
+                <button
+                  type="button"
+                  onClick={() => { setPhotoCategory('all'); setPhotoPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    photoCategory === 'all'
+                      ? 'bg-[#0B3827] text-white shadow-xs'
+                      : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                  }`}
+                >
+                  Toutes les photos
+                </button>
+                {availableCategories.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
@@ -251,20 +277,25 @@ export default function GalleryClient() {
                 </p>
               </div>
               <span className="text-xs font-bold text-primary bg-secondary-container px-3 py-1 rounded-full">
-                {OFFICIAL_GALLERY_VIDEOS.length} vidéos disponibles
+                {initialVideos.length} vidéos disponibles
               </span>
             </div>
 
             {/* Grille des vidéos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {OFFICIAL_GALLERY_VIDEOS.map((video) => (
+              {initialVideos.map((video) => (
                 <div
                   key={video.id}
                   className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xs hover:shadow-md transition-all flex flex-col"
                 >
-                  {/* Lecteur Vidéo Embed Responsive (YouTube) */}
+                  {/* Lecteur Vidéo Embed Responsive (YouTube ou iframe directe) */}
                   <div className="relative aspect-video bg-black w-full overflow-hidden">
-                    {video.youtubeId ? (
+                    {video.videoEmbed ? (
+                      <div
+                        className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:border-0"
+                        dangerouslySetInnerHTML={{ __html: video.videoEmbed }}
+                      />
+                    ) : video.youtubeId ? (
                       <iframe
                         src={`https://www.youtube-nocookie.com/embed/${video.youtubeId}`}
                         title={video.title}

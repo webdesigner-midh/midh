@@ -15,12 +15,13 @@ import {
   getSections,
   getTeamMembers,
   getHeroSlides,
+  getGalleryData,
 } from '@/services/wordpress';
 
 export const revalidate = 60; // Revalidation ISR toutes les 60s
 
 export default async function HomePage() {
-  const [projects, articles, documents, sections, partners, team, slides] = await Promise.all([
+  const [projects, articles, documents, sections, partners, team, slides, galleryData] = await Promise.all([
     getProjects(),
     getArticles(),
     getDocuments(),
@@ -28,6 +29,7 @@ export default async function HomePage() {
     getPartners(),
     getTeamMembers(),
     getHeroSlides(),
+    getGalleryData(),
   ]);
 
   return (
@@ -47,8 +49,8 @@ export default async function HomePage() {
       {/* SECTION G — ACTUALITÉS ET PUBLICATIONS (AVEC RAPPORTS & DÉCLARATIONS) */}
       <NewsAndReports initialArticles={articles} documents={documents} />
 
-      {/* SECTION H — IMPLANTATION TERRITORIALE (SECTIONS & CARTE DE CÔTE D'IVOIRE) */}
-      <TerritorialMap sections={sections} />
+      {/* SECTION H — IMPLANTATION TERRITORIALE (SECTIONS & CARROUSEL ACTIONS DE TERRAIN) */}
+      <TerritorialMap sections={sections} initialPhotos={galleryData.homePhotos} />
 
       {/* SECTION I — PARTENAIRES INSTITUTIONNELS & ÉQUIPE */}
       <PartnersAndTeam partners={partners} team={team} />

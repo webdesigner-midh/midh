@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import GalleryClient from '@/components/gallery/GalleryClient';
+import { getGalleryData } from '@/services/wordpress';
+
+export const revalidate = 60; // Revalidation ISR toutes les 60s
 
 export const metadata: Metadata = {
   title: 'Médiathèque & Galerie Photo-Vidéo | MIDH Côte d’Ivoire',
@@ -13,6 +16,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GaleriePage() {
-  return <GalleryClient />;
+export default async function GaleriePage() {
+  const { photos, videos } = await getGalleryData();
+
+  return <GalleryClient initialPhotos={photos} initialVideos={videos} />;
 }

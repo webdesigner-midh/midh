@@ -10,6 +10,12 @@ import {
   OFFICIAL_SITE_OPTIONS,
 } from '@/data/fallbackData';
 import {
+  GalleryPhoto,
+  GalleryVideo,
+  OFFICIAL_GALLERY_PHOTOS,
+  OFFICIAL_GALLERY_VIDEOS,
+} from '@/data/galleryData';
+import {
   MIDHArticle,
   MIDHDocument,
   MIDHDomainInfo,
@@ -381,4 +387,101 @@ export async function getHeroSlides(): Promise<MIDHHeroSlide[]> {
     }
   }
   return FALLBACK_HERO_SLIDES;
+}
+
+export interface WordPressGalleryResponse {
+  photos: Array<{
+    id: number | string;
+    title: string;
+    category?: string;
+    image?: string;
+    date?: string;
+    location?: string;
+    description?: string;
+    show_on_home?: boolean;
+  }>;
+  videos: Array<{
+    id: number | string;
+    title: string;
+    video_url?: string;
+    video_embed?: string;
+    youtube_id?: string;
+    thumbnail?: string;
+    date?: string;
+    duration?: string;
+    source?: string;
+    description?: string;
+    location?: string;
+    category?: string;
+  }>;
+  homeSlides: Array<{
+    id: number | string;
+    title: string;
+    category?: string;
+    image?: string;
+    date?: string;
+    location?: string;
+    description?: string;
+  }>;
+}
+
+/**
+ * Récupère les photos et vidéos de la médiathèque depuis WordPress
+ */
+export async function getGalleryData(): Promise<{
+  photos: GalleryPhoto[];
+  videos: GalleryVideo[];
+  homePhotos: GalleryPhoto[];
+}> {
+  const wpData = await fetchWordPressAPI<WordPressGalleryResponse>('/wp-json/midh/v1/gallery');
+
+  if (wpData && (wpData.photos?.length > 0 || wpData.videos?.length > 0)) {
+    const photos: GalleryPhoto[] = (wpData.photos || [])
+      .filter((p) => p.image && p.image.trim().length > 0)
+      .map((p, idx) => ({
+        id: String(p.id || `wp-p-${idx}`),
+        title: decodeHtml(p.title),
+        category: p.category || 'terrain',
+        categoryLabel: p.category || 'Action de terrain',
+        imageUrl: sanitizeUrl(p.image),
+        date: p.date || '',
+        location: p.location || 'Côte d’Ivoire',
+        description: decodeHtml(p.description || ''),
+        showOnHome: p.show_on_home !== false,
+      }));
+
+    const videos: GalleryVideo[] = (wpData.videos || []).map((v, idx) => ({
+      id: String(v.id || `wp-v-${idx}`),
+      title: decodeHtml(v.title),
+      category: v.category || 'reportage',
+      categoryLabel: v.category || 'Reportage officiel',
+      videoUrl: v.video_url || '',
+      videoEmbed: v.video_embed || '',
+      youtubeId: v.youtube_id || '',
+      thumbnail: sanitizeUrl(v.thumbnail),
+      date: v.date || '',
+      duration: v.duration || 'Vidéo',
+      source: v.source || 'YouTube',
+      description: decodeHtml(v.description || ''),
+    }));
+
+    const homePhotos = photos.filter((p) => p.showOnHome);
+
+    return {
+      photos: photos.length > 0 ? photos : OFFICIAL_GALLERY_PHOTOS,
+      videos: videos.length > 0 ? videos : OFFICIAL_GALLERY_VIDEOS,
+      homePhotos:
+        homePhotos.length > 0
+          ? homePhotos
+          : photos.length > 0
+          ? photos.slice(0, 6)
+          : OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
+    };
+  }
+
+  return {
+    photos: OFFICIAL_GALLERY_PHOTOS,
+    videos: OFFICIAL_GALLERY_VIDEOS,
+    homePhotos: OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
+  };
 }

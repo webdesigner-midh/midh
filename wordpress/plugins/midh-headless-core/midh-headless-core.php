@@ -60,6 +60,12 @@ class MIDH_Headless_Core {
         add_action('save_post_midh_slide', array($this, 'save_midh_slide_meta_box'), 10, 2);
         add_filter('manage_midh_slide_posts_columns', array($this, 'customize_slide_columns'));
         add_action('manage_midh_slide_posts_custom_column', array($this, 'render_slide_custom_column'), 10, 2);
+
+        // Boîte de métadonnées et colonnes pour Galerie Photo & Vidéo MIDH
+        add_action('save_post_midh_gallery', array($this, 'save_midh_gallery_meta_box'), 10, 2);
+        add_filter('manage_midh_gallery_posts_columns', array($this, 'customize_gallery_columns'));
+        add_action('manage_midh_gallery_posts_custom_column', array($this, 'render_gallery_custom_column'), 10, 2);
+
         add_filter('enter_title_here', array($this, 'custom_enter_title_placeholder'), 10, 2);
         add_filter('use_block_editor_for_post_type', array($this, 'disable_gutenberg_for_team'), 10, 2);
 
@@ -174,6 +180,43 @@ class MIDH_Headless_Core {
             'menu_position'=> 24,
         ));
 
+        // F. CPT : Galerie Photo & Vidéo MIDH (pointé dans la barre latérale)
+        register_post_type('midh_gallery', array(
+            'labels' => array(
+                'name'               => __('Galerie Photo & Vidéo MIDH', 'midh-headless'),
+                'singular_name'      => __('Média Galerie', 'midh-headless'),
+                'add_new'            => __('Ajouter un média', 'midh-headless'),
+                'add_new_item'       => __('Ajouter une photo ou vidéo', 'midh-headless'),
+                'edit_item'          => __('Modifier le média', 'midh-headless'),
+                'all_items'          => __('Tous les médias', 'midh-headless'),
+                'menu_name'          => __('Galerie Photo & Vidéo MIDH', 'midh-headless'),
+            ),
+            'public'       => true,
+            'show_ui'      => true,
+            'show_in_menu' => true,
+            'show_in_rest' => true,
+            'rest_base'    => 'midh_gallery',
+            'menu_icon'    => 'dashicons-format-gallery',
+            'menu_position'=> 25,
+            'supports'     => array('title', 'thumbnail', 'page-attributes'),
+        ));
+
+        // Taxonomie : Catégories de la Galerie MIDH
+        register_taxonomy('midh_gallery_cat', array('midh_gallery'), array(
+            'labels' => array(
+                'name'          => __('Catégories de la Galerie', 'midh-headless'),
+                'singular_name' => __('Catégorie de la Galerie', 'midh-headless'),
+                'add_new_item'  => __('Ajouter une catégorie', 'midh-headless'),
+                'all_items'     => __('Toutes les catégories', 'midh-headless'),
+            ),
+            'hierarchical'      => true,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'show_in_rest'      => true,
+            'query_var'         => true,
+            'rewrite'           => array('slug' => 'categorie-galerie'),
+        ));
+
         // Taxonomie : Domaines d'action (8 thématiques)
         register_taxonomy('midh_domain', array('midh_project', 'post'), array(
             'labels' => array(
@@ -236,6 +279,19 @@ class MIDH_Headless_Core {
                 'sanitize_callback' => 'sanitize_text_field',
             ));
         }
+
+        // Galerie Photo & Vidéo MIDH
+        $gallery_metas = array(
+            'media_type', 'media_url', 'video_url', 'video_embed', 'video_duration', 'video_source',
+            'category_name', 'location', 'event_date', 'show_on_home', 'description'
+        );
+        foreach ($gallery_metas as $key) {
+            register_post_meta('midh_gallery', $key, array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+            ));
+        }
     }
 
     /**
@@ -269,6 +325,12 @@ class MIDH_Headless_Core {
         register_rest_route('midh/v1', '/documents', array(
             'methods'  => 'GET',
             'callback' => array($this, 'get_documents_endpoint'),
+            'permission_callback' => '__return_true',
+        ));
+
+        register_rest_route('midh/v1', '/gallery', array(
+            'methods'  => 'GET',
+            'callback' => array($this, 'get_gallery_endpoint'),
             'permission_callback' => '__return_true',
         ));
 
@@ -769,20 +831,22 @@ class MIDH_Headless_Core {
         $count_projects  = wp_count_posts('midh_project')->publish;
         $count_docs      = wp_count_posts('midh_document')->publish;
         $count_team      = wp_count_posts('midh_team')->publish;
+        $count_gallery   = wp_count_posts('midh_gallery')->publish;
         $frontend_url    = get_option('midh_frontend_url', 'http://localhost:3000');
 
         ?>
         <div class="midh-hub-banner">
             <h2>Bienvenue sur le portail d'administration du MIDH</h2>
-            <p>Ce tableau de bord vous permet d'administrer en toute simplicité les actualités, projets d'impact, rapports d'enquête et membres de l'organisation. Toutes vos publications sont synchronisées en temps réel avec le site public institutionnel.</p>
+            <p>Ce tableau de bord vous permet d'administrer en toute simplicité les actualités, projets d'impact, rapports d'enquête, membres de l'organisation et votre nouvelle <strong>Galerie Photo &amp; Vidéo</strong>. Toutes vos publications sont synchronisées en temps réel avec le site public institutionnel.</p>
             <div class="midh-hub-actions">
                 <a href="<?php echo admin_url('post-new.php'); ?>" class="midh-hub-btn-primary">+ Rédiger une actualité</a>
                 <a href="<?php echo admin_url('post-new.php?post_type=midh_document'); ?>" class="midh-hub-btn-primary">+ Ajouter un document PDF</a>
+                <a href="<?php echo admin_url('post-new.php?post_type=midh_gallery'); ?>" class="midh-hub-btn-primary" style="background: #0B3827; border-color: #07261a;">📸 + Ajouter une photo / vidéo</a>
                 <a href="<?php echo esc_url($frontend_url); ?>" target="_blank" class="midh-hub-btn-outline">🌐 Ouvrir le site public</a>
             </div>
         </div>
 
-        <div class="midh-stats-grid">
+        <div class="midh-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
             <div class="midh-stat-card">
                 <div class="midh-stat-label">Actualités publiées</div>
                 <div class="midh-stat-value"><?php echo esc_html($count_posts); ?></div>
@@ -802,6 +866,11 @@ class MIDH_Headless_Core {
                 <div class="midh-stat-label">Équipe &amp; Gouvernance</div>
                 <div class="midh-stat-value"><?php echo esc_html($count_team); ?></div>
                 <a href="<?php echo admin_url('edit.php?post_type=midh_team'); ?>" class="midh-stat-link">Voir l'équipe &rarr;</a>
+            </div>
+            <div class="midh-stat-card" style="border-top: 3px solid #006b1f;">
+                <div class="midh-stat-label">Galerie Photos &amp; Vidéos</div>
+                <div class="midh-stat-value"><?php echo esc_html($count_gallery); ?></div>
+                <a href="<?php echo admin_url('edit.php?post_type=midh_gallery'); ?>" class="midh-stat-link">Gérer la galerie &rarr;</a>
             </div>
         </div>
         <?php
@@ -888,6 +957,15 @@ class MIDH_Headless_Core {
             __('🖼️ Paramètres de la Diapositive (Carrousel Accueil)', 'midh-headless'),
             array($this, 'render_slide_meta_box'),
             'midh_slide',
+            'normal',
+            'high'
+        );
+
+        add_meta_box(
+            'midh_gallery_details',
+            __('📸 Paramètres du Média (Photo ou Vidéo & Affichage Accueil)', 'midh-headless'),
+            array($this, 'render_gallery_meta_box'),
+            'midh_gallery',
             'normal',
             'high'
         );
@@ -1554,13 +1632,15 @@ class MIDH_Headless_Core {
                 return __('Titre officiel du rapport ou document PDF', 'midh-headless');
             } elseif ($post->post_type === 'midh_slide') {
                 return __('Titre de la diapositive (ex: Dialogue citoyen de terrain)', 'midh-headless');
+            } elseif ($post->post_type === 'midh_gallery') {
+                return __('Titre de la photo ou du reportage vidéo (ex: Cérémonie de remise des prix Droits Humains)', 'midh-headless');
             }
         }
         return $title;
     }
 
     public function disable_gutenberg_for_team($use_block_editor, $post_type) {
-        if ($post_type === 'midh_team' || $post_type === 'midh_document' || $post_type === 'midh_slide') {
+        if ($post_type === 'midh_team' || $post_type === 'midh_document' || $post_type === 'midh_slide' || $post_type === 'midh_gallery') {
             return false;
         }
         return $use_block_editor;
@@ -1875,6 +1955,494 @@ class MIDH_Headless_Core {
         }
 
         return new WP_REST_Response($documents, 200);
+    }
+
+    /**
+     * =========================================================================
+     * GESTION DE LA GALERIE PHOTO & VIDÉO MIDH (MÉDIATHÈQUE ET CARROUSEL ACCUEIL)
+     * =========================================================================
+     */
+    public function render_gallery_meta_box($post) {
+        wp_nonce_field('midh_gallery_meta_save', 'midh_gallery_nonce');
+
+        $media_type     = get_post_meta($post->ID, 'media_type', true) ?: 'photo';
+        $media_url      = get_post_meta($post->ID, 'media_url', true) ?: '';
+        if (!$media_url && has_post_thumbnail($post->ID)) {
+            $media_url = get_the_post_thumbnail_url($post->ID, 'full');
+        }
+        $video_url      = get_post_meta($post->ID, 'video_url', true) ?: '';
+        $video_embed    = get_post_meta($post->ID, 'video_embed', true) ?: '';
+        $video_duration = get_post_meta($post->ID, 'video_duration', true) ?: '';
+        $video_source   = get_post_meta($post->ID, 'video_source', true) ?: 'YouTube';
+        $category_name  = get_post_meta($post->ID, 'category_name', true) ?: 'Formations & Renforcement';
+        $location       = get_post_meta($post->ID, 'location', true) ?: 'Abidjan, Côte d\'Ivoire';
+        $event_date     = get_post_meta($post->ID, 'event_date', true) ?: date_i18n('F Y');
+        $show_on_home   = get_post_meta($post->ID, 'show_on_home', true);
+        if ($show_on_home === '') {
+            $show_on_home = '1';
+        }
+        $description    = get_post_meta($post->ID, 'description', true) ?: '';
+
+        ?>
+        <style>
+            .midh-gal-app { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+            .midh-type-selector { display: flex; gap: 14px; margin-bottom: 20px; }
+            .midh-type-card {
+                flex: 1; border: 2px solid #cbd5e1; border-radius: 10px; padding: 14px 18px;
+                cursor: pointer; transition: all 0.2s ease; background: #ffffff;
+                display: flex; align-items: center; gap: 12px;
+            }
+            .midh-type-card:hover { border-color: #006b1f; background: #f8faf9; }
+            .midh-type-card.active { border-color: #006b1f; background: #eef7f0; box-shadow: 0 0 0 1px #006b1f; }
+            .midh-type-card input[type="radio"] { margin: 0; }
+            .midh-gal-panel { display: none; margin-bottom: 20px; }
+            .midh-gal-panel.active { display: block; }
+            .midh-upload-zone {
+                background: #f8fafc; border: 2px dashed #94a3b8; border-radius: 12px;
+                padding: 24px; text-align: center; margin-bottom: 16px;
+            }
+            .midh-preview-img {
+                max-width: 100%; max-height: 240px; border-radius: 8px; border: 2px solid #006b1f;
+                margin-top: 14px; display: inline-block; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            .midh-gal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+            .midh-gal-label { display: block; font-weight: 700; color: #0B3827; font-size: 13px; margin-bottom: 6px; }
+            .midh-gal-input, .midh-gal-select, .midh-gal-textarea {
+                width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 12px;
+                font-size: 14px; box-sizing: border-box; height: 40px;
+            }
+            .midh-gal-textarea { height: auto; padding: 10px 12px; resize: vertical; }
+            .midh-home-toggle {
+                background: #f6faf5; border-left: 4px solid #006b1f; padding: 14px 18px;
+                border-radius: 6px; margin-top: 18px; display: flex; align-items: flex-start; gap: 12px;
+            }
+            .midh-home-toggle input[type="checkbox"] { margin-top: 3px; transform: scale(1.2); }
+        </style>
+
+        <div class="midh-gal-app">
+            <!-- Sélecteur de type de média -->
+            <label class="midh-gal-label" style="font-size: 14px; margin-bottom: 8px;">1. Quel type de média souhaitez-vous ajouter ?</label>
+            <div class="midh-type-selector">
+                <label class="midh-type-card <?php echo $media_type === 'photo' ? 'active' : ''; ?>" id="card_type_photo">
+                    <input type="radio" name="midh_media_type" value="photo" <?php checked($media_type, 'photo'); ?> />
+                    <div>
+                        <div style="font-weight: 700; font-size: 15px; color: #0B3827;">📷 Photo Haute Définition</div>
+                        <div style="font-size: 12px; color: #64748b;">Image terrain, séminaire ou formation depuis la médiathèque</div>
+                    </div>
+                </label>
+                <label class="midh-type-card <?php echo $media_type === 'video' ? 'active' : ''; ?>" id="card_type_video">
+                    <input type="radio" name="midh_media_type" value="video" <?php checked($media_type, 'video'); ?> />
+                    <div>
+                        <div style="font-weight: 700; font-size: 15px; color: #0B3827;">🎥 Reportage Vidéo Externe</div>
+                        <div style="font-size: 12px; color: #64748b;">Lien YouTube / Facebook ou code d'intégration iframe</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Panel Photo -->
+            <div id="panel_photo" class="midh-gal-panel <?php echo $media_type === 'photo' ? 'active' : ''; ?>">
+                <div class="midh-upload-zone">
+                    <div style="font-size: 36px; margin-bottom: 6px;">📸</div>
+                    <h4 style="margin: 0 0 6px 0; color: #0B3827; font-size: 15px; font-weight: 700;">Photo Officielle du Média</h4>
+                    <p style="margin: 0 0 14px 0; font-size: 13px; color: #64748b;">
+                        Téléversez votre cliché ou sélectionnez une photo existante dans la médiathèque WordPress.<br />
+                        Elle sera automatiquement convertie au format WebP ultra-rapide.
+                    </p>
+
+                    <div>
+                        <button type="button" id="midh_gal_upload_btn" class="button button-primary" style="background: #006b1f; border-color: #005217; padding: 6px 20px; font-weight: 600;">
+                            <?php echo $media_url ? '📷 Remplacer la photo' : '📷 Choisir depuis la médiathèque'; ?>
+                        </button>
+                        <button type="button" id="midh_gal_remove_btn" class="button" style="<?php echo $media_url ? '' : 'display:none;'; ?> color: #b32d2e; border-color: #e0a3a3; margin-left: 8px;">
+                            Supprimer la photo
+                        </button>
+                    </div>
+
+                    <input type="hidden" name="midh_media_url" id="midh_media_url" value="<?php echo esc_url($media_url); ?>" />
+                    <div id="midh_gal_preview_wrap">
+                        <?php if ($media_url): ?>
+                            <img src="<?php echo esc_url($media_url); ?>" id="midh_gal_preview_img" class="midh-preview-img" alt="Aperçu du média" />
+                        <?php else: ?>
+                            <img src="" id="midh_gal_preview_img" class="midh-preview-img" style="display: none;" alt="Aperçu" />
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Vidéo -->
+            <div id="panel_video" class="midh-gal-panel <?php echo $media_type === 'video' ? 'active' : ''; ?>">
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #0B3827; font-weight: 700; font-size: 14px;">
+                        <span>📺 Configuration de la Vidéo (Pas de fichier lourd sur le serveur)</span>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label for="midh_video_url" class="midh-gal-label">
+                            Option A : Lien direct de la vidéo (YouTube, Facebook, Dailymotion...) :
+                        </label>
+                        <input type="url" name="midh_video_url" id="midh_video_url" value="<?php echo esc_url($video_url); ?>" class="midh-gal-input" placeholder="ex: https://www.youtube.com/watch?v=dQw4w9WgXcQ ou https://fb.watch/..." />
+                        <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
+                            💡 Pour YouTube, collez simplement le lien classique, le lecteur Next.js s'adaptera automatiquement.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label for="midh_video_embed" class="midh-gal-label">
+                            Option B : Ou collez directement le code d'intégration / code source (iframe) :
+                        </label>
+                        <textarea name="midh_video_embed" id="midh_video_embed" rows="3" class="midh-gal-textarea" placeholder="&lt;iframe src=&quot;https://...&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;"><?php echo esc_textarea($video_embed); ?></textarea>
+                        <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
+                            Idéal pour les reportages RTI, Facebook Video Embed ou lecteurs spécifiques.
+                        </p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label for="midh_video_duration" class="midh-gal-label">Durée de la vidéo (ex: 3:45) :</label>
+                            <input type="text" name="midh_video_duration" id="midh_video_duration" value="<?php echo esc_attr($video_duration); ?>" class="midh-gal-input" placeholder="ex: 04:12" />
+                        </div>
+                        <div>
+                            <label for="midh_video_source" class="midh-gal-label">Source / Chaîne (Badge affiché) :</label>
+                            <input type="text" name="midh_video_source" id="midh_video_source" value="<?php echo esc_attr($video_source); ?>" class="midh-gal-input" placeholder="ex: YouTube, RTI 1, Facebook Watch..." />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métadonnées Communes -->
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <label class="midh-gal-label" style="font-size: 14px; margin-bottom: 12px;">2. Informations contextuelles &amp; Localisation</label>
+                
+                <div class="midh-gal-grid">
+                    <div>
+                        <label for="midh_category_name" class="midh-gal-label">Catégorie thématique de l'action :</label>
+                        <select name="midh_category_name" id="midh_category_name" class="midh-gal-select">
+                            <option value="Formations & Renforcement" <?php selected($category_name, 'Formations & Renforcement'); ?>>🎓 Formations &amp; Renforcement des capacités</option>
+                            <option value="Éducation civique & Dialogue" <?php selected($category_name, 'Éducation civique & Dialogue'); ?>>🗣️ Éducation civique &amp; Dialogue citoyen</option>
+                            <option value="Missions terrain & Monitoring" <?php selected($category_name, 'Missions terrain & Monitoring'); ?>>🌍 Missions terrain &amp; Monitoring</option>
+                            <option value="Plaidoyer & Sommets" <?php selected($category_name, 'Plaidoyer & Sommets'); ?>>⚖️ Plaidoyer &amp; Sommets institutionnels</option>
+                            <option value="Conférences & Presse" <?php selected($category_name, 'Conférences & Presse'); ?>>📢 Conférences de presse &amp; Médias</option>
+                            <option value="Cérémonies & Distinction" <?php selected($category_name, 'Cérémonies & Distinction'); ?>>🏆 Cérémonies &amp; Distinctions</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="midh_location" class="midh-gal-label">Lieu géographique de l'événement :</label>
+                        <input type="text" name="midh_location" id="midh_location" value="<?php echo esc_attr($location); ?>" class="midh-gal-input" placeholder="ex: Bouaké, Woroba, Abidjan..." />
+                    </div>
+
+                    <div>
+                        <label for="midh_event_date" class="midh-gal-label">Date ou période de l'action :</label>
+                        <input type="text" name="midh_event_date" id="midh_event_date" value="<?php echo esc_attr($event_date); ?>" class="midh-gal-input" placeholder="ex: Mars 2026 ou 12 Octobre 2026" />
+                    </div>
+
+                    <div>
+                        <label for="menu_order" class="midh-gal-label">Ordre d'affichage (optionnel) :</label>
+                        <input type="number" name="menu_order" id="menu_order" value="<?php echo esc_attr($post->menu_order); ?>" class="midh-gal-input" min="0" placeholder="0 = premier, 1, 2..." />
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <label for="midh_description" class="midh-gal-label">Description courte / Légende du média :</label>
+                    <textarea name="midh_description" id="midh_description" rows="2" class="midh-gal-textarea" placeholder="ex: Renforcement des capacités opérationnelles des officiers de police judiciaire sur le respect des droits des personnes gardées à vue."><?php echo esc_textarea($description); ?></textarea>
+                </div>
+
+                <!-- Case à cocher : Afficher sur l'accueil (Carousel carte) -->
+                <div class="midh-home-toggle">
+                    <input type="checkbox" name="midh_show_on_home" id="midh_show_on_home" value="1" <?php checked($show_on_home, '1'); ?> />
+                    <div>
+                        <label for="midh_show_on_home" style="font-weight: 700; color: #0B3827; cursor: pointer; font-size: 14px;">
+                            ⭐ Afficher dans le carrousel photo de la page d'accueil (en remplacement de la carte)
+                        </label>
+                        <div style="font-size: 12px; color: #475569; margin-top: 2px;">
+                            Si cette case est cochée, la photo défilera automatiquement dans le grand carrousel de la section terrain sur la page d'accueil de <strong>midh-ci.org</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Bascule Photo / Vidéo
+            $('input[name="midh_media_type"]').on('change', function() {
+                var val = $(this).val();
+                $('.midh-type-card').removeClass('active');
+                if (val === 'photo') {
+                    $('#card_type_photo').addClass('active');
+                    $('#panel_photo').addClass('active');
+                    $('#panel_video').removeClass('active');
+                } else {
+                    $('#card_type_video').addClass('active');
+                    $('#panel_video').addClass('active');
+                    $('#panel_photo').removeClass('active');
+                }
+            });
+
+            // Uploader Media WordPress
+            var galUploader;
+            $('#midh_gal_upload_btn').on('click', function(e) {
+                e.preventDefault();
+                if (galUploader) {
+                    galUploader.open();
+                    return;
+                }
+                galUploader = wp.media({
+                    title: 'Sélectionner la photo officielle de l\'action',
+                    button: { text: 'Insérer cette photo' },
+                    multiple: false,
+                    library: { type: 'image' }
+                });
+                galUploader.on('select', function() {
+                    var attachment = galUploader.state().get('selection').first().toJSON();
+                    var url = attachment.sizes && attachment.sizes.large ? attachment.sizes.large.url : attachment.url;
+                    $('#midh_media_url').val(url);
+                    $('#midh_gal_preview_img').attr('src', url).show();
+                    $('#midh_gal_remove_btn').show();
+                    $('#midh_gal_upload_btn').html('📷 Remplacer la photo');
+
+                    // Auto-titre si vide
+                    var titleInput = $('#title');
+                    if (titleInput.length && !titleInput.val().trim() && attachment.title) {
+                        titleInput.val(attachment.title);
+                    }
+                });
+                galUploader.open();
+            });
+
+            $('#midh_gal_remove_btn').on('click', function(e) {
+                e.preventDefault();
+                $('#midh_media_url').val('');
+                $('#midh_gal_preview_img').attr('src', '').hide();
+                $(this).hide();
+                $('#midh_gal_upload_btn').html('📷 Choisir depuis la médiathèque');
+            });
+        });
+        </script>
+        <?php
+    }
+
+    public function save_midh_gallery_meta_box($post_id, $post) {
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        $nonce = isset($_POST['midh_gallery_nonce']) ? sanitize_text_field($_POST['midh_gallery_nonce']) : '';
+        if (empty($nonce) || !wp_verify_nonce($nonce, 'midh_gallery_meta_save')) {
+            return;
+        }
+
+        $media_type = isset($_POST['midh_media_type']) && in_array($_POST['midh_media_type'], array('photo', 'video'), true)
+            ? $_POST['midh_media_type'] : 'photo';
+        update_post_meta($post_id, 'media_type', $media_type);
+
+        if (isset($_POST['midh_media_url'])) {
+            $media_url = esc_url_raw(wp_unslash($_POST['midh_media_url']));
+            update_post_meta($post_id, 'media_url', $media_url);
+
+            // Synchroniser comme thumbnail WordPress si non défini
+            if ($media_url && !has_post_thumbnail($post_id)) {
+                $attach_id = attachment_url_to_postid($media_url);
+                if ($attach_id) {
+                    set_post_thumbnail($post_id, $attach_id);
+                }
+            }
+        }
+
+        if (isset($_POST['midh_video_url'])) {
+            update_post_meta($post_id, 'video_url', esc_url_raw(wp_unslash($_POST['midh_video_url'])));
+        }
+
+        if (isset($_POST['midh_video_embed'])) {
+            // Autoriser les balises iframe sécurisées
+            $allowed_html = array(
+                'iframe' => array(
+                    'src'             => true,
+                    'width'           => true,
+                    'height'          => true,
+                    'frameborder'     => true,
+                    'allowfullscreen' => true,
+                    'title'           => true,
+                    'allow'           => true,
+                    'referrerpolicy'  => true,
+                ),
+            );
+            update_post_meta($post_id, 'video_embed', wp_kses(wp_unslash($_POST['midh_video_embed']), $allowed_html));
+        }
+
+        if (isset($_POST['midh_video_duration'])) {
+            update_post_meta($post_id, 'video_duration', sanitize_text_field(wp_unslash($_POST['midh_video_duration'])));
+        }
+
+        if (isset($_POST['midh_video_source'])) {
+            update_post_meta($post_id, 'video_source', sanitize_text_field(wp_unslash($_POST['midh_video_source'])));
+        }
+
+        if (isset($_POST['midh_category_name'])) {
+            update_post_meta($post_id, 'category_name', sanitize_text_field(wp_unslash($_POST['midh_category_name'])));
+        }
+
+        if (isset($_POST['midh_location'])) {
+            update_post_meta($post_id, 'location', sanitize_text_field(wp_unslash($_POST['midh_location'])));
+        }
+
+        if (isset($_POST['midh_event_date'])) {
+            update_post_meta($post_id, 'event_date', sanitize_text_field(wp_unslash($_POST['midh_event_date'])));
+        }
+
+        $show_on_home = !empty($_POST['midh_show_on_home']) ? '1' : '0';
+        update_post_meta($post_id, 'show_on_home', $show_on_home);
+
+        if (isset($_POST['midh_description'])) {
+            update_post_meta($post_id, 'description', sanitize_textarea_field(wp_unslash($_POST['midh_description'])));
+        }
+    }
+
+    public function customize_gallery_columns($columns) {
+        $new = array();
+        if (isset($columns['cb'])) {
+            $new['cb'] = $columns['cb'];
+        }
+        $new['midh_thumb']      = __('Visuel', 'midh-headless');
+        $new['title']           = __('Titre du média', 'midh-headless');
+        $new['midh_type']       = __('Format', 'midh-headless');
+        $new['midh_category']   = __('Catégorie', 'midh-headless');
+        $new['midh_location']   = __('Lieu & Date', 'midh-headless');
+        $new['midh_home']       = __('Accueil ?', 'midh-headless');
+        if (isset($columns['date'])) {
+            $new['date']        = __('Date', 'midh-headless');
+        }
+        return $new;
+    }
+
+    public function render_gallery_custom_column($column, $post_id) {
+        if ($column === 'midh_thumb') {
+            $media_url = get_post_meta($post_id, 'media_url', true);
+            if (!$media_url && has_post_thumbnail($post_id)) {
+                $media_url = get_the_post_thumbnail_url($post_id, 'medium');
+            }
+            if ($media_url) {
+                echo '<div class="midh-table-thumb-wrap"><img src="' . esc_url($media_url) . '" alt="" class="midh-table-thumb" loading="lazy" /></div>';
+            } else {
+                $type = get_post_meta($post_id, 'media_type', true);
+                $icon = $type === 'video' ? 'dashicons-video-alt3' : 'dashicons-format-image';
+                echo '<div class="midh-table-thumb-wrap midh-table-thumb-empty"><span class="dashicons ' . esc_attr($icon) . '"></span></div>';
+            }
+        } elseif ($column === 'midh_type') {
+            $type = get_post_meta($post_id, 'media_type', true) ?: 'photo';
+            if ($type === 'video') {
+                $source = get_post_meta($post_id, 'video_source', true) ?: 'Vidéo';
+                echo '<span class="midh-domain-badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">🎥 ' . esc_html($source) . '</span>';
+            } else {
+                echo '<span class="midh-domain-badge" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;">📷 Photo HD</span>';
+            }
+        } elseif ($column === 'midh_category') {
+            $cat = get_post_meta($post_id, 'category_name', true);
+            echo esc_html($cat ?: '—');
+        } elseif ($column === 'midh_location') {
+            $loc = get_post_meta($post_id, 'location', true);
+            $dt  = get_post_meta($post_id, 'event_date', true);
+            echo '<strong>' . esc_html($loc ?: '—') . '</strong><br /><span style="font-size: 11px; color: #64748b;">' . esc_html($dt ?: '') . '</span>';
+        } elseif ($column === 'midh_home') {
+            $home = get_post_meta($post_id, 'show_on_home', true);
+            if ($home === '1') {
+                echo '<span style="color: #16a34a; font-weight: 700; font-size: 13px;">🟢 Oui</span>';
+            } else {
+                echo '<span style="color: #94a3b8; font-size: 13px;">⚪ Non</span>';
+            }
+        }
+    }
+
+    /**
+     * Endpoint REST API /wp-json/midh/v1/gallery
+     */
+    public function get_gallery_endpoint() {
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_gallery',
+            'post_status'    => 'publish',
+            'posts_per_page' => 100,
+            'orderby'        => 'menu_order date',
+            'order'          => 'DESC',
+        ));
+
+        $photos = array();
+        $videos = array();
+        $home_slides = array();
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id = get_the_ID();
+
+                $media_type     = get_post_meta($id, 'media_type', true) ?: 'photo';
+                $media_url      = get_post_meta($id, 'media_url', true) ?: '';
+                if (!$media_url && has_post_thumbnail($id)) {
+                    $media_url = get_the_post_thumbnail_url($id, 'full');
+                }
+                $video_url      = get_post_meta($id, 'video_url', true) ?: '';
+                $video_embed    = get_post_meta($id, 'video_embed', true) ?: '';
+                $video_duration = get_post_meta($id, 'video_duration', true) ?: '';
+                $video_source   = get_post_meta($id, 'video_source', true) ?: 'YouTube';
+                $category_name  = get_post_meta($id, 'category_name', true) ?: 'Formations & Renforcement';
+                $location       = get_post_meta($id, 'location', true) ?: 'Abidjan, Côte d\'Ivoire';
+                $event_date     = get_post_meta($id, 'event_date', true) ?: get_the_date('F Y');
+                $show_on_home   = get_post_meta($id, 'show_on_home', true);
+                $is_home        = ($show_on_home === '1' || $show_on_home === true || $show_on_home === '');
+                $description    = get_post_meta($id, 'description', true) ?: (get_the_excerpt() ?: '');
+
+                // Extraction YouTube ID si lien YouTube fourni
+                $youtube_id = '';
+                if (!empty($video_url)) {
+                    if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([\w-]{11})/', $video_url, $matches)) {
+                        $youtube_id = $matches[1];
+                    }
+                }
+
+                if ($media_type === 'video') {
+                    $item = array(
+                        'id'          => $id,
+                        'title'       => get_the_title(),
+                        'video_url'   => $video_url,
+                        'video_embed' => $video_embed,
+                        'youtube_id'  => $youtube_id,
+                        'thumbnail'   => $media_url ?: ($youtube_id ? 'https://img.youtube.com/vi/' . $youtube_id . '/maxresdefault.jpg' : ''),
+                        'date'        => $event_date,
+                        'duration'    => $video_duration ?: 'Vidéo',
+                        'source'      => $video_source ?: 'YouTube',
+                        'description' => $description,
+                        'location'    => $location,
+                        'category'    => $category_name,
+                    );
+                    $videos[] = $item;
+                } else {
+                    $item = array(
+                        'id'           => $id,
+                        'title'        => get_the_title(),
+                        'category'     => $category_name,
+                        'image'        => $media_url,
+                        'date'         => $event_date,
+                        'location'     => $location,
+                        'description'  => $description,
+                        'show_on_home' => $is_home,
+                    );
+                    $photos[] = $item;
+                    if ($is_home && $media_url) {
+                        $home_slides[] = $item;
+                    }
+                }
+            }
+            wp_reset_postdata();
+        }
+
+        return new WP_REST_Response(array(
+            'photos'     => $photos,
+            'videos'     => $videos,
+            'homeSlides' => $home_slides,
+            'total'      => count($photos) + count($videos),
+        ), 200);
     }
 
     /**

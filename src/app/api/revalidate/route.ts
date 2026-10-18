@@ -29,6 +29,7 @@ async function handleRevalidation(request: NextRequest) {
 
     revalidateTag(tag);
     revalidatePath(path);
+    revalidatePath('/galerie');
     revalidatePath('/', 'layout');
 
     console.info(`[Revalidation Webhook] Tag "${tag}" et chemin "${path}" revalidés.`);
