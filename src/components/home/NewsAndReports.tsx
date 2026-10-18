@@ -244,24 +244,35 @@ export default function NewsAndReports({ initialArticles, documents }: NewsAndRe
               </div>
             )}
 
-            {/* Carte 2 : Deuxième article récent en aperçu */}
+            {/* Carte 2 : Deuxième article récent en aperçu avec image */}
             {secondaryArticles[0] && (
-              <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/40 flex flex-col justify-between flex-1 gap-4 hover:shadow-md transition-shadow">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-0.5 rounded bg-surface-container text-tertiary font-label-md text-label-md font-semibold">
-                      [{secondaryArticles[0].categoryLabel}]
-                    </span>
-                    <span className="font-caption text-caption text-tertiary">
-                      {secondaryArticles[0].formattedDate}
-                    </span>
+              <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/40 flex flex-col justify-between flex-1 gap-4 hover:shadow-md transition-shadow group">
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  {secondaryArticles[0].featuredImage && (
+                    <div className="relative w-full sm:w-28 sm:h-28 md:w-32 md:h-32 shrink-0 rounded-xl overflow-hidden bg-surface-container">
+                      <img
+                        src={secondaryArticles[0].featuredImage}
+                        alt={secondaryArticles[0].title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2 min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded bg-surface-container text-tertiary font-label-md text-label-md font-semibold">
+                        [{secondaryArticles[0].categoryLabel}]
+                      </span>
+                      <span className="font-caption text-caption text-tertiary">
+                        {secondaryArticles[0].formattedDate}
+                      </span>
+                    </div>
+                    <h4 className="font-title-lg text-title-lg text-on-surface font-bold hover:text-primary transition-colors line-clamp-2">
+                      <Link href={`/actualites/${secondaryArticles[0].slug}`}>{secondaryArticles[0].title}</Link>
+                    </h4>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed line-clamp-2">
+                      {secondaryArticles[0].excerpt}
+                    </p>
                   </div>
-                  <h4 className="font-title-lg text-title-lg text-on-surface font-bold hover:text-primary transition-colors">
-                    <Link href={`/actualites/${secondaryArticles[0].slug}`}>{secondaryArticles[0].title}</Link>
-                  </h4>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed line-clamp-2">
-                    {secondaryArticles[0].excerpt}
-                  </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-surface-container">
