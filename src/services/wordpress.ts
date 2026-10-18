@@ -485,3 +485,27 @@ export async function getGalleryData(): Promise<{
     homePhotos: OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
   };
 }
+
+/**
+ * Enregistre un abonné à la newsletter dans WordPress
+ */
+export async function subscribeNewsletterInWordPress(email: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetchWordPressAPI<{ success: boolean; message?: string }>('/wp-json/midh/v1/newsletter/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (res && res.success) {
+      return { success: true, message: res.message };
+    }
+    return { success: false, message: res?.message || 'Erreur d\'enregistrement WordPress' };
+  } catch (error) {
+    console.warn('[WordPress Newsletter] Erreur:', (error as Error).message);
+    return { success: false, message: (error as Error).message };
+  }
+}
+

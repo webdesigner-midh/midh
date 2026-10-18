@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.2.0 avec Médiathèque & Galerie Photo-Vidéo, carrousel d'accueil et synchronisation Next.js.
- * Version: 1.2.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.3.0 avec Gestionnaire d'Abonnés Newsletter & Export Excel/CSV, Médiathèque & Galerie Photo-Vidéo, et synchronisation Next.js.
+ * Version: 1.3.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -74,6 +74,12 @@ class MIDH_Headless_Core {
         add_action('manage_posts_custom_column', array($this, 'render_article_custom_column'), 10, 2);
         add_filter('post_row_actions', array($this, 'customize_article_row_actions'), 10, 2);
         add_action('all_admin_notices', array($this, 'render_newsroom_header_banner'));
+
+        // Gestion des Abonnés Newsletter MIDH & Export Excel/CSV
+        add_filter('manage_midh_subscriber_posts_columns', array($this, 'customize_subscriber_columns'));
+        add_action('manage_midh_subscriber_posts_custom_column', array($this, 'render_subscriber_custom_column'), 10, 2);
+        add_action('manage_posts_extra_tablenav', array($this, 'render_subscriber_export_button'));
+        add_action('admin_post_midh_export_subscribers', array($this, 'export_subscribers_csv'));
     }
 
     /**
@@ -230,6 +236,29 @@ class MIDH_Headless_Core {
             'query_var'         => true,
             'rewrite'           => array('slug' => 'domaine'),
         ));
+
+        // G. CPT : Abonnés Newsletter MIDH
+        register_post_type('midh_subscriber', array(
+            'labels' => array(
+                'name'               => __('Abonnés Newsletter', 'midh-headless'),
+                'singular_name'      => __('Abonné', 'midh-headless'),
+                'add_new'            => __('Ajouter un abonné', 'midh-headless'),
+                'add_new_item'       => __('Ajouter un nouvel abonné', 'midh-headless'),
+                'edit_item'          => __('Modifier l\'abonné', 'midh-headless'),
+                'all_items'          => __('Tous les abonnés', 'midh-headless'),
+                'menu_name'          => __('Abonnés Newsletter', 'midh-headless'),
+                'search_items'       => __('Rechercher un e-mail', 'midh-headless'),
+                'not_found'          => __('Aucun abonné trouvé', 'midh-headless'),
+            ),
+            'public'       => false,
+            'show_ui'      => true,
+            'show_in_menu' => true,
+            'show_in_rest' => true,
+            'rest_base'    => 'midh_subscriber',
+            'menu_icon'    => 'dashicons-email-alt',
+            'menu_position'=> 26,
+            'supports'     => array('title'),
+        ));
     }
 
     /**
@@ -343,6 +372,18 @@ class MIDH_Headless_Core {
         register_rest_route('midh/v1', '/bridge', array(
             'methods'             => array('GET', 'POST'),
             'callback'            => array($this, 'bridge_command_endpoint'),
+            'permission_callback' => array($this, 'check_bridge_permission'),
+        ));
+
+        register_rest_route('midh/v1', '/newsletter/subscribe', array(
+            'methods'             => 'POST',
+            'callback'            => array($this, 'register_newsletter_subscriber_endpoint'),
+            'permission_callback' => '__return_true',
+        ));
+
+        register_rest_route('midh/v1', '/newsletter/subscribers', array(
+            'methods'             => 'GET',
+            'callback'            => array($this, 'get_subscribers_endpoint'),
             'permission_callback' => array($this, 'check_bridge_permission'),
         ));
     }
@@ -2717,6 +2758,186 @@ class MIDH_Headless_Core {
         $results['revalidation_status'] = !is_wp_error($res) ? wp_remote_retrieve_response_code($res) : 'error';
 
         return $results;
+    }
+
+    /**
+     * Personnalisation des colonnes pour la liste des Abonnés Newsletter
+     */
+    public function customize_subscriber_columns($columns) {
+        $new = array();
+        if (isset($columns['cb'])) {
+            $new['cb'] = $columns['cb'];
+        }
+        $new['title']               = __('Adresse e-mail de l\'abonné', 'midh-headless');
+        $new['midh_sub_status']     = __('Statut', 'midh-headless');
+        $new['midh_sub_date']       = __('Date d\'inscription', 'midh-headless');
+        $new['midh_sub_source']     = __('Origine', 'midh-headless');
+        return $new;
+    }
+
+    public function render_subscriber_custom_column($column, $post_id) {
+        if ($column === 'midh_sub_status') {
+            $status = get_post_meta($post_id, 'subscriber_status', true) ?: 'Actif';
+            echo '<span style="display:inline-block; background:#dcfce7; color:#166534; font-weight:700; padding:4px 10px; border-radius:12px; font-size:12px; border:1px solid #bbf7d0;">✅ ' . esc_html($status) . '</span>';
+        } elseif ($column === 'midh_sub_date') {
+            $date = get_post_meta($post_id, 'subscription_date', true);
+            if (!$date) {
+                $date = get_the_date('d/m/Y H:i', $post_id);
+            } else {
+                $timestamp = strtotime($date);
+                $date = $timestamp ? date('d/m/Y H:i', $timestamp) : $date;
+            }
+            echo '<strong>' . esc_html($date) . '</strong>';
+        } elseif ($column === 'midh_sub_source') {
+            $source = get_post_meta($post_id, 'subscriber_source', true) ?: 'Site Web MIDH';
+            echo '<span style="color:#475569; font-size:12.5px;">🌐 ' . esc_html($source) . '</span>';
+        }
+    }
+
+    /**
+     * Bouton d'exportation Excel / CSV en haut de la liste des abonnés
+     */
+    public function render_subscriber_export_button($which) {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'midh_subscriber' && $which === 'top') {
+            $export_url = admin_url('admin-post.php?action=midh_export_subscribers&_wpnonce=' . wp_create_nonce('midh_export_subscribers_nonce'));
+            echo '<div class="alignleft actions" style="display:inline-flex; align-items:center; margin-left:10px;">';
+            echo '<a href="' . esc_url($export_url) . '" class="button button-primary" style="background:#005a36; border-color:#00462a; font-weight:bold; height:32px; line-height:30px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,90,54,0.2);">';
+            echo '<span>📥</span> <span>Exporter la liste des abonnés (Excel / CSV)</span>';
+            echo '</a>';
+            echo '</div>';
+        }
+    }
+
+    /**
+     * Traitement du téléchargement du fichier CSV d'exportation
+     */
+    public function export_subscribers_csv() {
+        if (!current_user_can('edit_posts')) {
+            wp_die(__('Autorisations insuffisantes.', 'midh-headless'));
+        }
+        check_admin_referer('midh_export_subscribers_nonce');
+
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_subscriber',
+            'post_status'    => array('publish', 'private'),
+            'posts_per_page' => -1,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $filename = 'midh-abonnes-newsletter-' . date('Y-m-d_H-i') . '.csv';
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // BOM UTF-8 pour ouverture parfaite dans Microsoft Excel sur Mac et Windows
+        echo "\xEF\xBB\xBF";
+
+        // Délimiteur point-virgule (standard francophone Excel)
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array('Adresse Email', 'Date d\'inscription', 'Statut', 'Origine'), ';');
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id = get_the_ID();
+                $email = get_the_title();
+                $date = get_post_meta($id, 'subscription_date', true) ?: get_the_date('Y-m-d H:i:s', $id);
+                $status = get_post_meta($id, 'subscriber_status', true) ?: 'Actif';
+                $source = get_post_meta($id, 'subscriber_source', true) ?: 'Site Web MIDH';
+
+                fputcsv($output, array($email, $date, $status, $source), ';');
+            }
+            wp_reset_postdata();
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Endpoint API REST d'enregistrement d'un abonné : POST /wp-json/midh/v1/newsletter/subscribe
+     */
+    public function register_newsletter_subscriber_endpoint($request) {
+        $email = sanitize_email($request->get_param('email'));
+        if (!is_email($email)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Veuillez fournir une adresse e-mail valide.',
+            ), 400);
+        }
+
+        // Vérification si déjà inscrit
+        $existing = get_page_by_title($email, OBJECT, 'midh_subscriber');
+        if ($existing) {
+            return new WP_REST_Response(array(
+                'success'           => true,
+                'already_subscribed'=> true,
+                'message'           => 'Cette adresse e-mail est déjà inscrite à la lettre d\'information du MIDH.',
+                'id'                => $existing->ID,
+            ), 200);
+        }
+
+        $post_id = wp_insert_post(array(
+            'post_type'   => 'midh_subscriber',
+            'post_title'  => $email,
+            'post_status' => 'publish',
+        ));
+
+        if (is_wp_error($post_id)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Erreur technique lors de l\'enregistrement dans WordPress.',
+            ), 500);
+        }
+
+        update_post_meta($post_id, 'subscription_date', current_time('mysql'));
+        update_post_meta($post_id, 'subscriber_status', 'Actif');
+        update_post_meta($post_id, 'subscriber_source', 'Site Web MIDH');
+
+        return new WP_REST_Response(array(
+            'success'           => true,
+            'already_subscribed'=> false,
+            'message'           => 'Inscription enregistrée avec succès dans le fichier du MIDH.',
+            'id'                => $post_id,
+        ), 201);
+    }
+
+    /**
+     * Endpoint API REST de liste des abonnés : GET /wp-json/midh/v1/newsletter/subscribers
+     */
+    public function get_subscribers_endpoint() {
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_subscriber',
+            'post_status'    => array('publish', 'private'),
+            'posts_per_page' => 200,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $subscribers = array();
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id = get_the_ID();
+                $subscribers[] = array(
+                    'id'    => $id,
+                    'email' => get_the_title(),
+                    'date'  => get_post_meta($id, 'subscription_date', true) ?: get_the_date('Y-m-d H:i:s', $id),
+                    'status'=> get_post_meta($id, 'subscriber_status', true) ?: 'Actif',
+                );
+            }
+            wp_reset_postdata();
+        }
+
+        return new WP_REST_Response(array(
+            'success' => true,
+            'total'   => count($subscribers),
+            'items'   => $subscribers,
+        ), 200);
     }
 }
 

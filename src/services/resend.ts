@@ -538,3 +538,202 @@ export async function sendVolunteerNotification({
     html: htmlContent,
   });
 }
+
+/**
+ * Envoi d'une alerte à l'équipe MIDH lors d'une nouvelle inscription à la newsletter
+ */
+export async function sendNewsletterNotificationToTeam({
+  subscriberEmail,
+}: {
+  subscriberEmail: string;
+}) {
+  const recipients = getRecipients();
+  const dateStr = new Date().toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Africa/Abidjan',
+  });
+
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html lang="fr">
+    <head>
+      <meta charset="utf-8">
+      <title>[MIDH] Nouvel abonné Newsletter</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f0f4f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding: 30px 10px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+              
+              <tr>
+                <td style="background: linear-gradient(135deg, #07261a 0%, #0B3827 50%, #12573c 100%); padding: 30px; text-align: center;">
+                  <img src="${LOGO_MIDH_URL}" alt="Logo MIDH" width="130" style="background:#fff; padding:8px 18px; border-radius:10px; margin-bottom:12px; display:inline-block;" />
+                  <h1 style="margin: 0; font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase;">
+                    Lettre d'Information MIDH
+                  </h1>
+                  <p style="margin: 6px 0 0 0; font-size: 12px; color: #a7f3d0;">
+                    Nouvelle souscription enregistrée sur le portail web
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 30px;">
+                  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 6px;">
+                      Adresse e-mail du nouvel abonné
+                    </div>
+                    <div style="font-size: 17px; font-weight: 800; color: #0B3827;">
+                      <a href="mailto:${subscriberEmail}" style="color: #0B3827; text-decoration: none;">${subscriberEmail}</a>
+                    </div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                      🗓️ <strong>Date :</strong> ${dateStr} (Heure d'Abidjan)<br>
+                      🌐 <strong>Origine :</strong> Formulaire d'accueil du site officiel
+                    </div>
+                  </div>
+
+                  <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 6px; padding: 14px 18px; font-size: 13.5px; color: #166534; line-height: 1.6; margin-bottom: 24px;">
+                    💡 <strong>Gestion WordPress :</strong> Cette adresse est automatiquement enregistrée dans votre menu WordPress <strong>« Abonnés Newsletter »</strong>. Vous pouvez exporter la liste complète au format Excel / CSV à tout moment.
+                  </div>
+
+                  <table align="center" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td>
+                        <a href="https://cms.midh-ci.org/wp-admin/edit.php?post_type=midh_subscriber" 
+                           style="display: inline-block; background-color: #0B3827; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 13.5px;">
+                          📊 Consulter la liste des abonnés dans WordPress
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                  Mouvement Ivoirien des Droits Humains (MIDH) — Notification automatique
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
+  `;
+
+  return await resend.emails.send({
+    from: DEFAULT_FROM,
+    to: recipients,
+    subject: `[MIDH Newsletter] Nouvel abonné : ${subscriberEmail}`,
+    html: htmlContent,
+  });
+}
+
+/**
+ * Envoi d'un e-mail officiel de bienvenue et de confirmation à l'abonné
+ */
+export async function sendNewsletterWelcomeEmail({
+  subscriberEmail,
+}: {
+  subscriberEmail: string;
+}) {
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html lang="fr">
+    <head>
+      <meta charset="utf-8">
+      <title>Bienvenue sur la lettre d'information du MIDH</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f0f4f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding: 30px 10px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+              
+              <tr>
+                <td style="background: linear-gradient(135deg, #07261a 0%, #0B3827 50%, #12573c 100%); padding: 34px 30px; text-align: center;">
+                  <img src="${LOGO_MIDH_URL}" alt="Logo MIDH" width="130" style="background:#fff; padding:8px 18px; border-radius:10px; margin-bottom:14px; display:inline-block;" />
+                  <h1 style="margin: 0 0 6px 0; font-size: 20px; font-weight: 800; color: #ffffff;">
+                    MOUVEMENT IVOIRIEN DES DROITS HUMAINS
+                  </h1>
+                  <p style="margin: 0; font-size: 13px; color: #a7f3d0; font-style: italic;">
+                    « Agir pour la Dignité Humaine, la Justice et la Démocratie »
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 34px 30px;">
+                  <h2 style="font-size: 17px; font-weight: 800; color: #0B3827; margin: 0 0 14px 0;">
+                    Votre inscription est confirmée !
+                  </h2>
+
+                  <p style="font-size: 14.5px; line-height: 1.7; color: #334155; margin: 0 0 16px 0;">
+                    Bonjour,
+                  </p>
+
+                  <p style="font-size: 14.5px; line-height: 1.7; color: #334155; margin: 0 0 20px 0;">
+                    Nous vous remercions pour votre intérêt envers l'action du <strong>Mouvement Ivoirien des Droits Humains (MIDH)</strong>. Votre adresse (<code>${subscriberEmail}</code>) a bien été enregistrée dans notre liste de diffusion officielle.
+                  </p>
+
+                  <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 12.5px; font-weight: 700; color: #0B3827; text-transform: uppercase; margin-bottom: 10px;">
+                      Ce que vous recevrez en priorité :
+                    </div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.8;">
+                      <li>📑 <strong>Rapports d'enquêtes &amp; plaidoyers</strong> sur l'état des droits fondamentaux.</li>
+                      <li>📢 <strong>Communiqués officiels &amp; déclarations</strong> du Bureau Exécutif National.</li>
+                      <li>⚖️ <strong>Informations sur nos cliniques juridiques</strong> et actions auprès des populations.</li>
+                    </ul>
+                  </div>
+
+                  <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin: 28px auto 10px auto;">
+                    <tr>
+                      <td style="padding: 0 6px;">
+                        <a href="https://www.midh-ci.org/documents-rapports" 
+                           style="display: inline-block; background-color: #0B3827; color: #ffffff !important; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 700; font-size: 13.5px;">
+                          📚 Consulter nos rapports
+                        </a>
+                      </td>
+                      <td style="padding: 0 6px;">
+                        <a href="https://www.midh-ci.org/nos-actions" 
+                           style="display: inline-block; background-color: #e2e8f0; color: #0f172a !important; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 700; font-size: 13.5px;">
+                          🤝 Nos actions de terrain
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; font-size: 11.5px; color: #64748b; line-height: 1.6; border-top: 1px solid #e2e8f0;">
+                  📍 <strong>Siège :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
+                  📞 <strong>Ligne directe :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ✉️ <a href="mailto:contact@midh-ci.org" style="color:#0B3827; text-decoration:none;">contact@midh-ci.org</a><br>
+                  <span style="font-size:10.5px; color:#94a3b8; display:block; margin-top:8px;">
+                    Vous recevez cet e-mail car vous vous êtes inscrit(e) sur www.midh-ci.org. Pour vous désabonner à tout moment, répondez simplement « Désabonnement » à ce message.
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
+  `;
+
+  return await resend.emails.send({
+    from: DEFAULT_FROM,
+    to: subscriberEmail,
+    subject: `Bienvenue sur la lettre d'information du MIDH`,
+    html: htmlContent,
+  });
+}
+
