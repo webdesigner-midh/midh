@@ -1,0 +1,22 @@
+{
+  "name": "Mouvement Ivoirien des Droits Humains",
+  "short_name": "MIDH",
+  "description": "Organisation non gouvernementale de défense et de promotion des droits humains en Côte d'Ivoire.",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0B3827",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}
