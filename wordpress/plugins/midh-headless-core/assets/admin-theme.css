@@ -634,9 +634,9 @@ input:focus, textarea:focus, select:focus {
 /* Grille de cartes statistiques */
 .midh-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
 .midh-stat-card {
@@ -647,38 +647,72 @@ input:focus, textarea:focus, select:focus {
   box-shadow: var(--midh-shadow-soft);
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  min-height: 140px;
 }
 
 .midh-stat-card:hover {
   transform: translateY(-2px);
   border-color: var(--midh-primary);
+  box-shadow: var(--midh-shadow-elevated);
+}
+
+.midh-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .midh-stat-label {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--midh-on-surface-variant);
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .midh-stat-value {
   font-family: 'Manrope', sans-serif;
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 800;
   color: var(--midh-primary);
-  line-height: 1;
-  margin-bottom: 12px;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.midh-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #e6f4ea;
+  color: #137333;
+  border: 1px solid #ceead6;
+}
+
+.midh-stat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #f0f4f1;
 }
 
 .midh-stat-link {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--midh-secondary);
   text-decoration: none;
-  margin-top: auto;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -687,6 +721,25 @@ input:focus, textarea:focus, select:focus {
 .midh-stat-link:hover {
   color: var(--midh-primary);
   text-decoration: underline;
+}
+
+.midh-stat-quick-btn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f1f5f2;
+  color: #0B3827;
+  text-decoration: none;
+  border: 1px solid #d4ded7;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.midh-stat-quick-btn:hover {
+  background: #0B3827;
+  color: #ffffff;
+  border-color: #0B3827;
 }
 
 /* ==========================================================

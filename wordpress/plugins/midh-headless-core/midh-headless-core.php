@@ -783,7 +783,7 @@ class MIDH_Headless_Core {
             'midh-admin-theme',
             plugin_dir_url(__FILE__) . 'assets/admin-theme.css',
             array(),
-            '1.5.0'
+            '1.6.0'
         );
 
         global $post;
@@ -868,17 +868,41 @@ class MIDH_Headless_Core {
     }
 
     public function render_midh_dashboard_hub() {
-        $count_posts     = wp_count_posts('post')->publish;
-        $count_projects  = wp_count_posts('midh_project')->publish;
-        $count_docs      = wp_count_posts('midh_document')->publish;
-        $count_team      = wp_count_posts('midh_team')->publish;
-        $count_gallery   = wp_count_posts('midh_gallery')->publish;
-        $frontend_url    = get_option('midh_frontend_url', 'http://localhost:3000');
+        $count_posts_obj     = wp_count_posts('post');
+        $count_posts         = isset($count_posts_obj->publish) ? (int) $count_posts_obj->publish : 0;
+
+        $count_media_obj     = wp_count_posts('attachment');
+        $count_media         = isset($count_media_obj->inherit) ? (int) $count_media_obj->inherit : 0;
+
+        $count_slides_obj    = wp_count_posts('midh_slide');
+        $count_slides        = isset($count_slides_obj->publish) ? (int) $count_slides_obj->publish : 0;
+
+        $count_projects_obj  = wp_count_posts('midh_project');
+        $count_projects      = isset($count_projects_obj->publish) ? (int) $count_projects_obj->publish : 0;
+
+        $count_docs_obj      = wp_count_posts('midh_document');
+        $count_docs          = isset($count_docs_obj->publish) ? (int) $count_docs_obj->publish : 0;
+
+        $count_team_obj      = wp_count_posts('midh_team');
+        $count_team          = isset($count_team_obj->publish) ? (int) $count_team_obj->publish : 0;
+
+        $count_partners_obj  = wp_count_posts('midh_partner');
+        $count_partners      = isset($count_partners_obj->publish) ? (int) $count_partners_obj->publish : 0;
+
+        $count_gallery_obj   = wp_count_posts('midh_gallery');
+        $count_gallery       = isset($count_gallery_obj->publish) ? (int) $count_gallery_obj->publish : 0;
+
+        $count_subs_obj      = wp_count_posts('midh_subscriber');
+        $count_subscribers   = isset($count_subs_obj->publish) ? (int) $count_subs_obj->publish : 0;
+
+        $frontend_url        = get_option('midh_frontend_url', 'http://localhost:3000');
+        $revalidate_secret   = get_option('midh_revalidation_secret', '');
+        $is_headless_ready   = !empty($revalidate_secret) && !empty($frontend_url);
 
         ?>
         <div class="midh-hub-banner">
             <h2>Bienvenue sur le portail d'administration du MIDH</h2>
-            <p>Ce tableau de bord vous permet d'administrer en toute simplicité les actualités, projets d'impact, rapports d'enquête, membres de l'organisation et votre nouvelle <strong>Galerie Photo &amp; Vidéo</strong>. Toutes vos publications sont synchronisées en temps réel avec le site public institutionnel.</p>
+            <p>Ce tableau de bord vous permet d'administrer en toute simplicité l'ensemble des modules du portail institutionnel. Chaque élément ci-dessous est un raccourci direct vers son interface de gestion :</p>
             <div class="midh-hub-actions">
                 <a href="<?php echo admin_url('post-new.php'); ?>" class="midh-hub-btn-primary">+ Rédiger une actualité</a>
                 <a href="<?php echo admin_url('post-new.php?post_type=midh_document'); ?>" class="midh-hub-btn-primary">+ Ajouter un document PDF</a>
@@ -887,31 +911,125 @@ class MIDH_Headless_Core {
             </div>
         </div>
 
-        <div class="midh-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="midh-stats-grid">
+            <!-- 1. Articles & Actualités -->
             <div class="midh-stat-card">
-                <div class="midh-stat-label">Actualités publiées</div>
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">📌 Articles &amp; Actualités</div>
+                </div>
                 <div class="midh-stat-value"><?php echo esc_html($count_posts); ?></div>
-                <a href="<?php echo admin_url('edit.php'); ?>" class="midh-stat-link">Gérer les articles &rarr;</a>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php'); ?>" class="midh-stat-link">Gérer les articles &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php'); ?>" class="midh-stat-quick-btn">+ Rédiger</a>
+                </div>
             </div>
+
+            <!-- 2. Médias & Fichiers -->
             <div class="midh-stat-card">
-                <div class="midh-stat-label">Projets &amp; Actions</div>
-                <div class="midh-stat-value"><?php echo esc_html($count_projects); ?></div>
-                <a href="<?php echo admin_url('edit.php?post_type=midh_project'); ?>" class="midh-stat-link">Voir les projets &rarr;</a>
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">📁 Bibliothèque Médias</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_media); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('upload.php'); ?>" class="midh-stat-link">Voir la médiathèque &rarr;</a>
+                    <a href="<?php echo admin_url('media-new.php'); ?>" class="midh-stat-quick-btn">+ Ajouter</a>
+                </div>
             </div>
+
+            <!-- 3. Diapositives Accueil -->
             <div class="midh-stat-card">
-                <div class="midh-stat-label">Rapports &amp; Guides</div>
-                <div class="midh-stat-value"><?php echo esc_html($count_docs); ?></div>
-                <a href="<?php echo admin_url('edit.php?post_type=midh_document'); ?>" class="midh-stat-link">Gérer les documents &rarr;</a>
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">🎞️ Diapositives Accueil</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_slides); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_slide'); ?>" class="midh-stat-link">Gérer le carrousel &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php?post_type=midh_slide'); ?>" class="midh-stat-quick-btn">+ Ajouter</a>
+                </div>
             </div>
-            <div class="midh-stat-card">
-                <div class="midh-stat-label">Équipe &amp; Gouvernance</div>
-                <div class="midh-stat-value"><?php echo esc_html($count_team); ?></div>
-                <a href="<?php echo admin_url('edit.php?post_type=midh_team'); ?>" class="midh-stat-link">Voir l'équipe &rarr;</a>
-            </div>
+
+            <!-- 4. MIDH Headless (API & Webhooks) -->
             <div class="midh-stat-card" style="border-top: 3px solid #006b1f;">
-                <div class="midh-stat-label">Galerie Photos &amp; Vidéos</div>
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">⚡ MIDH Headless API</div>
+                    <span class="midh-stat-badge"><?php echo $is_headless_ready ? '● Connecté' : '○ En attente'; ?></span>
+                </div>
+                <div class="midh-stat-value" style="font-size: 20px; font-weight: 700; color: #006b1f; padding-top: 6px;">Next.js Sync</div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('admin.php?page=midh-headless-settings'); ?>" class="midh-stat-link">Réglages API &amp; Webhook &rarr;</a>
+                </div>
+            </div>
+
+            <!-- 5. Projets & Actions -->
+            <div class="midh-stat-card">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">🎯 Projets &amp; Actions</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_projects); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_project'); ?>" class="midh-stat-link">Voir les projets &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php?post_type=midh_project'); ?>" class="midh-stat-quick-btn">+ Nouveau</a>
+                </div>
+            </div>
+
+            <!-- 6. Documents & Rapports -->
+            <div class="midh-stat-card">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">📄 Documents &amp; Rapports</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_docs); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_document'); ?>" class="midh-stat-link">Gérer les documents &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php?post_type=midh_document'); ?>" class="midh-stat-quick-btn">+ Ajouter</a>
+                </div>
+            </div>
+
+            <!-- 7. Équipe & Gouvernance -->
+            <div class="midh-stat-card">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">👥 Équipe &amp; Gouvernance</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_team); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_team'); ?>" class="midh-stat-link">Voir l'équipe &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php?post_type=midh_team'); ?>" class="midh-stat-quick-btn">+ Ajouter</a>
+                </div>
+            </div>
+
+            <!-- 8. Partenaires Institutionnels -->
+            <div class="midh-stat-card">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">🤝 Partenaires</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_partners); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_partner'); ?>" class="midh-stat-link">Voir les partenaires &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php?post_type=midh_partner'); ?>" class="midh-stat-quick-btn">+ Ajouter</a>
+                </div>
+            </div>
+
+            <!-- 9. Galerie Photos & Vidéos -->
+            <div class="midh-stat-card" style="border-top: 3px solid #006b1f;">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">📸 Galerie Photos &amp; Vidéos</div>
+                </div>
                 <div class="midh-stat-value"><?php echo esc_html($count_gallery); ?></div>
-                <a href="<?php echo admin_url('edit.php?post_type=midh_gallery'); ?>" class="midh-stat-link">Gérer la galerie &rarr;</a>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_gallery'); ?>" class="midh-stat-link">Gérer la galerie &rarr;</a>
+                    <a href="<?php echo admin_url('post-new.php?post_type=midh_gallery'); ?>" class="midh-stat-quick-btn">+ Ajouter</a>
+                </div>
+            </div>
+
+            <!-- 10. Abonnés Newsletter -->
+            <div class="midh-stat-card" style="border-top: 3px solid #0B3827;">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">✉️ Abonnés Newsletter</div>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_subscribers); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_subscriber'); ?>" class="midh-stat-link">Gérer les abonnés &rarr;</a>
+                    <a href="<?php echo admin_url('admin-post.php?action=midh_export_subscribers'); ?>" class="midh-stat-quick-btn">📥 CSV</a>
+                </div>
             </div>
         </div>
         <?php
