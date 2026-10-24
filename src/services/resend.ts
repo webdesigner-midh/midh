@@ -5,7 +5,7 @@ const resendApiKey = process.env.RESEND_API_KEY;
 export const resend = new Resend(resendApiKey);
 
 // Expéditeur officiel vérifié dans Resend
-export const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'MIDH <contact@midh-ci.org>';
+export const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'MIDH <info@midh-ci.org>';
 
 // URL du logo officiel du MIDH (hébergé sur CDN global haute disponibilité)
 export const LOGO_MIDH_URL =
@@ -15,10 +15,45 @@ export const LOGO_MIDH_URL =
 export function getRecipients(): string[] {
   const envRecipients = process.env.CONTACT_FORM_RECIPIENT;
   if (!envRecipients) {
-    return ['contact@midh-ci.org', 'brahimacoulibaly7777@gmail.com'];
+    return ['info@midh-ci.org', 'brahimacoulibaly7777@gmail.com'];
   }
   return envRecipients.split(',').map((e) => e.trim()).filter(Boolean);
 }
+
+// Pôles et services officiels du MIDH
+export const MIDH_DEPARTMENTS: Record<
+  string,
+  { label: string; email: string; isGeneral?: boolean }
+> = {
+  general: {
+    label: 'Coordination Générale / Accueil',
+    email: 'info@midh-ci.org',
+    isGeneral: true,
+  },
+  direx: {
+    label: 'Direction Exécutive',
+    email: 'direx@midh-ci.org',
+  },
+  president: {
+    label: 'Présidence du MIDH',
+    email: 'president@midh-ci.org',
+  },
+  secretaire: {
+    label: 'Secrétariat Général',
+    email: 'secretaire@midh-ci.org',
+  },
+  tresorier: {
+    label: 'Trésorerie Générale',
+    email: 'tresorier@midh-ci.org',
+  },
+};
+
+// Destinataires automatiquement placés en copie lors d'un message adressé à info@midh-ci.org
+export const AUTO_CC_COORDINATION = [
+  'direx@midh-ci.org',
+  'president@midh-ci.org',
+  'secretaire@midh-ci.org',
+];
 
 /**
  * Nettoyage et formatage du numéro pour lien WhatsApp
@@ -28,6 +63,15 @@ function cleanPhoneForWhatsApp(phone?: string): string {
   return phone.replace(/[^0-9]/g, '');
 }
 
+export interface ContactNotificationParams {
+  name: string;
+  email: string;
+  phone?: string;
+  department?: string;
+  subject: string;
+  message: string;
+}
+
 /**
  * Envoi d'un e-mail institutionnel pour le formulaire de contact
  */
@@ -35,16 +79,31 @@ export async function sendContactNotification({
   name,
   email,
   phone,
+  department = 'general',
   subject,
   message,
-}: {
-  name: string;
-  email: string;
-  phone?: string;
-  subject: string;
-  message: string;
-}) {
-  const recipients = getRecipients();
+}: ContactNotificationParams) {
+  const deptKey = (department && MIDH_DEPARTMENTS[department]) ? department : 'general';
+  const targetDept = MIDH_DEPARTMENTS[deptKey];
+
+  // Routage des destinataires
+  let toRecipients: string[];
+  let ccRecipients: string[] | undefined = undefined;
+
+  if (targetDept.isGeneral || targetDept.email === 'info@midh-ci.org') {
+    // Règle automatique : lorsque l'email est envoyé à info@midh-ci.org,
+    // direx@, president@ et secretaire@ sont automatiquement mis en copie (Cc).
+    toRecipients = getRecipients();
+    ccRecipients = [...AUTO_CC_COORDINATION];
+  } else {
+    // Si adressé spécifiquement à un pôle (direx, president, secretaire, tresorier)
+    toRecipients = [targetDept.email];
+    // Conserver une copie aux boîtes de secours configurées (ex. développeur / backup)
+    const backupRecipients = getRecipients().filter((r) => r !== 'info@midh-ci.org');
+    if (backupRecipients.length > 0) {
+      ccRecipients = backupRecipients;
+    }
+  }
   const dateStr = new Date().toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -129,6 +188,25 @@ export async function sendContactNotification({
                               <div style="font-size: 13.5px; color: #0284c7; margin-top: 2px;">
                                 <a href="mailto:${email}" style="color: #0284c7; text-decoration: none; font-weight: 500;">${email}</a>
                               </div>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- Service Destinataire et Copie -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 14px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                          <tr>
+                            <td width="30" valign="top" style="padding-top: 2px;">
+                              <span style="font-size: 16px;">🏛️</span>
+                            </td>
+                            <td>
+                              <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Service destinataire</div>
+                              <div style="font-size: 14px; font-weight: 700; color: #0B3827; margin-top: 2px;">
+                                ${targetDept.label} &lt;${targetDept.email}&gt;
+                              </div>
+                              ${ccRecipients && ccRecipients.length > 0 ? `
+                              <div style="font-size: 11.5px; color: #475569; margin-top: 5px;">
+                                📋 <strong>En copie certifiée (Cc) :</strong> ${ccRecipients.join(', ')}
+                              </div>` : ''}
                             </td>
                           </tr>
                         </table>
@@ -230,7 +308,7 @@ export async function sendContactNotification({
                       <td style="font-size: 12px; color: #475569; line-height: 1.7; text-align: center;">
                         📍 <strong>Siège social :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
                         📞 <strong>Ligne directe / WhatsApp :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ☎️ +225 27 22 52 35 15<br>
-                        ✉️ <strong>Courriel officiel :</strong> <a href="mailto:contact@midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">contact@midh-ci.org</a> &nbsp;|&nbsp; 🌐 <strong>Site web :</strong> <a href="https://www.midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">www.midh-ci.org</a>
+                        ✉️ <strong>Courriel officiel :</strong> <a href="mailto:info@midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">info@midh-ci.org</a> &nbsp;|&nbsp; 🌐 <strong>Site web :</strong> <a href="https://www.midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">www.midh-ci.org</a>
                       </td>
                     </tr>
                   </table>
@@ -261,9 +339,10 @@ export async function sendContactNotification({
 
   return await resend.emails.send({
     from: DEFAULT_FROM,
-    to: recipients,
+    to: toRecipients,
+    cc: ccRecipients && ccRecipients.length > 0 ? ccRecipients : undefined,
     replyTo: email,
-    subject: `[Contact MIDH] ${subject} - de ${name}`,
+    subject: `[Contact MIDH - ${targetDept.label}] ${subject} - de ${name}`,
     html: htmlContent,
   });
 }
@@ -503,7 +582,7 @@ export async function sendVolunteerNotification({
                       <td style="font-size: 12px; color: #475569; line-height: 1.7; text-align: center;">
                         📍 <strong>Siège social :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
                         📞 <strong>Ligne directe / WhatsApp :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ☎️ +225 27 22 52 35 15<br>
-                        ✉️ <strong>Courriel officiel :</strong> <a href="mailto:contact@midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">contact@midh-ci.org</a> &nbsp;|&nbsp; 🌐 <strong>Site web :</strong> <a href="https://www.midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">www.midh-ci.org</a>
+                        ✉️ <strong>Courriel officiel :</strong> <a href="mailto:info@midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">info@midh-ci.org</a> &nbsp;|&nbsp; 🌐 <strong>Site web :</strong> <a href="https://www.midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">www.midh-ci.org</a>
                       </td>
                     </tr>
                   </table>
@@ -715,7 +794,7 @@ export async function sendNewsletterWelcomeEmail({
               <tr>
                 <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; font-size: 11.5px; color: #64748b; line-height: 1.6; border-top: 1px solid #e2e8f0;">
                   📍 <strong>Siège :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
-                  📞 <strong>Ligne directe :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ✉️ <a href="mailto:contact@midh-ci.org" style="color:#0B3827; text-decoration:none;">contact@midh-ci.org</a><br>
+                  📞 <strong>Ligne directe :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ✉️ <a href="mailto:info@midh-ci.org" style="color:#0B3827; text-decoration:none;">info@midh-ci.org</a><br>
                   <span style="font-size:10.5px; color:#94a3b8; display:block; margin-top:8px;">
                     Vous recevez cet e-mail car vous vous êtes inscrit(e) sur www.midh-ci.org. Pour vous désabonner à tout moment, répondez simplement « Désabonnement » à ce message.
                   </span>

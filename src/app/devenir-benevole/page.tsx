@@ -107,11 +107,11 @@ export default function DevenirBenevolePage() {
                   <span>+225 01 01 49 87 39 (WhatsApp)</span>
                 </a>
                 <a
-                  href="mailto:contact@midh-ci.org"
+                  href="mailto:info@midh-ci.org"
                   className="inline-flex items-center gap-2 text-emerald-800 font-semibold hover:underline"
                 >
                   <span className="material-symbols-outlined text-base">mail</span>
-                  <span>contact@midh-ci.org</span>
+                  <span>info@midh-ci.org</span>
                 </a>
               </div>
             </div>

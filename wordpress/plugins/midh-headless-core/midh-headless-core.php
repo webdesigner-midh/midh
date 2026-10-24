@@ -397,7 +397,7 @@ class MIDH_Headless_Core {
             'address'          => get_option('midh_address', 'Abidjan, Cocody Angré, Carrefour les Oscars'),
             'phone'            => get_option('midh_phone', '+225 01 01 49 87 39'),
             'whatsapp'         => get_option('midh_whatsapp', '+225 01 01 49 87 39'),
-            'email'            => get_option('midh_email', 'contact@midh-ci.org'),
+            'email'            => get_option('midh_email', 'info@midh-ci.org'),
             'socialLinks'      => array(
                 'facebook'  => get_option('midh_facebook', 'https://facebook.com/midh.ci'),
                 'instagram' => get_option('midh_instagram', 'https://instagram.com/midh.ci'),
@@ -693,7 +693,7 @@ class MIDH_Headless_Core {
                     </tr>
                     <tr>
                         <th scope="row"><?php _e('Email officiel', 'midh-headless'); ?></th>
-                        <td><input type="email" name="midh_email" value="<?php echo esc_attr(get_option('midh_email', 'contact@midh-ci.org')); ?>" class="regular-text" /></td>
+                        <td><input type="email" name="midh_email" value="<?php echo esc_attr(get_option('midh_email', 'info@midh-ci.org')); ?>" class="regular-text" /></td>
                     </tr>
                 </table>
 

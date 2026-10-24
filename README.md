@@ -99,7 +99,7 @@ NEXT_PUBLIC_WORDPRESS_URL=https://cms.midh-ci.org
 REVALIDATE_SECRET_TOKEN=votre_jeton_secret_aleatoire
 
 # Destinataire des formulaires de contact
-CONTACT_FORM_RECIPIENT=brahimacoulibaly7777@gmail.com
+CONTACT_FORM_RECIPIENT=info@midh-ci.org,brahimacoulibaly7777@gmail.com
 ```
 
 ---
@@ -145,5 +145,5 @@ Consultez le guide dédié [wordpress/README-WORDPRESS.md](wordpress/README-WORD
 - **Date de fondation :** 08 octobre 2000
 - **Siège :** Abidjan, Cocody Angré, Carrefour les Oscars
 - **Téléphone / WhatsApp officiel :** `+225 01 01 49 87 39`
-- **Email officiel :** `brahimacoulibaly7777@gmail.com`
+- **Email officiel :** `info@midh-ci.org`
 - **Sections régionales actives (11 localités vérifiées) :** Abidjan (Siège), Bouaké, Daloa, Gagnoa, Korhogo, San-Pédro, Yamoussoukro, Dimbokro, Toumodi, Odienné, Katiola.

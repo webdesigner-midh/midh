@@ -86,8 +86,8 @@ export default function DonPage() {
               </div>
               <div>
                 <strong>Email officiel :</strong>{' '}
-                <a href="mailto:contact@midh-ci.org" className="text-primary hover:underline">
-                  contact@midh-ci.org
+                <a href="mailto:info@midh-ci.org" className="text-primary hover:underline">
+                  info@midh-ci.org
                 </a>
               </div>
               <div>

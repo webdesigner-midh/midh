@@ -44,7 +44,7 @@ export default function PolitiqueConfidentialitePage() {
           <section>
             <h2 className="font-title-lg text-[#0B3827] font-bold mb-2">4. Exercice de vos droits</h2>
             <p>
-              Conformément aux principes de protection des données, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour toute demande, écrivez-nous à : <a href="mailto:contact@midh-ci.org" className="text-primary font-bold hover:underline">contact@midh-ci.org</a>.
+              Conformément aux principes de protection des données, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données. Pour toute demande, écrivez-nous à : <a href="mailto:info@midh-ci.org" className="text-primary font-bold hover:underline">info@midh-ci.org</a>.
             </p>
           </section>
         </div>

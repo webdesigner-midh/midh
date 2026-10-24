@@ -117,11 +117,11 @@ export default function Header() {
             {/* Email officiel */}
             <a
               className="inline-flex items-center gap-1.5 text-white/90 hover:text-white transition-colors"
-              href="mailto:contact@midh-ci.org"
+              href="mailto:info@midh-ci.org"
               aria-label="Envoyer un email au MIDH"
             >
               <span className="material-symbols-outlined text-[14px] text-emerald-300">mail</span>
-              <span className="font-medium tracking-tight">contact@midh-ci.org</span>
+              <span className="font-medium tracking-tight">info@midh-ci.org</span>
             </a>
 
             <span className="text-white/30">•</span>
@@ -326,7 +326,7 @@ export default function Header() {
 
               <div className="p-3 bg-surface-container rounded-lg text-caption text-tertiary flex flex-col gap-1">
                 <span>Téléphone / WhatsApp : +225 01 01 49 87 39</span>
-                <span>Email : contact@midh-ci.org</span>
+                <span>Email : info@midh-ci.org</span>
                 <span>Siège : Abidjan, Cocody Angré, Carrefour Duncan</span>
               </div>
             </div>

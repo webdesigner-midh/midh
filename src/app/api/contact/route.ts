@@ -6,6 +6,7 @@ const contactSchema = z.object({
   name: z.string().min(2, "Le nom doit comporter au moins 2 caractères").max(100),
   email: z.string().email("Adresse email invalide").max(120),
   phone: z.string().max(25).optional().or(z.literal('')),
+  department: z.enum(['general', 'direx', 'president', 'secretaire', 'tresorier']).optional().default('general'),
   subject: z.string().min(3, "L'objet est requis").max(150),
   message: z.string().min(10, "Le message doit contenir au moins 10 caractères").max(3000),
   // Piège anti-spam (Honeypot) : doit rester absolument vide
@@ -59,10 +60,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, phone, subject, message } = validatedData.data;
+    const { name, email, phone, department, subject, message } = validatedData.data;
 
     // Journalisation sécurisée sans secrets
-    console.info(`[Contact Form] Nouveau message reçu de ${name} (${email}) - Objet: ${subject}`);
+    console.info(`[Contact Form] Nouveau message reçu de ${name} (${email}) - Pôle: ${department} - Objet: ${subject}`);
 
     // Envoi de l'e-mail via Resend
     try {
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
         name,
         email,
         phone,
+        department,
         subject,
         message,
       });

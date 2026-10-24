@@ -24,7 +24,7 @@ export default function MentionsLegalesPage() {
               <li><strong>Date de fondation :</strong> 08 octobre 2000 à Abidjan</li>
               <li><strong>Siège national :</strong> Abidjan, Cocody Angré, Carrefour les Oscars, République de Côte d&apos;Ivoire</li>
               <li><strong>Téléphone / WhatsApp :</strong> +225 01 01 49 87 39</li>
-              <li><strong>Email de contact :</strong> contact@midh-ci.org</li>
+              <li><strong>Email de contact :</strong> info@midh-ci.org</li>
             </ul>
           </section>
 

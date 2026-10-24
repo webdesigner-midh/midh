@@ -152,8 +152,8 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-secondary shrink-0 text-[18px]">mail</span>
-              <a className="hover:text-primary transition-colors break-all" href="mailto:contact@midh-ci.org">
-                contact@midh-ci.org
+              <a className="hover:text-primary transition-colors break-all" href="mailto:info@midh-ci.org">
+                info@midh-ci.org
               </a>
             </div>
             <div className="pt-2">

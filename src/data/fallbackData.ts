@@ -18,7 +18,7 @@ export const OFFICIAL_SITE_OPTIONS: MIDHSiteOptions = {
   address: "Abidjan, Cocody Angré, Carrefour les Oscars",
   phone: "+225 01 01 49 87 39",
   whatsapp: "+225 01 01 49 87 39",
-  email: "contact@midh-ci.org",
+  email: "info@midh-ci.org",
   socialLinks: {
     facebook: "https://facebook.com/midh.ci",
     instagram: "https://instagram.com/midh.ci",

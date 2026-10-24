@@ -62,7 +62,7 @@ Rendez-vous dans le menu d'administration **MIDH Headless** :
 3. **Coordonnées Officielles du MIDH :**
    - Siège : Abidjan, Cocody Angré, Carrefour les Oscars
    - Téléphone / WhatsApp : `+225 01 01 49 87 39`
-   - Email officiel : `brahimacoulibaly7777@gmail.com`
+   - Email officiel : `info@midh-ci.org`
 4. Cliquez sur **Enregistrer les réglages**.
 
 ---
