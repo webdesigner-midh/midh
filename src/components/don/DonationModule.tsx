@@ -2,23 +2,12 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   Heart,
-  ShieldCheck,
   Copy,
   Check,
-  Lock,
-  FileCheck2,
-  PhoneCall,
-  Sparkles,
-  ArrowRight,
-  Info,
-  Building2,
   BadgeCheck,
-  Send,
-  MessageCircle,
-  Coins,
+  Info,
 } from 'lucide-react';
 
 interface PaymentOperator {
@@ -177,22 +166,15 @@ const PAYMENT_OPERATORS: PaymentOperator[] = [
 
 export default function DonationModule() {
   const [selectedOperator, setSelectedOperator] = useState<PaymentOperator>(PAYMENT_OPERATORS[0]);
-  const [customAmount, setCustomAmount] = useState<string>('');
   const [copiedNumber, setCopiedNumber] = useState(false);
 
   const officialNumberDisplay = '01 01 49 87 39';
-  const cleanNumber = '2250101498739';
 
   const handleCopyNumber = () => {
     navigator.clipboard.writeText('0101498739');
     setCopiedNumber(true);
     setTimeout(() => setCopiedNumber(false), 2500);
   };
-
-  const amountText = customAmount ? ` de ${Number(customAmount).toLocaleString('fr-FR')} FCFA` : '';
-  const whatsappMessage = encodeURIComponent(
-    `Bonjour Trésorerie du MIDH,\n\nJe souhaite effectuer un don libre${amountText} via ${selectedOperator.name} pour soutenir vos actions de défense des droits humains.\n\nPourriez-vous m'accompagner et m'éditer mon reçu fiscal officiel ? Merci.`
-  );
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -271,37 +253,15 @@ export default function DonationModule() {
               })}
             </div>
 
-            {/* Champ Optionnel : Montant Libre Indicatif */}
-            <div className="mt-2 p-4 sm:p-5 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-[#0B3827] flex items-center justify-center flex-shrink-0">
-                  <Coins className="w-5 h-5" />
-                </div>
-                <div>
-                  <label htmlFor="custom-amount-input" className="text-xs sm:text-sm font-bold text-[#0B3827] block">
-                    Montant de votre don (Optionnel)
-                  </label>
-                  <span className="text-[11px] text-slate-500">
-                    Vous êtes libre de donner la somme de votre choix en FCFA
-                  </span>
-                </div>
-              </div>
-
-              <div className="relative w-full sm:w-48">
-                <input
-                  id="custom-amount-input"
-                  type="number"
-                  min="500"
-                  step="500"
-                  placeholder="Ex: 10 000"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-bold text-[#0B3827] focus:outline-none focus:ring-2 focus:ring-[#0B3827]"
-                />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                  FCFA
-                </span>
-              </div>
+            {/* Bouton « Faire un don » (prêt pour le futur agrégateur de paiement) */}
+            <div className="pt-2">
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2.5 bg-[#138A2E] hover:bg-[#0F7326] active:scale-[0.99] text-white font-bold py-4 px-6 rounded-2xl text-base sm:text-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
+              >
+                <Heart className="w-5 h-5 fill-white/20" />
+                <span>Faire un don</span>
+              </button>
             </div>
           </div>
         </div>
@@ -356,7 +316,7 @@ export default function DonationModule() {
                 <button
                   type="button"
                   onClick={handleCopyNumber}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
                 >
                   {copiedNumber ? (
                     <>
@@ -398,50 +358,6 @@ export default function DonationModule() {
                   <span>{selectedOperator.instructions.tips}</span>
                 </div>
               )}
-            </div>
-
-            {/* Boutons d'Action Directs */}
-            <div className="flex flex-col gap-3 pt-2">
-              <a
-                href={`https://wa.me/${cleanNumber}?text=${whatsappMessage}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-[#138A2E] hover:bg-[#0F7326] text-white font-bold py-3.5 px-4 rounded-xl text-sm transition-all shadow-sm hover:shadow"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Informer la Trésorerie par WhatsApp</span>
-              </a>
-
-              <Link
-                href="/contact"
-                className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-xl text-xs transition-colors"
-              >
-                <Building2 className="w-3.5 h-3.5 text-slate-600" />
-                <span>Demander un virement bancaire ou convention</span>
-              </Link>
-            </div>
-
-            {/* Avertissement de Sécurité Strict */}
-            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 flex items-start gap-2 text-[11px] text-amber-900 leading-relaxed">
-              <Lock className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
-              <span>
-                <strong>Sécurité absolue :</strong> Le MIDH ne vous demandera <u>JAMAIS</u> votre code secret ou code PIN Mobile Money.
-              </span>
-            </div>
-          </div>
-
-          {/* Badge Reçu Fiscal & Certification */}
-          <div className="bg-emerald-950 text-emerald-50 rounded-3xl p-6 border border-emerald-900 shadow-sm flex flex-col gap-3">
-            <div className="flex items-center gap-2.5">
-              <FileCheck2 className="w-5 h-5 text-emerald-400" />
-              <h4 className="text-sm font-bold text-white">Reçu fiscal &amp; Attestation officielle</h4>
-            </div>
-            <p className="text-xs text-emerald-200/90 leading-relaxed">
-              Délivré systématiquement par la Trésorerie Générale pour chaque don reçu. L’attestation porte le cachet officiel de l’ONG et permet de justifier de vos actions caritatives et mécénats.
-            </p>
-            <div className="text-[11px] text-emerald-300 font-medium pt-1 border-t border-emerald-900 flex items-center justify-between">
-              <span>Organisation agréée depuis 2000</span>
-              <span>Abidjan, Côte d’Ivoire</span>
             </div>
           </div>
         </div>

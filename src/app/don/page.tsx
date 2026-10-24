@@ -1,21 +1,12 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import DonationModule from '@/components/don/DonationModule';
 import {
   Gavel,
   ShieldAlert,
   GraduationCap,
   Scale,
-  Award,
-  Users2,
-  CalendarCheck,
   CheckCircle2,
   HelpCircle,
-  Building,
-  PhoneCall,
-  Mail,
-  MapPin,
-  FileText,
 } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -187,54 +178,7 @@ export default function DonPage() {
         </div>
       </section>
 
-      {/* 4. Transparence, Gouvernance & Reçu Fiscal */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
-        <div className="bg-[#0B3827] text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-xl">
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-8 flex flex-col gap-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-                Transparence &amp; Rigueur
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-                Chaque don fait l&apos;objet d&apos;un compte-rendu certifié
-              </h2>
-              <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed">
-                Les comptes du MIDH sont gérés sous la supervision de la Trésorerie Générale et font l&apos;objet de vérifications régulières. Un reçu fiscal officiel vous est délivré pour tout don, attestant de votre engagement citoyen.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Link
-                  href="/documents-rapports"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#0B3827] text-xs sm:text-sm font-bold hover:bg-emerald-50 transition-colors shadow-sm"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Consulter nos rapports d&apos;activité</span>
-                </Link>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-colors"
-                >
-                  <span>Nous contacter</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="lg:col-span-4 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/15 flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <Award className="w-8 h-8 text-emerald-300 flex-shrink-0" />
-                <div>
-                  <h4 className="text-sm font-bold text-white">Agrément officiel</h4>
-                  <p className="text-xs text-emerald-200">ONG de droit ivoirien fondée en 2000</p>
-                </div>
-              </div>
-              <p className="text-xs text-emerald-100/80 leading-relaxed">
-                Organisation accréditée, membre observateur auprès des instances régionales et internationales de protection des droits de l&apos;homme.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Foire Aux Questions (FAQ Spéciale Donateurs) */}
+      {/* 4. Foire Aux Questions (FAQ Spéciale Donateurs) */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 flex flex-col gap-8">
         <div className="text-center flex flex-col gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[#138A2E]">
@@ -286,44 +230,6 @@ export default function DonPage() {
               </a>
               .
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. Coordonnées Officielles de la Trésorerie */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-[#0B3827] flex items-center justify-center flex-shrink-0">
-              <Building className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[#0B3827]">
-                Trésorerie Générale du MIDH
-              </h4>
-              <p className="text-xs text-slate-500">
-                Siège social : Abidjan Cocody Angré, Carrefour Duncan
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <a
-              href="https://wa.me/2250101498739"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#138A2E] hover:bg-[#0F7326] text-white text-xs font-bold transition-colors"
-            >
-              <PhoneCall className="w-3.5 h-3.5" />
-              <span>+225 01 01 49 87 39</span>
-            </a>
-            <Link
-              href="/contact"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors"
-            >
-              <Mail className="w-3.5 h-3.5" />
-              <span>Écrire à la trésorerie</span>
-            </Link>
           </div>
         </div>
       </section>
