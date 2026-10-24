@@ -1,123 +1,332 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import DonationModule from '@/components/don/DonationModule';
+import {
+  Gavel,
+  ShieldAlert,
+  GraduationCap,
+  Scale,
+  Award,
+  Users2,
+  CalendarCheck,
+  CheckCircle2,
+  HelpCircle,
+  Building,
+  PhoneCall,
+  Mail,
+  MapPin,
+  FileText,
+} from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Soutenir le MIDH | Faire un don pour la défense des droits humains',
-  description: 'Soutenez les cliniques juridiques, l’assistance aux victimes et la veille citoyenne du Mouvement Ivoirien des Droits Humains en Côte d’Ivoire.',
+  title: 'Faire un don au MIDH | Soutenir la défense des droits humains en Côte d’Ivoire',
+  description:
+    'Faites un don par Mobile Money (Wave, Orange Money, MTN MoMo, Moov Money, Djamo) ou carte bancaire pour financer les cliniques juridiques gratuites et l’assistance aux victimes.',
+  openGraph: {
+    title: 'Faire un don au MIDH — Agir pour la Dignité Humaine et la Justice',
+    description:
+      'Soutenez l’action indépendante du Mouvement Ivoirien des Droits Humains en Côte d’Ivoire via Mobile Money ou Carte Bancaire.',
+    url: 'https://midh-ci.org/don',
+  },
 };
 
 export default function DonPage() {
   return (
-    <div className="w-full bg-background py-space-xl">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col gap-space-2xl">
-        {/* En-tête */}
-        <div className="flex flex-col gap-space-xs text-center sm:text-left">
-          <span className="font-label-lg text-xs sm:text-sm text-primary uppercase tracking-wider font-semibold">
-            Solidarité Civique &amp; Financement
-          </span>
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] text-[#0B3827] font-extrabold leading-tight">
-            Soutenir l&apos;action du MIDH
+    <div className="w-full bg-[#f6faf5] pb-24">
+      {/* 1. Hero Institutionnel avec Dégradé Haut de Gamme */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#07261a] via-[#0B3827] to-[#0d4732] text-white pt-16 pb-24 px-4 sm:px-6 lg:px-8">
+        {/* Motif d'arrière-plan discret */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#a7f3d0_1px,transparent_1px)] [background-size:24px_24px]" />
+
+        <div className="relative max-w-5xl mx-auto text-center flex flex-col items-center gap-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-bold text-emerald-200 tracking-wide uppercase">
+            <Scale className="w-4 h-4 text-emerald-300" />
+            <span>Solidarité Civique &amp; Engagement Citoyen</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight max-w-4xl font-display">
+            Chaque don protège une vie,{' '}
+            <span className="text-emerald-300 underline decoration-emerald-400/40 underline-offset-8">
+              défend une liberté.
+            </span>
           </h1>
-          <p className="font-body-lg text-sm sm:text-base text-on-surface-variant leading-relaxed">
-            Vos dons garantissent l&apos;indépendance de notre veille, financent les cliniques juridiques gratuites et permettent d&apos;assister en justice les justiciables les plus vulnérables.
+
+          <p className="text-base sm:text-lg text-emerald-100/90 max-w-3xl leading-relaxed font-normal">
+            Le MIDH est une organisation non gouvernementale indépendante, reconnue d&apos;utilité civique depuis l&apos;an 2000. Vos contributions soutiennent directement nos cliniques juridiques gratuites, l&apos;assistance judiciaire des personnes vulnérables et la veille démocratique en Côte d&apos;Ivoire.
+          </p>
+
+          {/* 4 Chiffres Clés d'Impact */}
+          <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 max-w-4xl">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col items-center text-center">
+              <span className="text-2xl sm:text-3xl font-extrabold text-white tabular-nums">
+                +3 200
+              </span>
+              <span className="text-xs text-emerald-200 mt-1">
+                Justiciables assistés gratuitement
+              </span>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col items-center text-center">
+              <span className="text-2xl sm:text-3xl font-extrabold text-white tabular-nums">
+                24 ans
+              </span>
+              <span className="text-xs text-emerald-200 mt-1">
+                De veille continue en Côte d&apos;Ivoire
+              </span>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col items-center text-center">
+              <span className="text-2xl sm:text-3xl font-extrabold text-white tabular-nums">
+                14 pôles
+              </span>
+              <span className="text-xs text-emerald-200 mt-1">
+                Domaines d&apos;intervention couverts
+              </span>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex flex-col items-center text-center">
+              <span className="text-2xl sm:text-3xl font-extrabold text-white tabular-nums">
+                100%
+              </span>
+              <span className="text-xs text-emerald-200 mt-1">
+                Transparence &amp; Reçu fiscal
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Module Interactif de Don & Choix d'Opérateur Mobile Money */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10">
+        <DonationModule />
+      </section>
+
+      {/* 3. À Quoi Sert Votre Don ? (3 Piliers d'Action Clairs) */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 flex flex-col gap-12">
+        <div className="text-center max-w-3xl mx-auto flex flex-col gap-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#138A2E]">
+            Affectation Rigoureuse des Fonds
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0B3827]">
+            Comment votre don transforme des vies sur le terrain
+          </h2>
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            Chaque franc collecté est scrupuleusement orienté vers nos missions opérationnelles de défense des droits fondamentaux.
           </p>
         </div>
 
-        {/* Pourquoi donner */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 flex flex-col gap-3 shadow-sm">
-            <span className="material-symbols-outlined text-primary text-[32px]">gavel</span>
-            <h3 className="font-title-lg text-title-lg text-[#0B3827] font-bold">Assistance juridique</h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-              Prise en charge des frais de procédure et de conseil pour les personnes démunies victimes d&apos;injustices.
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Pilier 1 */}
+          <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0B3827] flex items-center justify-center">
+              <Gavel className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-[#0B3827]">
+              Assistance juridique &amp; Judiciaire
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Prise en charge intégrale des consultations, rédaction d&apos;actes, honoraires d&apos;avocats et déplacements pour les personnes démunies victimes d&apos;injustices, d&apos;abus de pouvoir ou de détentions arbitraires.
+            </p>
+            <ul className="mt-2 space-y-2 text-xs text-slate-700">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+                <span>Consultations juridiques gratuites au siège</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+                <span>Accompagnement des femmes et mineurs vulnérables</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Pilier 2 */}
+          <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0B3827] flex items-center justify-center">
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-[#0B3827]">
+              Veille citoyenne &amp; Enquêtes d&apos;urgence
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Déploiement d&apos;observateurs indépendants assermentés sur l&apos;ensemble du territoire ivoirien lors des scrutins électoraux, des tensions communautaires et des crises humanitaires.
+            </p>
+            <ul className="mt-2 space-y-2 text-xs text-slate-700">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+                <span>Rapports d&apos;investigation indépendants</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+                <span>Alertes précoces et médiation communautaire</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Pilier 3 */}
+          <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0B3827] flex items-center justify-center">
+              <GraduationCap className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-[#0B3827]">
+              Éducation civique &amp; Droits humains
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Organisation d&apos;ateliers de formation et de sensibilisation aux libertés fondamentales, à l&apos;état de droit et à la paix dans les lycées, collèges, universités et communautés de base.
+            </p>
+            <ul className="mt-2 space-y-2 text-xs text-slate-700">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+                <span>Formations des jeunes et leaders communautaires</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+                <span>Diffusion de guides juridiques pratiques</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Transparence, Gouvernance & Reçu Fiscal */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+        <div className="bg-[#0B3827] text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-xl">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 flex flex-col gap-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+                Transparence &amp; Rigueur
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                Chaque don fait l&apos;objet d&apos;un compte-rendu certifié
+              </h2>
+              <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed">
+                Les comptes du MIDH sont gérés sous la supervision de la Trésorerie Générale et font l&apos;objet de vérifications régulières. Un reçu fiscal officiel vous est délivré pour tout don, attestant de votre engagement citoyen.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-2">
+                <Link
+                  href="/documents-rapports"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#0B3827] text-xs sm:text-sm font-bold hover:bg-emerald-50 transition-colors shadow-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Consulter nos rapports d&apos;activité</span>
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-colors"
+                >
+                  <span>Nous contacter</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/15 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <Award className="w-8 h-8 text-emerald-300 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-bold text-white">Agrément officiel</h4>
+                  <p className="text-xs text-emerald-200">ONG de droit ivoirien fondée en 2000</p>
+                </div>
+              </div>
+              <p className="text-xs text-emerald-100/80 leading-relaxed">
+                Organisation accréditée, membre observateur auprès des instances régionales et internationales de protection des droits de l&apos;homme.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Foire Aux Questions (FAQ Spéciale Donateurs) */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 flex flex-col gap-8">
+        <div className="text-center flex flex-col gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#138A2E]">
+            Questions Fréquentes
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B3827]">
+            Tout savoir sur votre don au MIDH
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <h3 className="text-base font-bold text-[#0B3827] flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+              <span>Comment obtenir mon reçu fiscal ou attestation de don ?</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+              Dès votre transfert effectué (Wave, Orange, MTN, Moov, Djamo ou virement), transmettez votre confirmation de paiement par WhatsApp au{' '}
+              <a href="https://wa.me/2250101498739" className="text-[#138A2E] font-bold hover:underline">
+                +225 01 01 49 87 39
+              </a>{' '}
+              ou par e-mail à{' '}
+              <a href="mailto:tresorier@midh-ci.org" className="text-[#138A2E] font-bold hover:underline">
+                tresorier@midh-ci.org
+              </a>
+              . Votre attestation signée avec le cachet officiel vous est envoyée sous 24 à 48 heures.
             </p>
           </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 flex flex-col gap-3 shadow-sm">
-            <span className="material-symbols-outlined text-primary text-[32px]">campaign</span>
-            <h3 className="font-title-lg text-title-lg text-[#0B3827] font-bold">Veille &amp; Enquêtes</h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-              Déploiement d&apos;observateurs indépendants lors des crises et des scrutins sur l&apos;ensemble du territoire.
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <h3 className="text-base font-bold text-[#0B3827] flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+              <span>Puis-je faire un don depuis l&apos;étranger (Diaspora, Europe, Canada, USA) ?</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+              Absolument. Les donateurs de la diaspora peuvent contribuer soit directement par Wave (depuis la France et les pays compatibles), soit par virement bancaire international (RIB/IBAN officiel transmis sur simple demande par la trésorerie), soit par lien de paiement sécurisé pour carte bancaire Visa / Mastercard.
             </p>
           </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 flex flex-col gap-3 shadow-sm">
-            <span className="material-symbols-outlined text-primary text-[32px]">school</span>
-            <h3 className="font-title-lg text-title-lg text-[#0B3827] font-bold">Éducation civique</h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-              Organisation de sessions de formation aux droits fondamentaux dans les lycées et universités.
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <h3 className="text-base font-bold text-[#0B3827] flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-[#138A2E] flex-shrink-0" />
+              <span>Une entreprise ou fondation peut-elle devenir mécène du MIDH ?</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+              Oui. Le MIDH établit des conventions de mécénat et de partenariat institutionnel pour soutenir des projets ciblés (cliniques juridiques décentralisées, bourses d&apos;assistance judiciaire, observation électorale). Contactez directement la Direction Exécutive à{' '}
+              <a href="mailto:direx@midh-ci.org" className="text-[#138A2E] font-bold hover:underline">
+                direx@midh-ci.org
+              </a>
+              .
             </p>
           </div>
         </div>
+      </section>
 
-        {/* Module de don Mobile Money (Transparence & Statut provisoire) */}
-        <div className="bg-surface-container-lowest p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-outline-variant/30 shadow-sm flex flex-col gap-8">
-          <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-secondary-container/50 text-secondary font-label-md text-label-md font-bold w-fit">
-              <span className="material-symbols-outlined text-[16px]">info</span>
-              <span>Intégration Passerelle Mobile Money</span>
+      {/* 6. Coordonnées Officielles de la Trésorerie */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-[#0B3827] flex items-center justify-center flex-shrink-0">
+              <Building className="w-6 h-6" />
             </div>
-            <h2 className="font-headline-sm text-headline-sm text-[#0B3827] font-bold">
-              Faire un don par Mobile Money
-            </h2>
-            <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-              Conformément aux directives de sécurité, la passerelle de paiement en ligne (Orange Money, MTN MoMo, Wave ou Moov Money) est en cours de configuration officielle avec le prestataire bancaire agréé du MIDH.
-            </p>
-          </div>
-
-          {/* Encart explicatif officiel */}
-          <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant/40 flex flex-col gap-4">
-            <h3 className="font-title-lg text-title-lg text-on-surface font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">verified_user</span>
-              <span>Comment faire un don dès aujourd&apos;hui ?</span>
-            </h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-              Pour réaliser un don officiel sécurisé ou convenir d&apos;une convention de mécénat institutionnel, veuillez vous rapprocher directement de la Trésorerie Générale du MIDH :
-            </p>
-            <div className="bg-white p-4 rounded-xl border border-outline-variant/30 flex flex-col gap-2 font-body-sm">
-              <div>
-                <strong>Bénéficiaire officiel :</strong> Mouvement Ivoirien des Droits Humains (MIDH)
-              </div>
-              <div>
-                <strong>Ligne de contact dédiée :</strong>{' '}
-                <a href="https://wa.me/2250101498739" className="text-primary font-bold hover:underline">
-                  +225 01 01 49 87 39
-                </a>
-              </div>
-              <div>
-                <strong>Email officiel :</strong>{' '}
-                <a href="mailto:info@midh-ci.org" className="text-primary hover:underline">
-                  info@midh-ci.org
-                </a>
-              </div>
-              <div>
-                <strong>Reçu fiscal / Attestation de don :</strong> Délivré systématiquement sur demande auprès de la coordination à Abidjan Cocody Angré.
-              </div>
-            </div>
-
-            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-caption text-amber-900 leading-relaxed">
-              <strong>Règle de sécurité stricte :</strong> Le MIDH ne vous demandera JAMAIS votre code secret ou code PIN Mobile Money. Tout paiement en ligne sera directement opéré via une page de redirection bancaire chiffrée SSL dès sa mise en service.
+            <div>
+              <h4 className="text-sm font-bold text-[#0B3827]">
+                Trésorerie Générale du MIDH
+              </h4>
+              <p className="text-xs text-slate-500">
+                Siège social : Abidjan Cocody Angré, Carrefour Duncan
+              </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <a
+              href="https://wa.me/2250101498739"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#138A2E] hover:bg-[#0F7326] text-white text-xs font-bold transition-colors"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>+225 01 01 49 87 39</span>
+            </a>
             <Link
               href="/contact"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#138A2E] hover:bg-[#0F7326] text-white font-label-lg px-8 py-3.5 rounded-xl transition-colors shadow-xs"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors"
             >
-              <span>Contacter la trésorerie du MIDH</span>
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </Link>
-
-            <Link
-              href="/"
-              className="text-body-sm text-tertiary hover:text-on-surface transition-colors"
-            >
-              Retour à la page d&apos;accueil
+              <Mail className="w-3.5 h-3.5" />
+              <span>Écrire à la trésorerie</span>
             </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
