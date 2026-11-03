@@ -79,9 +79,6 @@ export default function PartnersCarousel({ partners }: PartnersCarouselProps) {
           <span className="font-label-md text-xs sm:text-sm font-bold uppercase tracking-wider text-[#0B3827]">
             Réseau de nos Partenaires Actifs
           </span>
-          <span className="text-xs text-outline hidden sm:inline">
-            ({partners.length} partenaires engagés)
-          </span>
         </div>
 
         {/* Flèches de navigation */}

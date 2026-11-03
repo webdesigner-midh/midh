@@ -24,32 +24,8 @@ export default function PartnersAndTeam({ partners }: PartnersAndTeamProps) {
           </p>
         </div>
 
-        {/* Grille de cadres réservés pour les logos officiels avec animations et micro-interactions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {partners.slice(0, 3).map((partner, idx) => (
-            <div
-              key={partner.id}
-              className="bg-surface-container-lowest p-6 rounded-xl flex flex-col items-center justify-center text-center gap-2 border border-dashed border-outline-variant/60 min-h-[130px] transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-xl hover:border-primary/50 hover:bg-white group cursor-pointer relative overflow-hidden after:absolute after:bottom-0 after:left-0 after:w-0 after:h-1 after:bg-primary group-hover:after:w-full after:transition-all after:duration-500"
-            >
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <span
-                className="material-symbols-outlined text-[32px] text-tertiary transition-transform duration-300 group-hover:scale-125 group-hover:text-primary animate-pulse"
-                style={{ animationDelay: `${idx * 200}ms` }}
-              >
-                {idx === 0 ? 'handshake' : idx === 1 ? 'groups' : 'account_balance'}
-              </span>
-              <span className="font-label-md text-label-md text-tertiary group-hover:text-[#0B3827] transition-colors relative z-10">
-                [{partner.name}]
-              </span>
-              <span className="font-caption text-caption text-outline group-hover:text-secondary transition-colors relative z-10">
-                {partner.description || partner.typeLabel}
-              </span>
-            </div>
-          ))}
-        </div>
-
         {/* SECTION CARROUSEL DES PARTENAIRES (DÉFILEMENT AUTOMATIQUE & ARTICLES COMPLETS) */}
-        <div className="my-2 border-t border-b border-outline-variant/20 py-4">
+        <div className="py-2">
           <PartnersCarousel partners={partners} />
         </div>
 
