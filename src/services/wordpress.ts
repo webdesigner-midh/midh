@@ -343,21 +343,66 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
  * Récupère les partenaires institutionnels
  */
 export async function getPartners(): Promise<MIDHPartner[]> {
-  const wpPartners = await fetchWordPressAPI<any[]>('/wp-json/wp/v2/midh_partner?_embed&per_page=20');
+  const wpPartners = await fetchWordPressAPI<any[]>('/wp-json/wp/v2/midh_partner?_embed&per_page=50');
 
   if (wpPartners && Array.isArray(wpPartners) && wpPartners.length > 0) {
-    return wpPartners.map((p) => ({
-      id: p.id,
-      name: p.title?.rendered || 'Partenaire',
-      logoUrl: p._embedded?.['wp:featuredmedia']?.[0]?.source_url || p.meta?.logo_url,
-      type: p.meta?.type || 'technique',
-      typeLabel: p.meta?.type_label || 'Partenaire',
-      websiteUrl: p.meta?.website_url,
-      description: p.content?.rendered?.replace(/<[^>]+>/g, '') || p.meta?.description,
-    }));
+    return wpPartners.map((p) => {
+      const featuredMedia = p._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+      const cleanExcerpt = p.excerpt?.rendered
+        ? p.excerpt.rendered.replace(/<[^>]+>/g, '').trim()
+        : p.meta?.description || '';
+
+      return {
+        id: p.id,
+        name: p.title?.rendered || 'Partenaire',
+        slug: p.slug || `partenaire-${p.id}`,
+        logoUrl: featuredMedia || p.meta?.logo_url,
+        featuredImage: featuredMedia || p.meta?.featured_image || p.meta?.logo_url,
+        type: p.meta?.type || 'technique',
+        typeLabel: p.meta?.type_label || (p.meta?.type === 'bailleur' ? 'Bailleur Institutionnel' : p.meta?.type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'),
+        websiteUrl: p.meta?.website_url,
+        description: cleanExcerpt || p.meta?.description,
+        excerpt: cleanExcerpt,
+        content: p.content?.rendered || '',
+        order: p.menu_order || 0,
+      };
+    });
   }
 
   return FALLBACK_PARTNERS;
+}
+
+/**
+ * Récupère un partenaire spécifique par son slug
+ */
+export async function getPartnerBySlug(slug: string): Promise<MIDHPartner | null> {
+  const wpPartners = await fetchWordPressAPI<any[]>(`/wp-json/wp/v2/midh_partner?slug=${encodeURIComponent(slug)}&_embed`);
+
+  if (wpPartners && Array.isArray(wpPartners) && wpPartners.length > 0) {
+    const p = wpPartners[0];
+    const featuredMedia = p._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+    const cleanExcerpt = p.excerpt?.rendered
+      ? p.excerpt.rendered.replace(/<[^>]+>/g, '').trim()
+      : p.meta?.description || '';
+
+    return {
+      id: p.id,
+      name: p.title?.rendered || 'Partenaire',
+      slug: p.slug,
+      logoUrl: featuredMedia || p.meta?.logo_url,
+      featuredImage: featuredMedia || p.meta?.featured_image || p.meta?.logo_url,
+      type: p.meta?.type || 'technique',
+      typeLabel: p.meta?.type_label || (p.meta?.type === 'bailleur' ? 'Bailleur Institutionnel' : p.meta?.type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'),
+      websiteUrl: p.meta?.website_url,
+      description: cleanExcerpt || p.meta?.description,
+      excerpt: cleanExcerpt,
+      content: p.content?.rendered || '',
+      order: p.menu_order || 0,
+    };
+  }
+
+  const fallback = FALLBACK_PARTNERS.find((p) => p.slug === slug || String(p.id) === slug);
+  return fallback || null;
 }
 
 /**

@@ -111,11 +111,16 @@ export interface MIDHHeroSlide {
 export interface MIDHPartner {
   id: number | string;
   name: string;
+  slug?: string;
   logoUrl?: string;
+  featuredImage?: string;
   type: 'technique' | 'societe_civile' | 'bailleur';
   typeLabel: string;
   websiteUrl?: string;
   description?: string;
+  excerpt?: string;
+  content?: string;
+  order?: number;
 }
 
 export interface MIDHSection {

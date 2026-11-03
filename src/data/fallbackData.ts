@@ -307,24 +307,138 @@ export const FALLBACK_DOCUMENTS: MIDHDocument[] = [
 export const FALLBACK_PARTNERS: MIDHPartner[] = [
   {
     id: 1,
-    name: "Partenaire Technique & Institutionnel",
-    type: "technique",
-    typeLabel: "Partenaire Technique",
-    description: "Appui aux programmes de monitoring des droits humains et formation juridique continue.",
+    name: "Délégation de l'Union Européenne en Côte d'Ivoire",
+    slug: "union-europeenne-cote-divoire",
+    type: "bailleur",
+    typeLabel: "Bailleur Institutionnel",
+    logoUrl: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=600&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=80",
+    websiteUrl: "https://eeas.europa.eu/delegations/cote-divoire_fr",
+    description: "Soutien financier et stratégique aux programmes de consolidation de l'État de droit et de protection des défenseurs des droits humains.",
+    excerpt: "Partenaire historique du MIDH pour l'accès universel à une justice équitable et la protection des libertés fondamentales en Côte d'Ivoire.",
+    content: `
+      <p>La Délégation de l'Union Européenne en Côte d'Ivoire est un partenaire stratégique et financier de premier plan pour le Mouvement Ivoirien des Droits Humains (MIDH). Depuis plus de deux décennies, cette coopération s'est matérialisée par l'appui à plusieurs programmes d'envergure nationale.</p>
+      <h3>Axes majeurs de la coopération</h3>
+      <p>Le partenariat se concentre sur trois priorités opérationnelles :</p>
+      <ul>
+        <li><strong>Renforcement de l'État de droit :</strong> Soutien aux observatoires citoyens du MIDH déployés lors des échéances électorales et monitoring régulier du respect des garanties judiciaires.</li>
+        <li><strong>Assistance juridique aux populations vulnérables :</strong> Financement des cliniques juridiques mobiles pour rapprocher la justice des justiciables dans les régions de l'Ouest et du Nord de la Côte d'Ivoire.</li>
+        <li><strong>Protection des défenseurs des droits de l'homme :</strong> Mise en place de protocoles d'alerte précoce et d'assistance d'urgence pour les militants et journalistes menacés.</li>
+      </ul>
+      <p>Grâce à ce partenariat, des milliers de citoyens ivoiriens ont bénéficié de consultations juridiques gratuites et d'un accompagnement personnalisé devant les juridictions compétentes.</p>
+    `,
+    order: 1,
   },
   {
     id: 2,
-    name: "Organisation Partenaire de la Société Civile",
-    type: "societe_civile",
-    typeLabel: "Société Civile",
-    description: "Synergie d'actions pour le plaidoyer national et la justice de proximité.",
+    name: "Fédération Internationale pour les Droits Humains (FIDH)",
+    slug: "fidh-federation-internationale-droits-humains",
+    type: "technique",
+    typeLabel: "Partenaire Technique International",
+    logoUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    websiteUrl: "https://www.fidh.org",
+    description: "Coordination internationale, appui aux missions d'enquêtes indépendantes et plaidoyer conjoint devant les instances internationales (ONU, CPI, CADHP).",
+    excerpt: "Synergie internationale pour la documentation rigoureuse des violations des droits humains et la lutte contre l'impunité.",
+    content: `
+      <p>Organisation non gouvernementale fédérant 192 ligues des droits de l'homme dans le monde, la Fédération Internationale pour les Droits Humains (FIDH) entretient des liens historiques et étroits avec le MIDH, l'un de ses membres les plus actifs en Afrique de l'Ouest.</p>
+      <h3>Actions conjointes de documentation et de plaidoyer</h3>
+      <p>Cette alliance technique et institutionnelle permet au MIDH d'amplifier la portée de ses rapports sur la scène internationale :</p>
+      <ul>
+        <li><strong>Documentation des crimes graves :</strong> Équipes conjointes d'enquêteurs déployées sur le terrain pour recueillir les dépositions des victimes avec les standards internationaux de recevabilité juridique.</li>
+        <li><strong>Plaidoyer auprès des instances multilatérales :</strong> Interventions régulières devant le Conseil des Droits de l'Homme de l'ONU à Genève et la Commission Africaine des Droits de l'Homme et des Peuples (CADHP) à Banjul.</li>
+        <li><strong>Accompagnement des victimes devant la justice pénale internationale :</strong> Représentation juridique et suivi des dossiers devant les cours internationales et régionales.</li>
+      </ul>
+    `,
+    order: 2,
   },
   {
     id: 3,
-    name: "Bailleur de Fonds Institutionnel",
+    name: "Conseil National des Droits de l'Homme (CNDH-CI)",
+    slug: "cndh-conseil-national-droits-homme",
+    type: "societe_civile",
+    typeLabel: "Institution Publique Partenaire",
+    logoUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+    websiteUrl: "https://www.cndh.ci",
+    description: "Cadre de concertation permanent pour la protection des droits des détenus, la prévention des crises et la veille démocratique.",
+    excerpt: "Partenariat républicain pour le monitoring pénitentiaire conjoint et la diffusion de la culture des droits humains.",
+    content: `
+      <p>Le Conseil National des Droits de l'Homme (CNDH) est l'institution nationale indépendante ivoirienne chargée de veiller au respect des droits de l'homme sur tout le territoire. Le MIDH siège et collabore étroitement avec le CNDH dans le cadre de concertations régulières.</p>
+      <h3>Axes de collaboration institutionnelle</h3>
+      <p>Les programmes de collaboration entre le MIDH et le CNDH portent sur :</p>
+      <ul>
+        <li><strong>Visites inopinées des lieux de privation de liberté :</strong> Inspections régulières des maisons d'arrêt, des commissariats et des brigades de gendarmerie pour s'assurer du respect des droits fondamentaux des gardés à vue et détenus.</li>
+        <li><strong>Mécanisme d'alerte et de médiation sociale :</strong> Traitement concerté des requêtes de citoyens victimes d'abus d'autorité ou d'expulsions illégales.</li>
+        <li><strong>Sensibilisation aux droits civiques :</strong> Ateliers conjoints de vulgarisation des textes légaux auprès des forces de défense et de sécurité ainsi que des leaders communautaires.</li>
+      </ul>
+    `,
+    order: 3,
+  },
+  {
+    id: 4,
+    name: "Programme des Nations Unies pour le Développement (PNUD)",
+    slug: "pnud-cote-divoire",
     type: "bailleur",
-    typeLabel: "Bailleur de fonds",
-    description: "Soutien aux projets d'accompagnement juridique et de protection des victimes.",
+    typeLabel: "Partenaire Multilatéral",
+    logoUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+    websiteUrl: "https://www.undp.org/cote-divoire",
+    description: "Appui technique à la cohésion sociale, à l'accès équitable à la justice de proximité et aux initiatives de consolidation de la paix.",
+    excerpt: "Coopération pour le renforcement des capacités institutionnelles de la société civile ivoirienne.",
+    content: `
+      <p>Le PNUD soutient les initiatives du MIDH visant à renforcer la résilience des communautés et à garantir un accès équitable aux services juridiques essentiels dans les zones rurales et périurbaines.</p>
+      <h3>Impacts concrets du partenariat</h3>
+      <p>Les projets conduits avec le PNUD ont permis :</p>
+      <ul>
+        <li>La formation de plus de 350 parajuristes communautaires actifs dans 15 régions de Côte d'Ivoire.</li>
+        <li>La création de centres d'écoute et d'orientation juridique pour les femmes victimes de violences basées sur le genre (VBG).</li>
+        <li>La publication de guides d'éducation civique et de résolution pacifique des conflits communautaires.</li>
+      </ul>
+    `,
+    order: 4,
+  },
+  {
+    id: 5,
+    name: "Haut-Commissariat des Nations Unies aux Droits de l'Homme (HCDH)",
+    slug: "hcdh-nations-unies",
+    type: "technique",
+    typeLabel: "Agence Spécialisée ONU",
+    logoUrl: "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?auto=format&fit=crop&w=600&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?auto=format&fit=crop&w=1200&q=80",
+    websiteUrl: "https://www.ohchr.org",
+    description: "Normes internationales, formation des officiers de police judiciaire et suivi de l'Examen Périodique Universel (EPU).",
+    excerpt: "Alignement sur les standards universels des droits humains et préparation des rapports alternatifs.",
+    content: `
+      <p>Le Bureau Régional du HCDH apporte un appui technique continu aux équipes du MIDH pour le renforcement des compétences en matière de monitoring des droits humains et le suivi des recommandations de l'ONU.</p>
+      <h3>Domaines d'intervention</h3>
+      <ul>
+        <li><strong>Rapports alternatifs EPU :</strong> Élaboration et soumission conjointe de rapports périodiques examinant la situation des droits de l'homme en Côte d'Ivoire devant les Comités de traités de l'ONU.</li>
+        <li><strong>Standardisation du monitoring :</strong> Intégration des méthodologies onusiennes de recueil de données et de vérification d'informations sensibles.</li>
+      </ul>
+    `,
+    order: 5,
+  },
+  {
+    id: 6,
+    name: "Action des Chrétiens pour l'Abolition de la Torture (ACAT-CI)",
+    slug: "acat-ci-abolition-torture",
+    type: "societe_civile",
+    typeLabel: "Organisation Sœur de la Société Civile",
+    logoUrl: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80",
+    featuredImage: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+    websiteUrl: "https://acat-ci.org",
+    description: "Synergie d'action sur le plaidoyer pour l'abolition définitive de la torture et des peines ou traitements cruels, inhumains ou dégradants.",
+    excerpt: "Mobilisation citoyenne pour la dignité humaine et le respect absolu de l'intégrité physique de chaque citoyen.",
+    content: `
+      <p>L'ACAT-CI et le MIDH partagent un engagement commun pour la dignité humaine. Cette collaboration historique prend la forme de campagnes conjointes de sensibilisation et de saisines coordonnées des juridictions nationales et régionales.</p>
+      <h3>Actions communes</h3>
+      <ul>
+        <li>Observation conjointe des conditions de détention en milieu carcéral.</li>
+        <li>Plaidoyer auprès de l'Assemblée Nationale pour la ratification complète des protocoles facultatifs des conventions internationales.</li>
+      </ul>
+    `,
+    order: 6,
   },
 ];
 

@@ -80,6 +80,19 @@ class MIDH_Headless_Core {
         add_action('manage_midh_subscriber_posts_custom_column', array($this, 'render_subscriber_custom_column'), 10, 2);
         add_action('manage_posts_extra_tablenav', array($this, 'render_subscriber_export_button'));
         add_action('admin_post_midh_export_subscribers', array($this, 'export_subscribers_csv'));
+
+        // Redirection du bouton "Voir l'article" / Prévisualisation vers le frontend Next.js sur Vercel
+        add_filter('preview_post_link', array($this, 'filter_headless_preview_link'), 10, 2);
+        add_filter('post_link', array($this, 'filter_headless_post_link'), 10, 2);
+        add_filter('post_type_link', array($this, 'filter_headless_post_type_link'), 10, 2);
+        add_filter('post_updated_messages', array($this, 'filter_headless_updated_messages'));
+        add_filter('get_sample_permalink_html', array($this, 'filter_headless_sample_permalink_html'), 10, 5);
+        add_action('template_redirect', array($this, 'redirect_to_frontend_vercel'));
+
+        // Colonnes personnalisées & actions pour Partenaires MIDH
+        add_filter('manage_midh_partner_posts_columns', array($this, 'customize_partner_columns'));
+        add_action('manage_midh_partner_posts_custom_column', array($this, 'render_partner_custom_column'), 10, 2);
+        add_filter('post_row_actions', array($this, 'customize_partner_row_actions'), 10, 2);
     }
 
     /**
@@ -163,7 +176,9 @@ class MIDH_Headless_Core {
             'show_in_rest' => true,
             'rest_base'    => 'midh_partner',
             'menu_icon'    => 'dashicons-businessperson',
-            'supports'     => array('title', 'editor', 'thumbnail'),
+            'supports'     => array('title', 'editor', 'thumbnail', 'excerpt'),
+            'has_archive'  => true,
+            'rewrite'      => array('slug' => 'partenaires'),
         ));
 
         // E. CPT : Diapositives du Carrousel d'Accueil
@@ -3056,6 +3071,187 @@ class MIDH_Headless_Core {
             'total'   => count($subscribers),
             'items'   => $subscribers,
         ), 200);
+    }
+
+    /**
+     * Redirige la prévisualisation WordPress vers le frontend Next.js sur Vercel
+     */
+    public function filter_headless_preview_link($link, $post) {
+        if (!$post) return $link;
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+        if ($post->post_type === 'post') {
+            return esc_url($frontend_base . '/actualites/' . $post->post_name);
+        } elseif ($post->post_type === 'midh_partner') {
+            return esc_url($frontend_base . '/partenaires/' . $post->post_name);
+        } elseif ($post->post_type === 'midh_project') {
+            return esc_url($frontend_base . '/nos-actions/' . $post->post_name);
+        }
+        return $link;
+    }
+
+    /**
+     * Redirige le permalien des articles classiques vers Vercel
+     */
+    public function filter_headless_post_link($permalink, $post) {
+        if (!$post) return $permalink;
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+        return esc_url($frontend_base . '/actualites/' . $post->post_name);
+    }
+
+    /**
+     * Redirige le permalien des CPT (Partenaires, Projets) vers Vercel
+     */
+    public function filter_headless_post_type_link($post_link, $post) {
+        if (!$post) return $post_link;
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+        if ($post->post_type === 'midh_partner') {
+            return esc_url($frontend_base . '/partenaires/' . $post->post_name);
+        } elseif ($post->post_type === 'midh_project') {
+            return esc_url($frontend_base . '/nos-actions/' . $post->post_name);
+        }
+        return $post_link;
+    }
+
+    /**
+     * Personnalise les messages de publication dans WordPress
+     * pour que "Voir l'article" pointe vers le frontend Vercel
+     */
+    public function filter_headless_updated_messages($messages) {
+        global $post;
+        if (!$post) return $messages;
+
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+
+        if ($post->post_type === 'post') {
+            $view_url = esc_url($frontend_base . '/actualites/' . $post->post_name);
+            $view_link = sprintf(' <a href="%s" target="_blank" rel="noopener noreferrer" style="font-weight:600; text-decoration:underline;">%s &rarr;</a>', $view_url, __('Voir l\'article sur Vercel', 'midh-headless'));
+            if (isset($messages['post'])) {
+                $messages['post'][1] = __('Article mis à jour.', 'midh-headless') . $view_link;
+                $messages['post'][6] = __('Article publié.', 'midh-headless') . $view_link;
+            }
+        } elseif ($post->post_type === 'midh_partner') {
+            $view_url = esc_url($frontend_base . '/partenaires/' . $post->post_name);
+            $view_link = sprintf(' <a href="%s" target="_blank" rel="noopener noreferrer" style="font-weight:600; text-decoration:underline;">%s &rarr;</a>', $view_url, __('Voir le partenaire sur Vercel', 'midh-headless'));
+            $messages['midh_partner'] = array(
+                0  => '',
+                1  => __('Partenaire mis à jour.', 'midh-headless') . $view_link,
+                4  => __('Partenaire mis à jour.', 'midh-headless') . $view_link,
+                6  => __('Partenaire publié avec succès.', 'midh-headless') . $view_link,
+                7  => __('Partenaire enregistré.', 'midh-headless'),
+                8  => __('Partenaire soumis.', 'midh-headless'),
+                10 => __('Brouillon du partenaire mis à jour.', 'midh-headless')
+            );
+        } elseif ($post->post_type === 'midh_project') {
+            $view_url = esc_url($frontend_base . '/nos-actions/' . $post->post_name);
+            $view_link = sprintf(' <a href="%s" target="_blank" rel="noopener noreferrer" style="font-weight:600; text-decoration:underline;">%s &rarr;</a>', $view_url, __('Voir le projet sur Vercel', 'midh-headless'));
+            $messages['midh_project'] = array(
+                0  => '',
+                1  => __('Projet mis à jour.', 'midh-headless') . $view_link,
+                4  => __('Projet mis à jour.', 'midh-headless') . $view_link,
+                6  => __('Projet publié avec succès.', 'midh-headless') . $view_link,
+                7  => __('Projet enregistré.', 'midh-headless'),
+                8  => __('Projet soumis.', 'midh-headless'),
+                10 => __('Brouillon du projet mis à jour.', 'midh-headless')
+            );
+        }
+
+        return $messages;
+    }
+
+    /**
+     * Remplace le permalien d'exemple dans Gutenberg et Classic Editor
+     */
+    public function filter_headless_sample_permalink_html($return, $post_id, $new_title, $new_slug, $post) {
+        if (!$post) return $return;
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+        $slug = $new_slug ? $new_slug : $post->post_name;
+        
+        $target_url = '';
+        if ($post->post_type === 'post') {
+            $target_url = $frontend_base . '/actualites/' . $slug;
+        } elseif ($post->post_type === 'midh_partner') {
+            $target_url = $frontend_base . '/partenaires/' . $slug;
+        } elseif ($post->post_type === 'midh_project') {
+            $target_url = $frontend_base . '/nos-actions/' . $slug;
+        }
+
+        if ($target_url) {
+            return '<div id="edit-slug-box" class="hide-if-no-js"><strong>' . __('Lien public Vercel :', 'midh-headless') . '</strong> <a href="' . esc_url($target_url) . '" target="_blank" rel="noopener noreferrer" style="color:#006b1f; font-weight:600;">' . esc_html($target_url) . ' <span class="dashicons dashicons-external" style="font-size:16px; vertical-align:middle;"></span></a></div>';
+        }
+        return $return;
+    }
+
+    /**
+     * Redirige tout accès direct au frontend WordPress vers le frontend Next.js sur Vercel
+     */
+    public function redirect_to_frontend_vercel() {
+        if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST) || wp_doing_ajax() || wp_doing_cron()) {
+            return;
+        }
+
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+
+        if (is_singular('post')) {
+            global $post;
+            wp_redirect($frontend_base . '/actualites/' . $post->post_name, 301);
+            exit;
+        } elseif (is_singular('midh_partner')) {
+            global $post;
+            wp_redirect($frontend_base . '/partenaires/' . $post->post_name, 301);
+            exit;
+        } elseif (is_singular('midh_project')) {
+            global $post;
+            wp_redirect($frontend_base . '/nos-actions/' . $post->post_name, 301);
+            exit;
+        } elseif (is_home() || is_front_page()) {
+            wp_redirect($frontend_base, 301);
+            exit;
+        }
+    }
+
+    /**
+     * Colonnes personnalisées pour la liste des partenaires
+     */
+    public function customize_partner_columns($columns) {
+        $new_columns = array();
+        $new_columns['cb'] = $columns['cb'];
+        $new_columns['midh_thumb'] = __('Photo / Logo', 'midh-headless');
+        $new_columns['title'] = __('Nom du Partenaire', 'midh-headless');
+        $new_columns['midh_partner_type'] = __('Type & Statut', 'midh-headless');
+        $new_columns['midh_partner_preview'] = __('Lien Frontend Vercel', 'midh-headless');
+        $new_columns['date'] = $columns['date'];
+        return $new_columns;
+    }
+
+    public function render_partner_custom_column($column, $post_id) {
+        $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+        $post = get_post($post_id);
+
+        if ($column === 'midh_thumb') {
+            if (has_post_thumbnail($post_id)) {
+                echo get_the_post_thumbnail($post_id, array(60, 40), array('style' => 'border-radius:6px; object-fit:cover; border:1px solid #ddd; width:60px; height:40px;'));
+            } else {
+                echo '<span class="dashicons dashicons-businessman" style="font-size:32px; color:#aaa;"></span>';
+            }
+        } elseif ($column === 'midh_partner_type') {
+            $type = get_post_meta($post_id, 'type', true);
+            $type_label = get_post_meta($post_id, 'type_label', true);
+            $label = !empty($type_label) ? $type_label : ($type === 'bailleur' ? 'Bailleur de Fonds' : ($type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'));
+            echo '<span class="midh-cat-badge">' . esc_html($label) . '</span>';
+        } elseif ($column === 'midh_partner_preview') {
+            $slug = $post->post_name;
+            $url = esc_url($frontend_base . '/partenaires/' . $slug);
+            echo '<a href="' . $url . '" target="_blank" rel="noopener noreferrer" class="button button-small" style="background:#0B3827; color:#fff; border:none; display:inline-flex; align-items:center; gap:4px; padding:2px 8px; font-weight:600;">' . __('Voir sur Vercel', 'midh-headless') . ' <span class="dashicons dashicons-external" style="font-size:14px; margin-top:2px;"></span></a>';
+        }
+    }
+
+    public function customize_partner_row_actions($actions, $post) {
+        if ($post->post_type === 'midh_partner') {
+            $frontend_base = rtrim(get_option('midh_frontend_url', 'http://localhost:3000'), '/');
+            $preview_url = esc_url($frontend_base . '/partenaires/' . $post->post_name);
+            $actions['midh_nextjs_preview'] = '<a href="' . $preview_url . '" target="_blank" rel="noopener noreferrer" style="color:#006b1f; font-weight:600;"><span class="dashicons dashicons-external" style="font-size:14px; vertical-align:middle;"></span> ' . __('Voir sur Vercel', 'midh-headless') . '</a>';
+        }
+        return $actions;
     }
 }
 
