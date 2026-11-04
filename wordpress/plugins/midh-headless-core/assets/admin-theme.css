@@ -530,28 +530,42 @@ input:focus, textarea:focus, select:focus {
 /* ==========================================================
    4. DASHBOARD HUB SUR-MESURE (Accueillir les Admins)
    ========================================================== */
-#dashboard-widgets-wrap {
+body.index-php #dashboard-widgets-wrap {
   margin-top: 20px;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
-#dashboard-widgets {
+body.index-php #dashboard-widgets {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+body.index-php #dashboard-widgets .postbox-container,
+body.index-php #dashboard-widgets #postbox-container-1,
+body.index-php #dashboard-widgets #postbox-container-2,
+body.index-php #dashboard-widgets #postbox-container-3,
+body.index-php #dashboard-widgets #postbox-container-4 {
+  width: 100% !important;
+  max-width: 100% !important;
+  float: none !important;
   display: block !important;
 }
 
-#dashboard-widgets .postbox-container {
-  width: 100% !important;
-  float: none !important;
-}
-
-#postbox-container-2:empty,
-#postbox-container-3:empty,
-#postbox-container-4:empty {
+body.index-php #dashboard-widgets #postbox-container-2:empty,
+body.index-php #dashboard-widgets #postbox-container-3:empty,
+body.index-php #dashboard-widgets #postbox-container-4:empty,
+body.index-php #dashboard-widgets .postbox-container:not(#postbox-container-1):empty {
   display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 #midh_dashboard_hub_widget {
   width: 100% !important;
   max-width: 100% !important;
+  float: none !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -651,14 +665,20 @@ input:focus, textarea:focus, select:focus {
 /* Grille de cartes statistiques : 2 par 2 côte à côte */
 .midh-stats-grid {
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 20px !important;
   margin-bottom: 32px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
-@media (max-width: 900px) {
+.midh-stat-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 782px) {
   .midh-stats-grid {
     grid-template-columns: 1fr !important;
   }

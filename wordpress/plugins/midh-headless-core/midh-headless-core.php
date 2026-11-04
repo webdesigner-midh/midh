@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.4.0 avec Tableau de bord optimisé en cartes 2x2, Historique des Dons & Mécénat avec Export Excel/CSV, Gestionnaire d'Abonnés Newsletter et synchronisation Next.js.
- * Version: 1.4.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.4.1 avec Tableau de bord optimisé en cartes 2x2, Historique des Dons & Mécénat avec Export Excel/CSV, Gestionnaire d'Abonnés Newsletter et synchronisation Next.js.
+ * Version: 1.4.1
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -17,6 +17,9 @@ if (!defined('ABSPATH')) {
 class MIDH_Headless_Core {
 
     public function __construct() {
+        // Forcer le conteneur du tableau de bord sur 1 colonne pleine largeur pour la grille 2x2
+        add_filter('get_user_option_screen_layout_dashboard', function() { return 1; });
+
         // Initialisation des Custom Post Types et Taxonomies
         add_action('init', array($this, 'register_content_types'));
         add_action('init', array($this, 'register_meta_fields'));
@@ -833,11 +836,13 @@ class MIDH_Headless_Core {
      * 6. PERSONNALISATION COMPLÈTE DE L'INTERFACE ADMIN (MIDH Studio)
      */
     public function enqueue_admin_theme($hook) {
+        $css_path = plugin_dir_path(__FILE__) . 'assets/admin-theme.css';
+        $ver = file_exists($css_path) ? filemtime($css_path) : '1.4.1';
         wp_enqueue_style(
             'midh-admin-theme',
             plugin_dir_url(__FILE__) . 'assets/admin-theme.css',
             array(),
-            '1.6.0'
+            $ver
         );
 
         global $post;
@@ -957,6 +962,65 @@ class MIDH_Headless_Core {
         $is_headless_ready   = !empty($revalidate_secret) && !empty($frontend_url);
 
         ?>
+        <style>
+            /* Forcer le conteneur du tableau de bord WordPress à utiliser 100% de la largeur */
+            body.index-php #dashboard-widgets-wrap,
+            body.index-php #dashboard-widgets,
+            body.index-php #dashboard-widgets .postbox-container,
+            body.index-php #dashboard-widgets #postbox-container-1,
+            body.index-php #dashboard-widgets #postbox-container-2,
+            body.index-php #dashboard-widgets #postbox-container-3,
+            body.index-php #dashboard-widgets #postbox-container-4 {
+                width: 100% !important;
+                max-width: 100% !important;
+                float: none !important;
+                display: block !important;
+            }
+            body.index-php #dashboard-widgets #postbox-container-2:empty,
+            body.index-php #dashboard-widgets #postbox-container-3:empty,
+            body.index-php #dashboard-widgets #postbox-container-4:empty,
+            body.index-php #dashboard-widgets .postbox-container:not(#postbox-container-1):empty {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+            }
+            #midh_dashboard_hub_widget {
+                width: 100% !important;
+                max-width: 100% !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                margin-top: 10px !important;
+            }
+            #midh_dashboard_hub_widget .postbox-header {
+                display: none !important;
+            }
+            #midh_dashboard_hub_widget .inside {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            /* GRILLE DES CARTES : STRICTEMENT 2 PAR 2 CÔTE À CÔTE */
+            .midh-stats-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 20px !important;
+                margin-bottom: 32px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .midh-stat-card {
+                width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+            @media (max-width: 782px) {
+                .midh-stats-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+        </style>
         <div class="midh-hub-banner">
             <h2>Bienvenue sur le portail d'administration du MIDH</h2>
             <p>Ce tableau de bord vous permet d'administrer en toute simplicité l'ensemble des modules du portail institutionnel. Chaque élément ci-dessous est un raccourci direct vers son interface de gestion :</p>
