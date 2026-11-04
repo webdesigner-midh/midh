@@ -7,10 +7,12 @@ const donationSchema = z.object({
     .number({ invalid_type_error: 'Le montant doit être un nombre valide.' })
     .min(100, 'Le montant minimum d’un don est de 100 FCFA.')
     .max(50000000, 'Montant supérieur à la limite autorisée.'),
+  donorType: z.enum(['particulier', 'organisation']).optional().default('particulier'),
   donorName: z
     .string()
     .trim()
-    .min(2, 'Veuillez saisir votre nom et prénom (au moins 2 caractères).'),
+    .min(2, 'Veuillez saisir votre nom ou la raison sociale de votre organisation.'),
+  representativeName: z.string().optional().default(''),
   donorEmail: z
     .string()
     .trim()
@@ -33,12 +35,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount, donorName, donorEmail, donorPhone, operator, donationType } = parseResult.data;
+    const { amount, donorType, donorName, representativeName, donorEmail, donorPhone, operator, donationType } = parseResult.data;
 
     // Appel au service WiniPayer avec idempotence
     const invoiceResult = await createDonationInvoice({
       amount,
+      donorType,
       donorName,
+      representativeName,
       donorEmail,
       donorPhone,
       operator,

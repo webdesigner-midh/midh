@@ -88,18 +88,21 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
 
         {/* Boutons d'action */}
         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <a
+            href={`/api/don/recu/${encodeURIComponent(ref)}?amount=${encodeURIComponent(amount)}&name=${encodeURIComponent(name)}`}
+            download
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Télécharger le reçu fiscal PDF</span>
+          </a>
+
           <Link
             href="/"
             className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0B3827] hover:bg-[#0A2F21] text-white font-bold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2"
           >
             <span>Retour à l&apos;accueil</span>
             <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/nos-actions"
-            className="w-full sm:w-auto px-6 py-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm transition-colors inline-flex items-center justify-center"
-          >
-            Découvrir nos actions de terrain
           </Link>
         </div>
       </div>

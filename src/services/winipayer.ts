@@ -7,7 +7,9 @@ import crypto from 'crypto';
 
 export interface CreateDonationParams {
   amount: number;
+  donorType?: 'particulier' | 'organisation';
   donorName: string;
+  representativeName?: string;
   donorEmail: string;
   donorPhone?: string;
   operator?: string;
@@ -111,7 +113,9 @@ export async function createDonationInvoice(
       },
     ],
     custom_data: {
+      donor_type: params.donorType || 'particulier',
       donor_name: params.donorName,
+      representative_name: params.representativeName || '',
       donor_email: params.donorEmail,
       donor_phone: params.donorPhone || '',
       idempotency_key: uniqueRef,
