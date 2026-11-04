@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { MIDHDocument } from '@/types/wordpress';
+import PdfViewerModal from './PdfViewerModal';
 
 interface DocumentsListProps {
   documents: MIDHDocument[];
@@ -18,6 +19,7 @@ const CATEGORIES = [
 export default function DocumentsList({ documents }: DocumentsListProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('tous');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [viewingDoc, setViewingDoc] = useState<MIDHDocument | null>(null);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
@@ -116,15 +118,24 @@ export default function DocumentsList({ documents }: DocumentsListProps) {
             >
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <span className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
+                  <button
+                    type="button"
+                    onClick={() => setViewingDoc(doc)}
+                    className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform cursor-pointer"
+                    title="Cliquer pour prévisualiser dans la visionneuse"
+                  >
                     <span className="material-symbols-outlined text-[26px]">picture_as_pdf</span>
-                  </span>
+                  </button>
                   <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#0B3827] border border-emerald-100 text-xs font-semibold">
                     {doc.categoryLabel || 'Rapport officiel'}
                   </span>
                 </div>
 
-                <h2 className="text-base sm:text-lg text-[#0B3827] font-bold leading-snug group-hover:text-emerald-900 transition-colors">
+                <h2
+                  onClick={() => setViewingDoc(doc)}
+                  className="text-base sm:text-lg text-[#0B3827] font-bold leading-snug group-hover:text-emerald-900 transition-colors cursor-pointer"
+                  title="Cliquer pour lire le document"
+                >
                   {doc.title}
                 </h2>
 
@@ -133,7 +144,7 @@ export default function DocumentsList({ documents }: DocumentsListProps) {
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 sm:gap-3">
                 <div className="flex flex-col text-xs text-slate-500">
                   <span className="font-medium text-slate-700">
                     {doc.fileFormat || 'PDF'} • {doc.fileSize || 'Standard'}
@@ -143,16 +154,33 @@ export default function DocumentsList({ documents }: DocumentsListProps) {
                   </span>
                 </div>
 
-                <a
-                  href={doc.fileUrl || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  className="inline-flex items-center gap-1.5 bg-[#138A2E] hover:bg-[#0F7326] active:scale-95 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-xs shrink-0"
-                >
-                  <span>Télécharger</span>
-                  <span className="material-symbols-outlined text-[16px]">download</span>
-                </a>
+                {/* Actions : Visionneuse interne & Téléchargement direct */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Bouton Visionneuse Interne */}
+                  <button
+                    type="button"
+                    onClick={() => setViewingDoc(doc)}
+                    className="inline-flex items-center gap-1.5 bg-[#0B3827] hover:bg-[#07261a] active:scale-95 text-white px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-xs"
+                    title="Lire le document dans la visionneuse sans le télécharger"
+                  >
+                    <span className="material-symbols-outlined text-[17px]">visibility</span>
+                    <span>Consulter</span>
+                  </button>
+
+                  {/* Bouton Téléchargement direct */}
+                  <a
+                    href={doc.fileUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#0B3827] border border-emerald-200 active:scale-95 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-xs"
+                    title="Télécharger le fichier PDF sur votre appareil"
+                    aria-label={`Télécharger le fichier ${doc.title}`}
+                  >
+                    <span className="material-symbols-outlined text-[17px]">download</span>
+                    <span className="hidden xl:inline">Télécharger</span>
+                  </a>
+                </div>
               </div>
             </article>
           ))}
@@ -177,6 +205,13 @@ export default function DocumentsList({ documents }: DocumentsListProps) {
           </button>
         </div>
       )}
+
+      {/* Visionneuse PDF Interne */}
+      <PdfViewerModal
+        document={viewingDoc}
+        isOpen={!!viewingDoc}
+        onClose={() => setViewingDoc(null)}
+      />
     </div>
   );
 }
