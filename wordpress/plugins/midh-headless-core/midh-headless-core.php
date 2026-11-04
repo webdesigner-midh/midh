@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.3.0 avec Gestionnaire d'Abonnés Newsletter & Export Excel/CSV, Médiathèque & Galerie Photo-Vidéo, et synchronisation Next.js.
- * Version: 1.3.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.4.0 avec Tableau de bord optimisé en cartes 2x2, Historique des Dons & Mécénat avec Export Excel/CSV, Gestionnaire d'Abonnés Newsletter et synchronisation Next.js.
+ * Version: 1.4.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
