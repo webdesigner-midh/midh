@@ -99,28 +99,19 @@ export async function createDonationInvoice(
   const payload = {
     env,
     amount: Math.round(params.amount),
-    description: `Don pour le MIDH — Soutien aux Droits Humains (${params.donorName.slice(0, 30)})`,
-    cancel_url: `${baseUrl}/don?status=cancelled&ref=${uniqueRef}`,
-    return_url: `${baseUrl}/don/succes?ref=${uniqueRef}&amount=${params.amount}`,
+    description: `Don MIDH - ${params.donorName.slice(0, 40)}`,
+    cancel_url: `${baseUrl}/don?status=cancelled&ref=${encodeURIComponent(uniqueRef)}`,
+    return_url: `${baseUrl}/don/succes?ref=${encodeURIComponent(uniqueRef)}&amount=${params.amount}&name=${encodeURIComponent(params.donorName)}`,
     callback_url: `${baseUrl}/api/don/ipn`,
-    client_pay_fee: true,
-    items: [
-      {
-        name: 'Donation pour la justice et les libertés',
-        quantity: 1,
-        unit_price: Math.round(params.amount),
-        description: `Donateur : ${params.donorName} (${params.donorEmail})`,
-      },
-    ],
-    custom_data: {
+    custom_data: JSON.stringify({
+      ref: uniqueRef,
       donor_type: params.donorType || 'particulier',
       donor_name: params.donorName,
       representative_name: params.representativeName || '',
       donor_email: params.donorEmail,
       donor_phone: params.donorPhone || '',
-      idempotency_key: uniqueRef,
       operator: params.operator || 'mobile_money',
-    },
+    }),
   };
 
   try {
@@ -137,11 +128,33 @@ export async function createDonationInvoice(
     const data = await res.json();
 
     if (!res.ok || !data.success) {
-      const errorMsg =
-        data.messages?.join(', ') ||
-        data.errors?.join(', ') ||
-        data.message ||
-        `Erreur WiniPayer (${res.status})`;
+      let errorMsg = `Erreur WiniPayer (${res.status})`;
+
+      if (Array.isArray(data.messages) && data.messages.length > 0) {
+        errorMsg = data.messages.map((m: unknown) => (typeof m === 'object' ? JSON.stringify(m) : String(m))).join(', ');
+      } else if (data.errors) {
+        if (typeof data.errors === 'string') {
+          errorMsg = data.errors;
+        } else if (Array.isArray(data.errors) && data.errors.length > 0) {
+          errorMsg = data.errors
+            .map((e: unknown) => (typeof e === 'object' && e !== null && 'msg' in e ? String((e as { msg: unknown }).msg) : String(e)))
+            .join(', ');
+        } else if (typeof data.errors === 'object' && data.errors !== null) {
+          const errObj = data.errors as Record<string, unknown>;
+          if (errObj.msg) {
+            errorMsg = String(errObj.msg);
+          } else if (errObj.message) {
+            errorMsg = String(errObj.message);
+          } else {
+            const vals = Object.values(errObj).flatMap((v) => (Array.isArray(v) ? v : [v]));
+            const strVals = vals.map((v) => (typeof v === 'object' && v !== null && 'msg' in v ? String((v as { msg: unknown }).msg) : String(v)));
+            if (strVals.length > 0) errorMsg = strVals.join(', ');
+          }
+        }
+      } else if (typeof data.message === 'string' && data.message.trim().length > 0) {
+        errorMsg = data.message;
+      }
+
       console.error('[WiniPayer] Erreur de création de facture :', errorMsg, data);
       return {
         success: false,
