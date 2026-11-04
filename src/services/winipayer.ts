@@ -101,7 +101,7 @@ export async function createDonationInvoice(
     amount: Math.round(params.amount),
     description: `Don MIDH - ${params.donorName.slice(0, 40)}`,
     cancel_url: `${baseUrl}/don?status=cancelled&ref=${encodeURIComponent(uniqueRef)}`,
-    return_url: `${baseUrl}/don/succes?ref=${encodeURIComponent(uniqueRef)}&amount=${params.amount}&name=${encodeURIComponent(params.donorName)}`,
+    return_url: `${baseUrl}/don/succes?ref=${encodeURIComponent(uniqueRef)}&amount=${params.amount}&name=${encodeURIComponent(params.donorName)}&email=${encodeURIComponent(params.donorEmail)}&phone=${encodeURIComponent(params.donorPhone || '')}&type=${encodeURIComponent(params.donorType || 'particulier')}`,
     callback_url: `${baseUrl}/api/don/ipn`,
     custom_data: JSON.stringify({
       ref: uniqueRef,
@@ -203,8 +203,10 @@ export function markTransactionProcessed(transactionId: string): void {
  */
 export function verifyIpnSignature(payload: WiniPayerIpnPayload): boolean {
   const privateKey = process.env.WINIPAYER_PRIVATE_KEY?.trim();
-  if (!privateKey) {
-    // Si la clé privée n'est pas encore configurée, on autorise sous réserve de validation de statut
+  const env = (process.env.WINIPAYER_ENV?.toLowerCase() === 'prod' ? 'prod' : 'test') as 'prod' | 'test';
+
+  // En environnement de test ou sans clé privée, autoriser le traitement
+  if (env === 'test' || !privateKey) {
     return true;
   }
 

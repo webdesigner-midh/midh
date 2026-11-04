@@ -30,12 +30,15 @@ export async function GET(
       paymentMethod: 'WiniPayer (Mobile Money & Carte Bancaire)',
     });
 
+    const cleanRef = ref.replace(/[^a-zA-Z0-9_-]/g, '_');
     const headers = new Headers();
     headers.set('Content-Type', 'application/pdf');
+    headers.set('Content-Length', String(pdfBytes.length));
     headers.set(
       'Content-Disposition',
-      `attachment; filename="recu-don-midh-${ref}.pdf"`
+      `attachment; filename="attestation-don-midh-${cleanRef}.pdf"`
     );
+    headers.set('Cache-Control', 'no-store, max-age=0');
 
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,

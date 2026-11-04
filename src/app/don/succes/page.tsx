@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle2, ShieldCheck, ArrowRight, HeartHandshake, Download } from 'lucide-react';
+import { formatFcfa, sendDonationConfirmationEmail } from '@/services/receiptPdf';
 
 export const metadata: Metadata = {
   title: 'Merci pour votre Don | MIDH',
@@ -16,7 +17,39 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
   const ref = (params.ref as string) || (params.uuid as string) || `MIDH-DON-${Date.now().toString().slice(-6)}`;
   const amount = (params.amount as string) || 'Libre';
   const name = (params.name as string) || '';
+  const email = (params.email as string) || '';
+  const phone = (params.phone as string) || '';
+  const donorType = (params.type === 'organisation' ? 'organisation' : 'particulier') as
+    | 'particulier'
+    | 'organisation';
+  const representative = (params.representative as string) || '';
   const isSimulated = params.simulated === 'true';
+
+  // Déclenchement automatique et sécurisé de l'e-mail officiel avec reçu PDF attaché
+  // Idempotent : ne sera envoyé qu'une seule et unique fois par référence de transaction
+  if (email && email.includes('@')) {
+    try {
+      await sendDonationConfirmationEmail({
+        reference: ref,
+        donorType,
+        donorName: name || 'Généreux Donateur',
+        representativeName: representative || undefined,
+        donorEmail: email,
+        donorPhone: phone || undefined,
+        amount,
+        currency: 'FCFA',
+        paymentMethod: 'WiniPayer (Mobile Money & Carte Bancaire)',
+      });
+    } catch (emailErr) {
+      console.error('[Donation Success Page] Erreur envoi automatique e-mail :', emailErr);
+    }
+  }
+
+  const downloadUrl = `/api/don/recu/${encodeURIComponent(ref)}?amount=${encodeURIComponent(
+    amount
+  )}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(
+    phone
+  )}&type=${encodeURIComponent(donorType)}`;
 
   return (
     <div className="min-h-[85vh] bg-gradient-to-b from-[#f0fdf4] via-[#f8fafc] to-white py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -65,7 +98,7 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
           <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
             <span className="text-slate-500 font-medium">Montant du don :</span>
             <span className="font-bold text-lg text-[#138A2E]">
-              {amount !== 'Libre' ? `${Number(amount).toLocaleString('fr-FR')} FCFA` : 'Don enregistré'}
+              {amount !== 'Libre' ? `${formatFcfa(amount)} FCFA` : 'Don enregistré'}
             </span>
           </div>
 
@@ -82,16 +115,18 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
         <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60 text-xs text-emerald-900 text-left flex items-start gap-3">
           <ShieldCheck className="w-5 h-5 text-[#138A2E] flex-shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            Un e-mail de confirmation accompagné de votre attestation officielle a été émis. Pour toute question administrative ou fiscale, contactez la Trésorerie du MIDH au <strong className="text-[#0B3827]">+225 01 01 49 87 39</strong> ou à <strong className="text-[#0B3827]">tresorier@midh-ci.org</strong>.
+            Un e-mail de confirmation accompagné de votre attestation officielle a été émis{email ? ` à l'adresse ${email}` : ''}. Pour toute question administrative ou fiscale, contactez la Trésorerie du MIDH au <strong className="text-[#0B3827]">+225 01 01 49 87 39</strong> ou à <strong className="text-[#0B3827]">tresorier@midh-ci.org</strong>.
           </p>
         </div>
 
         {/* Boutons d'action */}
         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <a
-            href={`/api/don/recu/${encodeURIComponent(ref)}?amount=${encodeURIComponent(amount)}&name=${encodeURIComponent(name)}`}
-            download
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+            href={downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            download={`recu-don-midh-${ref}.pdf`}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Télécharger le reçu fiscal PDF</span>
@@ -99,7 +134,7 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
 
           <Link
             href="/"
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0B3827] hover:bg-[#0A2F21] text-white font-bold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0B3827] hover:bg-[#0A2F21] text-white font-bold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Retour à l&apos;accueil</span>
             <ArrowRight className="w-4 h-4" />
@@ -109,4 +144,3 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
     </div>
   );
 }
-

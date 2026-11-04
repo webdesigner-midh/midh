@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 
 // Initialisation du client Resend avec la variable d'environnement sécurisée
-const resendApiKey = process.env.RESEND_API_KEY;
+const resendApiKey = process.env.RESEND_API_KEY?.trim() || 're_placeholder_midh';
 export const resend = new Resend(resendApiKey);
 
 // Expéditeur officiel vérifié dans Resend
