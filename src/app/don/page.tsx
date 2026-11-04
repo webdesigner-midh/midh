@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import DonationModule from '@/components/don/DonationModule';
 import {
   Gavel,
@@ -89,7 +90,9 @@ export default function DonPage() {
 
       {/* 2. Module Interactif de Don & Choix d'Opérateur Mobile Money */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10">
-        <DonationModule />
+        <Suspense fallback={<div className="w-full h-96 bg-white rounded-3xl animate-pulse" />}>
+          <DonationModule />
+        </Suspense>
       </section>
 
       {/* 3. À Quoi Sert Votre Don ? (3 Piliers d'Action Clairs) */}
