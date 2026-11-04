@@ -53,16 +53,18 @@ const processedTransactions = new Set<string>();
 
 /**
  * Récupère l'URL de base du site
+ * Impérativement le domaine officiel public https://www.midh-ci.org
+ * On n'utilise JAMAIS les domaines internes *.vercel.app qui sont protégés par le SSO Vercel
  */
 export function getSiteBaseUrl(): string {
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL;
-  if (envUrl) {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (envUrl && !envUrl.includes('vercel.app') && !envUrl.includes('localhost')) {
     if (envUrl.startsWith('http://') || envUrl.startsWith('https://')) {
       return envUrl.replace(/\/$/, '');
     }
     return `https://${envUrl.replace(/\/$/, '')}`;
   }
-  return 'https://midh-ci.org';
+  return 'https://www.midh-ci.org';
 }
 
 /**
@@ -72,7 +74,7 @@ export async function createDonationInvoice(
   params: CreateDonationParams
 ): Promise<WiniPayerInvoiceResult> {
   const applyKey = process.env.WINIPAYER_APPLY_KEY?.trim() || '';
-  const tokenKey = process.env.WINIPAYER_TOKEN_KEY?.trim();
+  const tokenKey = process.env.WINIPAYER_TOKEN_KEY?.trim() || '';
   const env = (process.env.WINIPAYER_ENV?.toLowerCase() === 'prod' ? 'prod' : 'test') as 'prod' | 'test';
   const baseUrl = getSiteBaseUrl();
 

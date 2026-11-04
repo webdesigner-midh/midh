@@ -5,7 +5,7 @@ const resendApiKey = process.env.RESEND_API_KEY?.trim() || 're_placeholder_midh'
 export const resend = new Resend(resendApiKey);
 
 // Expéditeur officiel vérifié dans Resend
-export const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'MIDH <info@midh-ci.org>';
+export const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL?.trim() || 'MIDH <info@midh-ci.org>';
 
 // URL du logo officiel du MIDH (hébergé sur CDN global haute disponibilité)
 export const LOGO_MIDH_URL =
