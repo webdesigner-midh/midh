@@ -85,7 +85,7 @@ export default function Header() {
             </span>
             <span className="hidden xl:inline text-white/30">/</span>
             <span className="hidden xl:inline text-white/85 truncate">
-              Siège : Abidjan, Cocody Angré, Carrefour Duncan
+              Siège : Abidjan, Cocody Angré, Carrefour les Oscars
             </span>
             {/* Affichage pour écrans moyens md/lg */}
             <span className="hidden md:inline xl:hidden text-white/30">•</span>
@@ -327,7 +327,7 @@ export default function Header() {
               <div className="p-3 bg-surface-container rounded-lg text-caption text-tertiary flex flex-col gap-1">
                 <span>Téléphone / WhatsApp : +225 01 01 49 87 39</span>
                 <span>Email : info@midh-ci.org</span>
-                <span>Siège : Abidjan, Cocody Angré, Carrefour Duncan</span>
+                <span>Siège : Abidjan, Cocody Angré, Carrefour les Oscars</span>
               </div>
             </div>
           </nav>

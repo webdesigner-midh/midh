@@ -142,7 +142,7 @@ export default function Footer() {
           <div className="flex flex-col gap-space-sm font-body-sm text-body-sm text-tertiary">
             <div className="flex items-start gap-space-xs">
               <span className="material-symbols-outlined text-secondary shrink-0 text-[18px] mt-0.5">location_on</span>
-              <span>Siège : Abidjan, Cocody Angré, Carrefour Duncan</span>
+              <span>Siège : Abidjan, Cocody Angré, Carrefour les Oscars</span>
             </div>
             <div className="flex items-center gap-space-xs">
               <span className="material-symbols-outlined text-secondary shrink-0 text-[18px]">call</span>

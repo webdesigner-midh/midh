@@ -554,3 +554,41 @@ export async function subscribeNewsletterInWordPress(email: string): Promise<{ s
   }
 }
 
+export interface WordPressDonationPayload {
+  reference: string;
+  donorName: string;
+  donorType?: 'particulier' | 'organisation';
+  representativeName?: string;
+  donorEmail?: string;
+  donorPhone?: string;
+  amount: number | string;
+  currency?: string;
+  paymentMethod?: string;
+  status?: string;
+}
+
+/**
+ * Enregistre un don complété dans l'Historique des Dons de WordPress
+ */
+export async function recordDonationInWordPress(
+  payload: WordPressDonationPayload
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetchWordPressAPI<{ success: boolean; message?: string }>('/wp-json/midh/v1/donations/record', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res && res.success) {
+      return { success: true, message: res.message };
+    }
+    return { success: false, message: res?.message || 'Erreur d\'enregistrement du don dans WordPress' };
+  } catch (error) {
+    console.warn('[WordPress Donation] Erreur:', (error as Error).message);
+    return { success: false, message: (error as Error).message };
+  }
+}
+

@@ -306,7 +306,7 @@ export async function sendContactNotification({
                   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top: 1px dashed #cbd5e1; padding-top: 16px;">
                     <tr>
                       <td style="font-size: 12px; color: #475569; line-height: 1.7; text-align: center;">
-                        📍 <strong>Siège social :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
+                        📍 <strong>Siège social :</strong> Abidjan, Cocody Angré, Carrefour les Oscars, Côte d'Ivoire<br>
                         📞 <strong>Ligne directe / WhatsApp :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ☎️ +225 27 22 52 35 15<br>
                         ✉️ <strong>Courriel officiel :</strong> <a href="mailto:info@midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">info@midh-ci.org</a> &nbsp;|&nbsp; 🌐 <strong>Site web :</strong> <a href="https://www.midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">www.midh-ci.org</a>
                       </td>
@@ -580,7 +580,7 @@ export async function sendVolunteerNotification({
                   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top: 1px dashed #cbd5e1; padding-top: 16px;">
                     <tr>
                       <td style="font-size: 12px; color: #475569; line-height: 1.7; text-align: center;">
-                        📍 <strong>Siège social :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
+                        📍 <strong>Siège social :</strong> Abidjan, Cocody Angré, Carrefour les Oscars, Côte d'Ivoire<br>
                         📞 <strong>Ligne directe / WhatsApp :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ☎️ +225 27 22 52 35 15<br>
                         ✉️ <strong>Courriel officiel :</strong> <a href="mailto:info@midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">info@midh-ci.org</a> &nbsp;|&nbsp; 🌐 <strong>Site web :</strong> <a href="https://www.midh-ci.org" style="color: #0B3827; text-decoration: none; font-weight: 600;">www.midh-ci.org</a>
                       </td>
@@ -793,7 +793,7 @@ export async function sendNewsletterWelcomeEmail({
 
               <tr>
                 <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; font-size: 11.5px; color: #64748b; line-height: 1.6; border-top: 1px solid #e2e8f0;">
-                  📍 <strong>Siège :</strong> Abidjan, Cocody Angré, Carrefour Duncan, Côte d'Ivoire<br>
+                  📍 <strong>Siège :</strong> Abidjan, Cocody Angré, Carrefour les Oscars, Côte d'Ivoire<br>
                   📞 <strong>Ligne directe :</strong> +225 01 01 49 87 39 &nbsp;|&nbsp; ✉️ <a href="mailto:info@midh-ci.org" style="color:#0B3827; text-decoration:none;">info@midh-ci.org</a><br>
                   <span style="font-size:10.5px; color:#94a3b8; display:block; margin-top:8px;">
                     Vous recevez cet e-mail car vous vous êtes inscrit(e) sur www.midh-ci.org. Pour vous désabonner à tout moment, répondez simplement « Désabonnement » à ce message.

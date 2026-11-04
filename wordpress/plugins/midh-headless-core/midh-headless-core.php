@@ -66,6 +66,9 @@ class MIDH_Headless_Core {
         add_filter('manage_midh_gallery_posts_columns', array($this, 'customize_gallery_columns'));
         add_action('manage_midh_gallery_posts_custom_column', array($this, 'render_gallery_custom_column'), 10, 2);
 
+        // Sauvegarde des métadonnées pour Dons & Mécénat MIDH
+        add_action('save_post_midh_donation', array($this, 'save_midh_donation_meta_box'), 10, 2);
+
         add_filter('enter_title_here', array($this, 'custom_enter_title_placeholder'), 10, 2);
         add_filter('use_block_editor_for_post_type', array($this, 'disable_gutenberg_for_team'), 10, 2);
 
@@ -80,6 +83,12 @@ class MIDH_Headless_Core {
         add_action('manage_midh_subscriber_posts_custom_column', array($this, 'render_subscriber_custom_column'), 10, 2);
         add_action('manage_posts_extra_tablenav', array($this, 'render_subscriber_export_button'));
         add_action('admin_post_midh_export_subscribers', array($this, 'export_subscribers_csv'));
+
+        // Gestion de l'historique des Dons & Mécénat MIDH
+        add_filter('manage_midh_donation_posts_columns', array($this, 'customize_donation_columns'));
+        add_action('manage_midh_donation_posts_custom_column', array($this, 'render_donation_custom_column'), 10, 2);
+        add_action('manage_posts_extra_tablenav', array($this, 'render_donation_export_button'));
+        add_action('admin_post_midh_export_donations', array($this, 'export_donations_csv'));
 
         // Redirection du bouton "Voir l'article" / Prévisualisation vers le frontend Next.js sur Vercel
         add_filter('preview_post_link', array($this, 'filter_headless_preview_link'), 10, 2);
@@ -274,6 +283,29 @@ class MIDH_Headless_Core {
             'menu_position'=> 26,
             'supports'     => array('title'),
         ));
+
+        // H. CPT : Historique des Dons & Mécénat MIDH
+        register_post_type('midh_donation', array(
+            'labels' => array(
+                'name'               => __('Historique des Dons', 'midh-headless'),
+                'singular_name'      => __('Don', 'midh-headless'),
+                'add_new'            => __('Enregistrer un don', 'midh-headless'),
+                'add_new_item'       => __('Ajouter un nouveau don', 'midh-headless'),
+                'edit_item'          => __('Détails du don', 'midh-headless'),
+                'all_items'          => __('Historique des dons', 'midh-headless'),
+                'menu_name'          => __('Dons & Mécénat', 'midh-headless'),
+                'search_items'       => __('Rechercher un donateur ou référence', 'midh-headless'),
+                'not_found'          => __('Aucun don enregistré', 'midh-headless'),
+            ),
+            'public'       => false,
+            'show_ui'      => true,
+            'show_in_menu' => true,
+            'show_in_rest' => true,
+            'rest_base'    => 'midh_donation',
+            'menu_icon'    => 'dashicons-heart',
+            'menu_position'=> 27,
+            'supports'     => array('title'),
+        ));
     }
 
     /**
@@ -400,6 +432,13 @@ class MIDH_Headless_Core {
             'methods'             => 'GET',
             'callback'            => array($this, 'get_subscribers_endpoint'),
             'permission_callback' => array($this, 'check_bridge_permission'),
+        ));
+
+        // Enregistrement sécurisé des dons en ligne depuis Next.js
+        register_rest_route('midh/v1', '/donations/record', array(
+            'methods'             => 'POST',
+            'callback'            => array($this, 'register_donation_endpoint'),
+            'permission_callback' => '__return_true',
         ));
     }
 
@@ -910,6 +949,9 @@ class MIDH_Headless_Core {
         $count_subs_obj      = wp_count_posts('midh_subscriber');
         $count_subscribers   = isset($count_subs_obj->publish) ? (int) $count_subs_obj->publish : 0;
 
+        $count_donations_obj = wp_count_posts('midh_donation');
+        $count_donations     = isset($count_donations_obj->publish) ? (int) $count_donations_obj->publish : 0;
+
         $frontend_url        = get_option('midh_frontend_url', 'http://localhost:3000');
         $revalidate_secret   = get_option('midh_revalidation_secret', '');
         $is_headless_ready   = !empty($revalidate_secret) && !empty($frontend_url);
@@ -1046,6 +1088,32 @@ class MIDH_Headless_Core {
                     <a href="<?php echo admin_url('admin-post.php?action=midh_export_subscribers'); ?>" class="midh-stat-quick-btn">📥 CSV</a>
                 </div>
             </div>
+
+            <!-- 11. Dons & Mécénat MIDH -->
+            <div class="midh-stat-card" style="border-top: 3px solid #005a36;">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">💚 Dons &amp; Mécénat</div>
+                    <span class="midh-stat-badge" style="background:#dcfce7; color:#166534; border-color:#bbf7d0;">Reçus Fiscaux</span>
+                </div>
+                <div class="midh-stat-value"><?php echo esc_html($count_donations); ?></div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo admin_url('edit.php?post_type=midh_donation'); ?>" class="midh-stat-link">Historique des dons &rarr;</a>
+                    <a href="<?php echo admin_url('admin-post.php?action=midh_export_donations'); ?>" class="midh-stat-quick-btn" style="background:#005a36; color:#ffffff;">📥 CSV</a>
+                </div>
+            </div>
+
+            <!-- 12. Portail Public Headless Next.js -->
+            <div class="midh-stat-card" style="border-top: 3px solid #0B3827;">
+                <div class="midh-stat-top">
+                    <div class="midh-stat-label">🌐 Portail Public Next.js</div>
+                    <span class="midh-stat-badge" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">🚀 En ligne</span>
+                </div>
+                <div class="midh-stat-value" style="font-size: 19px; font-weight: 700; color: #0B3827; padding-top: 6px;">midh-ci.org</div>
+                <div class="midh-stat-footer">
+                    <a href="<?php echo esc_url($frontend_url); ?>" target="_blank" class="midh-stat-link">Visiter le site &rarr;</a>
+                    <a href="<?php echo esc_url(rtrim($frontend_url, '/') . '/don'); ?>" target="_blank" class="midh-stat-quick-btn" style="background:#006b1f; color:#ffffff;">Faire un don</a>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -1140,6 +1208,15 @@ class MIDH_Headless_Core {
             __('📸 Paramètres du Média (Photo ou Vidéo & Affichage Accueil)', 'midh-headless'),
             array($this, 'render_gallery_meta_box'),
             'midh_gallery',
+            'normal',
+            'high'
+        );
+
+        add_meta_box(
+            'midh_donation_details',
+            __('💚 Fiche Officielle du Donateur & Transaction', 'midh-headless'),
+            array($this, 'render_donation_meta_box'),
+            'midh_donation',
             'normal',
             'high'
         );
@@ -2989,6 +3066,326 @@ class MIDH_Headless_Core {
 
         fclose($output);
         exit;
+    }
+
+    /**
+     * Personnalisation des colonnes de l'Historique des Dons & Mécénat MIDH
+     */
+    public function customize_donation_columns($columns) {
+        $new = array();
+        if (isset($columns['cb'])) {
+            $new['cb'] = $columns['cb'];
+        }
+        $new['title']           = __('Référence Transaction', 'midh-headless');
+        $new['midh_donor_name'] = __('Donateur / Organisation', 'midh-headless');
+        $new['midh_donor_type'] = __('Qualité', 'midh-headless');
+        $new['midh_amount']     = __('Montant (FCFA)', 'midh-headless');
+        $new['midh_contact']    = __('Contact Donateur', 'midh-headless');
+        $new['midh_gateway']    = __('Moyen de Paiement', 'midh-headless');
+        $new['midh_status']     = __('Statut du Don', 'midh-headless');
+        $new['date']            = __('Date du versement', 'midh-headless');
+        return $new;
+    }
+
+    public function render_donation_custom_column($column, $post_id) {
+        if ($column === 'midh_donor_name') {
+            $name = get_post_meta($post_id, 'donor_name', true) ?: 'Donateur Anonyme';
+            $rep  = get_post_meta($post_id, 'representative_name', true);
+            echo '<strong>' . esc_html($name) . '</strong>';
+            if ($rep) {
+                echo '<div style="font-size:11.5px; color:#64748b;">Représenté par : ' . esc_html($rep) . '</div>';
+            }
+        } elseif ($column === 'midh_donor_type') {
+            $type = get_post_meta($post_id, 'donor_type', true) ?: 'Particulier';
+            $is_org = (strtolower($type) === 'organisation' || strtolower($type) === 'organisation / partenaire');
+            $bg = $is_org ? '#e0f2fe' : '#f0fdf4';
+            $color = $is_org ? '#0369a1' : '#15803d';
+            $border = $is_org ? '#bae6fd' : '#bbf7d0';
+            $label = $is_org ? '🏢 Organisation' : '👤 Particulier';
+            echo '<span style="display:inline-block; background:' . esc_attr($bg) . '; color:' . esc_attr($color) . '; font-weight:600; padding:3px 9px; border-radius:8px; font-size:11.5px; border:1px solid ' . esc_attr($border) . ';">' . esc_html($label) . '</span>';
+        } elseif ($column === 'midh_amount') {
+            $amount = get_post_meta($post_id, 'donation_amount', true);
+            $formatted = $amount ? number_format((float)$amount, 0, ',', ' ') . ' FCFA' : '-';
+            echo '<strong style="color:#005a36; font-size:13.5px; font-weight:800;">' . esc_html($formatted) . '</strong>';
+        } elseif ($column === 'midh_contact') {
+            $email = get_post_meta($post_id, 'donor_email', true);
+            $phone = get_post_meta($post_id, 'donor_phone', true);
+            echo '<div style="font-size:12px; line-height:1.45;">';
+            if ($email) {
+                echo '<div><a href="mailto:' . esc_attr($email) . '" style="text-decoration:none; color:#005a36;">📧 ' . esc_html($email) . '</a></div>';
+            }
+            if ($phone) {
+                echo '<div style="color:#64748b;">📞 ' . esc_html($phone) . '</div>';
+            }
+            echo '</div>';
+        } elseif ($column === 'midh_gateway') {
+            $gateway = get_post_meta($post_id, 'payment_method', true) ?: 'WiniPayer';
+            echo '<span style="font-size:12px; color:#475569;">💳 ' . esc_html($gateway) . '</span>';
+        } elseif ($column === 'midh_status') {
+            $status = get_post_meta($post_id, 'donation_status', true) ?: 'Validé & Encaissé';
+            $is_ok = (stripos($status, 'valid') !== false || stripos($status, 'encaiss') !== false);
+            $bg = $is_ok ? '#dcfce7' : '#fef9c3';
+            $color = $is_ok ? '#166534' : '#854d0e';
+            $border = $is_ok ? '#bbf7d0' : '#fde047';
+            echo '<span style="display:inline-block; background:' . esc_attr($bg) . '; color:' . esc_attr($color) . '; font-weight:700; padding:3px 9px; border-radius:12px; font-size:11.5px; border:1px solid ' . esc_attr($border) . ';">' . ($is_ok ? '✅ ' : '⏳ ') . esc_html($status) . '</span>';
+        }
+    }
+
+    /**
+     * Bouton d'exportation CSV en haut de la table des dons
+     */
+    public function render_donation_export_button($which) {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'midh_donation' && $which === 'top') {
+            $export_url = admin_url('admin-post.php?action=midh_export_donations&_wpnonce=' . wp_create_nonce('midh_export_donations_nonce'));
+            echo '<div class="alignleft actions" style="display:inline-flex; align-items:center; margin-left:10px;">';
+            echo '<a href="' . esc_url($export_url) . '" class="button button-primary" style="background:#005a36; border-color:#00462a; font-weight:bold; height:32px; line-height:30px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,90,54,0.2);">';
+            echo '<span>📥</span> <span>Exporter le registre des dons (Excel / CSV)</span>';
+            echo '</a>';
+            echo '</div>';
+        }
+    }
+
+    /**
+     * Traitement de l'exportation CSV du registre des dons
+     */
+    public function export_donations_csv() {
+        if (!current_user_can('edit_posts')) {
+            wp_die(__('Autorisations insuffisantes.', 'midh-headless'));
+        }
+        check_admin_referer('midh_export_donations_nonce');
+
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_donation',
+            'post_status'    => array('publish', 'private'),
+            'posts_per_page' => -1,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $filename = 'midh-registre-des-dons-' . date('Y-m-d_H-i') . '.csv';
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        echo "\xEF\xBB\xBF";
+
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array(
+            'Référence Transaction',
+            'Date & Heure',
+            'Donateur / Organisation',
+            'Représentant',
+            'Qualité',
+            'Montant (FCFA)',
+            'Adresse Email',
+            'Numéro Téléphone',
+            'Moyen de Paiement',
+            'Statut'
+        ), ';');
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id        = get_the_ID();
+                $ref       = get_the_title();
+                $date      = get_the_date('Y-m-d H:i:s', $id);
+                $donor     = get_post_meta($id, 'donor_name', true) ?: '';
+                $rep       = get_post_meta($id, 'representative_name', true) ?: '';
+                $type      = get_post_meta($id, 'donor_type', true) ?: 'Particulier';
+                $amount    = get_post_meta($id, 'donation_amount', true) ?: '0';
+                $email     = get_post_meta($id, 'donor_email', true) ?: '';
+                $phone     = get_post_meta($id, 'donor_phone', true) ?: '';
+                $gateway   = get_post_meta($id, 'payment_method', true) ?: 'WiniPayer';
+                $status    = get_post_meta($id, 'donation_status', true) ?: 'Validé & Encaissé';
+
+                fputcsv($output, array($ref, $date, $donor, $rep, $type, $amount, $email, $phone, $gateway, $status), ';');
+            }
+            wp_reset_postdata();
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Boîte de métadonnées pour l'administration détaillée d'un don
+     */
+    public function render_donation_meta_box($post) {
+        wp_nonce_field('midh_donation_meta_save', 'midh_donation_nonce');
+        $donor_name   = get_post_meta($post->ID, 'donor_name', true);
+        $donor_type   = get_post_meta($post->ID, 'donor_type', true) ?: 'particulier';
+        $rep_name     = get_post_meta($post->ID, 'representative_name', true);
+        $donor_email  = get_post_meta($post->ID, 'donor_email', true);
+        $donor_phone  = get_post_meta($post->ID, 'donor_phone', true);
+        $amount       = get_post_meta($post->ID, 'donation_amount', true);
+        $method       = get_post_meta($post->ID, 'payment_method', true) ?: 'WiniPayer (Mobile Money & Carte Bancaire)';
+        $status       = get_post_meta($post->ID, 'donation_status', true) ?: 'Validé & Encaissé par la Trésorerie';
+        $notes        = get_post_meta($post->ID, 'donation_notes', true);
+        ?>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:12px 0;">
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">👤 Nom complet ou Raison Sociale :</label>
+                <input type="text" name="midh_donor_name" value="<?php echo esc_attr($donor_name); ?>" class="widefat" placeholder="ex: Koffi Kouassi / Société Civile" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">🏷️ Qualité du Donateur :</label>
+                <select name="midh_donor_type" class="widefat">
+                    <option value="particulier" <?php selected($donor_type, 'particulier'); ?>>Particulier</option>
+                    <option value="organisation" <?php selected($donor_type, 'organisation'); ?>>Organisation / Partenaire / Entreprise</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">🤝 Nom du Représentant Légal (si organisation) :</label>
+                <input type="text" name="midh_rep_name" value="<?php echo esc_attr($rep_name); ?>" class="widefat" placeholder="ex: M. le Directeur Général" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">💰 Montant du don (FCFA) :</label>
+                <input type="number" step="100" name="midh_amount" value="<?php echo esc_attr($amount); ?>" class="widefat" placeholder="ex: 25000" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📧 Adresse E-mail du Donateur :</label>
+                <input type="email" name="midh_donor_email" value="<?php echo esc_attr($donor_email); ?>" class="widefat" placeholder="ex: donateur@domaine.com" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📞 Numéro de Téléphone :</label>
+                <input type="text" name="midh_donor_phone" value="<?php echo esc_attr($donor_phone); ?>" class="widefat" placeholder="ex: +225 07 00 00 00 00" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">💳 Passerelle / Mode de Règlement :</label>
+                <input type="text" name="midh_payment_method" value="<?php echo esc_attr($method); ?>" class="widefat" placeholder="ex: WiniPayer (Mobile Money & Carte Bancaire)" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">⚖️ Statut comptable & Trésorerie :</label>
+                <select name="midh_donation_status" class="widefat">
+                    <option value="Validé & Encaissé par la Trésorerie" <?php selected($status, 'Validé & Encaissé par la Trésorerie'); ?>>Validé & Encaissé par la Trésorerie</option>
+                    <option value="En attente de confirmation bancaire" <?php selected($status, 'En attente de confirmation bancaire'); ?>>En attente de confirmation</option>
+                    <option value="Annulé / Échoué" <?php selected($status, 'Annulé / Échoué'); ?>>Annulé / Échoué</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top:12px;">
+            <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📝 Notes internes & Mention d'affectation :</label>
+            <textarea name="midh_donation_notes" rows="3" class="widefat" placeholder="Affectation statutaire, remerciements personnalisés..."><?php echo esc_textarea($notes); ?></textarea>
+        </div>
+        <?php
+    }
+
+    public function save_midh_donation_meta_box($post_id, $post) {
+        if (!isset($_POST['midh_donation_nonce']) || !wp_verify_nonce($_POST['midh_donation_nonce'], 'midh_donation_meta_save')) {
+            return;
+        }
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        if (isset($_POST['midh_donor_name'])) {
+            update_post_meta($post_id, 'donor_name', sanitize_text_field($_POST['midh_donor_name']));
+        }
+        if (isset($_POST['midh_donor_type'])) {
+            update_post_meta($post_id, 'donor_type', sanitize_text_field($_POST['midh_donor_type']));
+        }
+        if (isset($_POST['midh_rep_name'])) {
+            update_post_meta($post_id, 'representative_name', sanitize_text_field($_POST['midh_rep_name']));
+        }
+        if (isset($_POST['midh_amount'])) {
+            update_post_meta($post_id, 'donation_amount', sanitize_text_field($_POST['midh_amount']));
+        }
+        if (isset($_POST['midh_donor_email'])) {
+            update_post_meta($post_id, 'donor_email', sanitize_email($_POST['midh_donor_email']));
+        }
+        if (isset($_POST['midh_donor_phone'])) {
+            update_post_meta($post_id, 'donor_phone', sanitize_text_field($_POST['midh_donor_phone']));
+        }
+        if (isset($_POST['midh_payment_method'])) {
+            update_post_meta($post_id, 'payment_method', sanitize_text_field($_POST['midh_payment_method']));
+        }
+        if (isset($_POST['midh_donation_status'])) {
+            update_post_meta($post_id, 'donation_status', sanitize_text_field($_POST['midh_donation_status']));
+        }
+        if (isset($_POST['midh_donation_notes'])) {
+            update_post_meta($post_id, 'donation_notes', sanitize_textarea_field($_POST['midh_donation_notes']));
+        }
+    }
+
+    /**
+     * Endpoint API REST pour enregistrer automatiquement un don depuis Next.js
+     * Route : POST /wp-json/midh/v1/donations/record
+     */
+    public function register_donation_endpoint($request) {
+        $params = $request->get_json_params() ?: $request->get_params();
+
+        $reference = sanitize_text_field($params['reference'] ?? '');
+        if (empty($reference)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Référence de transaction requise.',
+            ), 400);
+        }
+
+        // Vérifier si le don existe déjà dans WordPress
+        $existing = get_page_by_title($reference, OBJECT, 'midh_donation');
+        if ($existing) {
+            $post_id = $existing->ID;
+        } else {
+            $post_id = wp_insert_post(array(
+                'post_type'   => 'midh_donation',
+                'post_title'  => $reference,
+                'post_status' => 'publish',
+            ));
+        }
+
+        if (is_wp_error($post_id) || !$post_id) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Impossible de créer le don dans WordPress.',
+            ), 500);
+        }
+
+        // Enregistrer les métadonnées du don
+        if (!empty($params['donorName'])) {
+            update_post_meta($post_id, 'donor_name', sanitize_text_field($params['donorName']));
+        }
+        if (!empty($params['donorType'])) {
+            update_post_meta($post_id, 'donor_type', sanitize_text_field($params['donorType']));
+        }
+        if (!empty($params['representativeName'])) {
+            update_post_meta($post_id, 'representative_name', sanitize_text_field($params['representativeName']));
+        }
+        if (!empty($params['donorEmail'])) {
+            update_post_meta($post_id, 'donor_email', sanitize_email($params['donorEmail']));
+        }
+        if (!empty($params['donorPhone'])) {
+            update_post_meta($post_id, 'donor_phone', sanitize_text_field($params['donorPhone']));
+        }
+        if (isset($params['amount'])) {
+            update_post_meta($post_id, 'donation_amount', sanitize_text_field((string)$params['amount']));
+        }
+        if (!empty($params['paymentMethod'])) {
+            update_post_meta($post_id, 'payment_method', sanitize_text_field($params['paymentMethod']));
+        }
+        $status = !empty($params['status']) ? sanitize_text_field($params['status']) : 'Validé & Encaissé par la Trésorerie';
+        update_post_meta($post_id, 'donation_status', $status);
+
+        return new WP_REST_Response(array(
+            'success'   => true,
+            'post_id'   => $post_id,
+            'reference' => $reference,
+            'message'   => 'Don enregistré avec succès dans l\'historique WordPress.',
+        ), 200);
     }
 
     /**

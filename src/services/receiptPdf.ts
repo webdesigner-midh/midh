@@ -1,4 +1,6 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
 import { resend, DEFAULT_FROM } from './resend';
 
 export interface DonationReceiptData {
@@ -84,20 +86,38 @@ export async function generateDonationReceiptPdf(
     color: primaryColor,
   });
 
-  // 2. EN-TÊTE OFFICIEL DU MIDH
+  // 2. EMBARQUER LE LOGO OFFICIEL DU MIDH (si disponible sur le disque)
+  try {
+    const logoPath = path.join(process.cwd(), 'public/images/logo-midh.png');
+    if (fs.existsSync(logoPath)) {
+      const logoBytes = fs.readFileSync(logoPath);
+      const logoImage = await pdfDoc.embedPng(logoBytes);
+      // Dimensions adaptées au ratio 450x122 (largeur 120, hauteur ~32.5)
+      page.drawImage(logoImage, {
+        x: width - margin - 125,
+        y: currentY - 26,
+        width: 125,
+        height: 34,
+      });
+    }
+  } catch (logoErr) {
+    console.warn('[PDF] Impossible de charger le logo MIDH :', logoErr);
+  }
+
+  // 3. EN-TÊTE OFFICIEL DU MIDH
   drawSafeText('MOUVEMENT IVOIRIEN DES DROITS HUMAINS', {
     x: margin,
     y: currentY,
-    size: 15,
+    size: 13,
     font: fontBold,
     color: primaryColor,
   });
 
-  currentY -= 15;
+  currentY -= 14;
   drawSafeText('(MIDH) - Organisation Non Gouvernementale Indépendante', {
     x: margin,
     y: currentY,
-    size: 10,
+    size: 9.5,
     font: fontBold,
     color: emeraldColor,
   });
@@ -116,7 +136,7 @@ export async function generateDonationReceiptPdf(
 
   currentY -= 11;
   drawSafeText(
-    'Siège : Abidjan, Cocody Angré, Carrefour Duncan | Tél : +225 01 01 49 87 39 | E-mail : info@midh-ci.org',
+    'Siège : Abidjan, Cocody Angré, Carrefour les Oscars | Tél : +225 01 01 49 87 39 | E-mail : info@midh-ci.org',
     {
       x: margin,
       y: currentY,
@@ -127,7 +147,7 @@ export async function generateDonationReceiptPdf(
   );
 
   // Ligne de séparation
-  currentY -= 18;
+  currentY -= 16;
   page.drawLine({
     start: { x: margin, y: currentY },
     end: { x: width - margin, y: currentY },
@@ -135,34 +155,28 @@ export async function generateDonationReceiptPdf(
     color: primaryColor,
   });
 
-  // 3. BLOC TITRE DU DOCUMENT
-  currentY -= 35;
+  // 4. BLOC TITRE DU DOCUMENT (Hauteur aérée à 44pt pour séparer proprement le titre et la référence sans chevauchement)
+  currentY -= 32;
   page.drawRectangle({
     x: margin,
-    y: currentY - 8,
+    y: currentY - 12,
     width: width - margin * 2,
-    height: 38,
+    height: 44,
     color: lightBgColor,
     borderColor: borderColor,
     borderWidth: 1,
   });
 
+  // Ligne 1 du bloc : Titre en grand et gras
   drawSafeText('ATTESTATION DE DON & REÇU FISCAL OFFICIEL', {
-    x: margin + 20,
-    y: currentY + 12,
-    size: 13,
+    x: margin + 16,
+    y: currentY + 14,
+    size: 12,
     font: fontBold,
     color: primaryColor,
   });
 
-  drawSafeText(`N° Réf : ${data.reference}`, {
-    x: width - margin - 200,
-    y: currentY + 13,
-    size: 9,
-    font: fontBold,
-    color: emeraldColor,
-  });
-
+  // Ligne 2 du bloc : Date d'émission à gauche, Référence officielle à droite
   drawSafeText(
     `Date d'émission : ${
       data.date ||
@@ -173,16 +187,24 @@ export async function generateDonationReceiptPdf(
       })
     }`,
     {
-      x: margin + 20,
-      y: currentY - 1,
+      x: margin + 16,
+      y: currentY - 2,
       size: 8,
       font: fontRegular,
       color: darkTextColor,
     }
   );
 
-  // 4. IDENTIFICATION DU DONATEUR
-  currentY -= 40;
+  drawSafeText(`N° Réf : ${data.reference}`, {
+    x: width - margin - 225,
+    y: currentY - 2,
+    size: 8.5,
+    font: fontBold,
+    color: emeraldColor,
+  });
+
+  // 5. IDENTIFICATION DU DONATEUR
+  currentY -= 42;
   drawSafeText('1. IDENTIFICATION DU SOUSCRIPTEUR', {
     x: margin,
     y: currentY,
@@ -272,7 +294,7 @@ export async function generateDonationReceiptPdf(
     color: darkTextColor,
   });
 
-  // 5. DÉTAILS FINANCIERS DU DON
+  // 6. DÉTAILS FINANCIERS DU DON
   currentY -= donorBoxHeight + 35;
   drawSafeText('2. DÉTAILS DE LA CONTRIBUTION CIVIQUE', {
     x: margin,
@@ -358,7 +380,7 @@ export async function generateDonationReceiptPdf(
     color: emeraldColor,
   });
 
-  // 6. CADRE RÉGLEMENTAIRE & DÉDUCTION FISCALE
+  // 7. CADRE RÉGLEMENTAIRE & DÉDUCTION FISCALE
   currentY -= 115;
   page.drawRectangle({
     x: margin,
@@ -401,10 +423,10 @@ export async function generateDonationReceiptPdf(
     }
   );
 
-  // 7. SIGNATURE ET CACHET OFFICIEL
-  currentY -= 80;
+  // 8. SIGNATURE ET CACHET OFFICIEL
+  currentY -= 75;
   drawSafeText('Fait à Abidjan, le ' + (data.date || new Date().toLocaleDateString('fr-FR')), {
-    x: width - margin - 220,
+    x: width - margin - 235,
     y: currentY,
     size: 9,
     font: fontRegular,
@@ -413,7 +435,7 @@ export async function generateDonationReceiptPdf(
 
   currentY -= 14;
   drawSafeText('Pour le Bureau Exécutif National du MIDH', {
-    x: width - margin - 220,
+    x: width - margin - 235,
     y: currentY,
     size: 9,
     font: fontBold,
@@ -422,40 +444,40 @@ export async function generateDonationReceiptPdf(
 
   currentY -= 12;
   drawSafeText('La Trésorerie Générale & le Secrétariat Exécutif', {
-    x: width - margin - 220,
+    x: width - margin - 235,
     y: currentY,
     size: 8,
     font: fontOblique,
     color: emeraldColor,
   });
 
-  // Empreinte de signature
-  currentY -= 35;
+  // Empreinte de signature & cachet (largeur élargie à 235pt pour contenir entièrement la référence sans débordement)
+  currentY -= 36;
   page.drawRectangle({
-    x: width - margin - 220,
+    x: width - margin - 235,
     y: currentY - 10,
-    width: 190,
-    height: 38,
+    width: 235,
+    height: 40,
     color: lightBgColor,
     borderColor: borderColor,
     borderWidth: 1,
   });
   drawSafeText('[ Cachet Certifié Trésorerie MIDH ]', {
-    x: width - margin - 200,
-    y: currentY + 12,
+    x: width - margin - 220,
+    y: currentY + 13,
     size: 8,
     font: fontBold,
     color: primaryColor,
   });
   drawSafeText('Réf. Électronique : ' + data.reference, {
-    x: width - margin - 200,
-    y: currentY,
+    x: width - margin - 220,
+    y: currentY - 1,
     size: 7,
     font: fontRegular,
     color: rgb(0.4, 0.45, 0.5),
   });
 
-  // 8. PIED DE PAGE SÉCURISÉ
+  // 9. PIED DE PAGE SÉCURISÉ
   drawSafeText(
     'Document certifié généré automatiquement par la plateforme numérique du Mouvement Ivoirien des Droits Humains (MIDH).',
     {
@@ -521,7 +543,7 @@ export async function sendDonationConfirmationEmail(data: DonationReceiptData): 
           <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #0B3827;">
             <h1 style="color: #0B3827; margin: 0 0 4px 0; font-size: 22px; font-weight: bold; letter-spacing: -0.5px;">MOUVEMENT IVOIRIEN DES DROITS HUMAINS (MIDH)</h1>
             <p style="color: #138A2E; font-size: 13px; font-weight: bold; margin: 0;">Organisation Non Gouvernementale Indépendante — Reconnue d'utilité civique</p>
-            <p style="color: #64748b; font-size: 11px; margin: 4px 0 0 0;">Siège : Abidjan, Cocody Angré, Carrefour Duncan | +225 01 01 49 87 39</p>
+            <p style="color: #64748b; font-size: 11px; margin: 4px 0 0 0;">Siège : Abidjan, Cocody Angré, Carrefour les Oscars | +225 01 01 49 87 39</p>
           </div>
 
           <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">

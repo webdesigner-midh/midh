@@ -7,6 +7,7 @@ import {
 } from '@/services/winipayer';
 import { resend, DEFAULT_FROM, getRecipients } from '@/services/resend';
 import { sendDonationConfirmationEmail } from '@/services/receiptPdf';
+import { recordDonationInWordPress } from '@/services/wordpress';
 
 export async function POST(request: Request) {
   try {
@@ -159,6 +160,28 @@ async function handleIpnNotification(payload: WiniPayerIpnPayload) {
       } catch (adminEmailErr) {
         console.error('[API IPN WiniPayer] Erreur notification admin :', adminEmailErr);
       }
+    }
+
+    // 5. ENREGISTREMENT DANS L'HISTORIQUE DES DONS DE WORDPRESS
+    try {
+      const donorType = (customData.donor_type as string) === 'organisation' ? 'organisation' : 'particulier';
+      const representative = (customData.representative_name as string) || undefined;
+      const phone = (customData.donor_phone as string) || '';
+
+      await recordDonationInWordPress({
+        reference: transactionUuid,
+        donorName,
+        donorType,
+        representativeName: representative,
+        donorEmail,
+        donorPhone: phone,
+        amount,
+        currency,
+        paymentMethod: 'WiniPayer (Mobile Money & Carte Bancaire)',
+        status: 'Validé & Encaissé par la Trésorerie',
+      });
+    } catch (wpErr) {
+      console.warn('[API IPN WiniPayer] Erreur enregistrement don WordPress :', wpErr);
     }
   }
 
