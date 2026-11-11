@@ -8,6 +8,7 @@ import {
 import { resend, DEFAULT_FROM, getRecipients } from '@/services/resend';
 import { sendDonationConfirmationEmail } from '@/services/receiptPdf';
 import { recordDonationInWordPress } from '@/services/wordpress';
+import { escapeHtml } from '@/lib/sanitize';
 
 export async function POST(request: Request) {
   try {
@@ -144,16 +145,16 @@ async function handleIpnNotification(payload: WiniPayerIpnPayload) {
         await resend.emails.send({
           from: DEFAULT_FROM,
           to: adminRecipients,
-          subject: `[Nouveau Don Reçu] ${amount} ${currency} de ${donorName} (WiniPayer)`,
+          subject: `[Nouveau Don Reçu] ${String(amount)} ${String(currency)} de ${donorName} (WiniPayer)`,
           html: `
             <p>Bonjour à l'équipe du MIDH,</p>
             <p>Un nouveau don vient d'être validé avec succès via la passerelle <strong>WiniPayer</strong> :</p>
             <ul>
-              <li><strong>Donateur :</strong> ${donorName}</li>
-              <li><strong>E-mail :</strong> ${donorEmail}</li>
-              <li><strong>Téléphone :</strong> ${(customData.donor_phone as string) || 'Non renseigné'}</li>
-              <li><strong>Montant :</strong> ${amount} ${currency}</li>
-              <li><strong>Référence WiniPayer :</strong> ${transactionUuid}</li>
+              <li><strong>Donateur :</strong> ${escapeHtml(donorName)}</li>
+              <li><strong>E-mail :</strong> ${escapeHtml(donorEmail)}</li>
+              <li><strong>Téléphone :</strong> ${escapeHtml((customData.donor_phone as string) || 'Non renseigné')}</li>
+              <li><strong>Montant :</strong> ${escapeHtml(amount)} ${escapeHtml(currency)}</li>
+              <li><strong>Référence WiniPayer :</strong> ${escapeHtml(transactionUuid)}</li>
             </ul>
           `,
         });

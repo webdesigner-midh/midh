@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getProjectBySlug, getProjects } from '@/services/wordpress';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { sanitizeRichHtml } from '@/lib/sanitize';
 
 interface ProjectPageProps {
   params: Promise<{ slug: string }>;
@@ -12,10 +13,7 @@ interface ProjectPageProps {
  */
 function sanitizeProjectHtml(html: string): string {
   if (!html) return '<p>Présentation détaillée en cours de rédaction par l\'équipe du MIDH.</p>';
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/javascript:[^"]*/gi, '');
+  return sanitizeRichHtml(html);
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {

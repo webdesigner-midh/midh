@@ -1,6 +1,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { timingSafeEqualString } from '@/lib/server-crypto';
 
 // Schéma explicite pour la validation des paramètres de requête (Query String)
 const RevalidateQuerySchema = z.object({
@@ -43,9 +44,16 @@ async function handleRevalidation(request: NextRequest) {
     }
 
     const { secret, tag: queryTag, path: queryPath } = queryValidation.data;
-    const configuredSecret = process.env.REVALIDATE_SECRET_TOKEN;
+    const configuredSecret = process.env.REVALIDATE_SECRET_TOKEN?.trim();
 
-    if (configuredSecret && secret !== configuredSecret) {
+    if (!configuredSecret) {
+      return NextResponse.json(
+        { message: 'Revalidation désactivée : REVALIDATE_SECRET_TOKEN non configuré sur le serveur' },
+        { status: 503 }
+      );
+    }
+
+    if (!timingSafeEqualString(secret, configuredSecret)) {
       return NextResponse.json({ message: 'Jeton secret invalide' }, { status: 401 });
     }
 

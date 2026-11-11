@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.4.1 avec Tableau de bord optimisé en cartes 2x2, Historique des Dons & Mécénat avec Export Excel/CSV, Gestionnaire d'Abonnés Newsletter et synchronisation Next.js.
- * Version: 1.4.1
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.5.0 avec durcissement sécuritaire OWASP (secrets dynamiques, whitelist options, CORS strict, CPT privés) et Tableau de bord 2x2.
+ * Version: 1.5.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -280,8 +280,7 @@ class MIDH_Headless_Core {
             'public'       => false,
             'show_ui'      => true,
             'show_in_menu' => true,
-            'show_in_rest' => true,
-            'rest_base'    => 'midh_subscriber',
+            'show_in_rest' => false,
             'menu_icon'    => 'dashicons-email-alt',
             'menu_position'=> 26,
             'supports'     => array('title'),
@@ -303,8 +302,7 @@ class MIDH_Headless_Core {
             'public'       => false,
             'show_ui'      => true,
             'show_in_menu' => true,
-            'show_in_rest' => true,
-            'rest_base'    => 'midh_donation',
+            'show_in_rest' => false,
             'menu_icon'    => 'dashicons-heart',
             'menu_position'=> 27,
             'supports'     => array('title'),
@@ -441,7 +439,7 @@ class MIDH_Headless_Core {
         register_rest_route('midh/v1', '/donations/record', array(
             'methods'             => 'POST',
             'callback'            => array($this, 'register_donation_endpoint'),
-            'permission_callback' => '__return_true',
+            'permission_callback' => array($this, 'check_donation_record_permission'),
         ));
     }
 
@@ -519,14 +517,25 @@ class MIDH_Headless_Core {
         remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
         add_filter('rest_pre_serve_request', function ($value) {
             $origin = get_http_origin();
-            $frontend_url = get_option('midh_frontend_url', 'http://localhost:3000');
-            
-            // Autoriser le frontend configuré
-            if ($origin) {
+            $frontend_url = untrailingslashit(get_option('midh_frontend_url', 'http://localhost:3000'));
+            $allowed_origins = array_filter(array_unique(array(
+                $frontend_url,
+                'https://midh-ci.org',
+                'https://www.midh-ci.org',
+            )));
+
+            // Autoriser localhost uniquement en environnement de développement local
+            $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+            if ($site_host && (substr($site_host, -6) === '.local' || $site_host === 'localhost' || $site_host === '127.0.0.1')) {
+                $allowed_origins[] = 'http://localhost:3000';
+            }
+
+            if ($origin && in_array(untrailingslashit($origin), $allowed_origins, true)) {
                 header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
+                header('Vary: Origin');
                 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
                 header('Access-Control-Allow-Credentials: true');
-                header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce');
+                header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce, X-MIDH-Key');
             }
             return $value;
         });
@@ -646,6 +655,7 @@ class MIDH_Headless_Core {
         register_setting('midh_settings_group', 'midh_email');
         register_setting('midh_settings_group', 'midh_frontend_url');
         register_setting('midh_settings_group', 'midh_revalidate_token');
+        register_setting('midh_settings_group', 'midh_bridge_secret');
 
         // Réglages des textes institutionnels (Page À propos & Présentation)
         register_setting('midh_settings_group', 'midh_about_hero_tag');
@@ -692,9 +702,9 @@ class MIDH_Headless_Core {
                         ⚡ <?php _e('Réparer & Lier Tous les Médias Maintenant', 'midh-headless'); ?>
                     </button>
                 </form>
-                <a href="<?php echo esc_url(rest_url('midh/v1/repair-and-sync?secret=midh_bridge_sync_2026')); ?>" target="_blank" class="button button-secondary button-hero">
-                    🔗 <?php _e('Lien direct API REST', 'midh-headless'); ?>
-                </a>
+                <span class="description" style="display:inline-block; vertical-align:middle;">
+                    <?php _e('Utilisez le bouton ci-dessus ou appelez l\'API REST avec l\'en-tête sécurisé X-MIDH-Key.', 'midh-headless'); ?>
+                </span>
             </div>
 
             <form method="post" action="options.php">
@@ -712,8 +722,15 @@ class MIDH_Headless_Core {
                     <tr>
                         <th scope="row"><?php _e('Jeton Secret de Revalidation', 'midh-headless'); ?></th>
                         <td>
-                            <input type="text" name="midh_revalidate_token" value="<?php echo esc_attr(get_option('midh_revalidate_token', '')); ?>" class="regular-text" placeholder="Ex. midh_secret_token_12345" />
+                            <input type="password" autocomplete="new-password" name="midh_revalidate_token" value="<?php echo esc_attr(get_option('midh_revalidate_token', '')); ?>" class="regular-text" placeholder="Ex. jeton_aléatoire_complexe" />
                             <p class="description"><?php _e('Doit correspondre à la variable d\'environnement REVALIDATE_SECRET_TOKEN du frontend.', 'midh-headless'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Clé Secrète API Bridge (X-MIDH-Key)', 'midh-headless'); ?></th>
+                        <td>
+                            <input type="password" autocomplete="new-password" name="midh_bridge_secret" value="<?php echo esc_attr($this->get_bridge_secret()); ?>" class="regular-text" />
+                            <p class="description"><?php _e('Clé générée aléatoirement pour authentifier les appels REST serveur-à-serveur (en-tête X-MIDH-Key / MIDH_WP_BRIDGE_SECRET).', 'midh-headless'); ?></p>
                         </td>
                     </tr>
                 </table>
@@ -958,7 +975,7 @@ class MIDH_Headless_Core {
         $count_donations     = isset($count_donations_obj->publish) ? (int) $count_donations_obj->publish : 0;
 
         $frontend_url        = get_option('midh_frontend_url', 'http://localhost:3000');
-        $revalidate_secret   = get_option('midh_revalidation_secret', '');
+        $revalidate_secret   = get_option('midh_revalidate_token', '');
         $is_headless_ready   = !empty($revalidate_secret) && !empty($frontend_url);
 
         ?>
@@ -2763,13 +2780,51 @@ class MIDH_Headless_Core {
     /**
      * Contrôle d'accès sécurisé pour le Pont Antigravity & la Réparation
      */
+    private function get_bridge_secret() {
+        if (defined('MIDH_BRIDGE_SECRET') && is_string(MIDH_BRIDGE_SECRET) && MIDH_BRIDGE_SECRET !== '') {
+            return MIDH_BRIDGE_SECRET;
+        }
+        $stored = get_option('midh_bridge_secret', '');
+        if (!is_string($stored) || strlen($stored) < 24) {
+            $stored = wp_generate_password(40, false, false);
+            update_option('midh_bridge_secret', $stored, false);
+        }
+        return $stored;
+    }
+
     public function check_bridge_permission($request) {
-        $secret = $request->get_param('secret');
-        $header_key = $request->get_header('x_midh_key');
-        if ($secret === 'midh_bridge_sync_2026' || $header_key === 'midh_bridge_sync_2026' || current_user_can('manage_options')) {
+        if (current_user_can('manage_options')) {
             return true;
         }
-        return false;
+        $header_key = (string) $request->get_header('x_midh_key');
+        $configured_bridge = $this->get_bridge_secret();
+        if (!empty($header_key) && !empty($configured_bridge) && hash_equals($configured_bridge, $header_key)) {
+            return true;
+        }
+        return new WP_Error('rest_forbidden', __('Accès refusé : authentification requise.', 'midh-headless'), array('status' => 403));
+    }
+
+    public function check_donation_record_permission($request) {
+        if (current_user_can('manage_options')) {
+            return true;
+        }
+        $header_key = (string) $request->get_header('x_midh_key');
+        if (empty($header_key)) {
+            $auth_header = (string) $request->get_header('authorization');
+            if (stripos($auth_header, 'Bearer ') === 0) {
+                $header_key = trim(substr($auth_header, 7));
+            }
+        }
+        if (empty($header_key)) {
+            return new WP_Error('rest_forbidden', __('Authentification requise pour enregistrer un don.', 'midh-headless'), array('status' => 401));
+        }
+        $bridge_secret = $this->get_bridge_secret();
+        $reval_token   = (string) get_option('midh_revalidate_token', '');
+        if ((!empty($bridge_secret) && hash_equals($bridge_secret, $header_key)) ||
+            (!empty($reval_token) && hash_equals($reval_token, $header_key))) {
+            return true;
+        }
+        return new WP_Error('rest_forbidden', __('Clé d\'authentification invalide.', 'midh-headless'), array('status' => 403));
     }
 
     /**
@@ -2788,19 +2843,48 @@ class MIDH_Headless_Core {
      * Endpoint API REST de pont d'administration
      */
     public function bridge_command_endpoint($request) {
-        $action = $request->get_param('action');
+        $action = sanitize_key((string) $request->get_param('action'));
         if ($action === 'ping') {
-            return new WP_REST_Response(array('status' => 'ok', 'cms' => 'MIDH Headless CMS', 'version' => '1.2.0'), 200);
+            return new WP_REST_Response(array('status' => 'ok', 'cms' => 'MIDH Headless CMS', 'version' => '1.5.0'), 200);
         }
         if ($action === 'repair') {
             $res = $this->execute_repair_and_sync();
             return new WP_REST_Response(array('success' => true, 'summary' => $res), 200);
         }
         if ($action === 'set_option') {
-            $name = sanitize_text_field($request->get_param('name'));
-            $value = $request->get_param('value');
+            $name = sanitize_text_field((string) $request->get_param('name'));
+            $allowed_options = array(
+                'midh_frontend_url',
+                'midh_revalidate_token',
+                'midh_org_name',
+                'midh_creation_date',
+                'midh_members_count',
+                'midh_sections_count',
+                'midh_address',
+                'midh_phone',
+                'midh_whatsapp',
+                'midh_email',
+                'midh_about_hero_tag',
+                'midh_about_hero_title',
+                'midh_about_hero_subtitle',
+                'midh_about_history_p1',
+                'midh_about_history_p2',
+                'midh_about_mission',
+                'midh_about_vision',
+                'midh_about_values',
+                'midh_about_team_photo',
+            );
+            if (!in_array($name, $allowed_options, true)) {
+                return new WP_REST_Response(array('error' => 'Option non autorisée'), 403);
+            }
+            $raw_value = $request->get_param('value');
+            if (in_array($name, array('midh_frontend_url', 'midh_about_team_photo'), true)) {
+                $value = esc_url_raw((string) $raw_value);
+            } else {
+                $value = sanitize_textarea_field((string) $raw_value);
+            }
             update_option($name, $value);
-            return new WP_REST_Response(array('success' => true, 'name' => $name, 'value' => $value), 200);
+            return new WP_REST_Response(array('success' => true, 'name' => $name), 200);
         }
         return new WP_REST_Response(array('error' => 'Action inconnue'), 400);
     }
@@ -3020,16 +3104,23 @@ class MIDH_Headless_Core {
             }
         }
 
-        // 6. Mise à jour des options globales du MIDH
-        update_option('midh_frontend_url', 'https://www.midh-ci.org');
-        update_option('midh_revalidate_token', 'midh_revalidate_secret_2026');
+        // 6. Mise à jour des options globales du MIDH (sans écraser les secrets configurés)
+        if (!get_option('midh_frontend_url')) {
+            update_option('midh_frontend_url', 'https://www.midh-ci.org');
+        }
         update_option('midh_about_team_photo', $upload_dir['baseurl'] . '/2026/10/Photo-de-famille-2.webp');
-        $results['options_updated'] = 3;
+        $results['options_updated'] = 2;
 
-        // 7. Déclenchement de la revalidation Next.js Vercel
-        $reval_url = 'https://www.midh-ci.org/api/revalidate?secret=midh_revalidate_secret_2026&tag=wordpress';
-        $res = wp_remote_get($reval_url, array('timeout' => 5));
-        $results['revalidation_status'] = !is_wp_error($res) ? wp_remote_retrieve_response_code($res) : 'error';
+        // 7. Déclenchement de la revalidation Next.js Vercel si le jeton est configuré
+        $frontend_base = untrailingslashit(get_option('midh_frontend_url', 'https://www.midh-ci.org'));
+        $reval_token = get_option('midh_revalidate_token', '');
+        if (!empty($frontend_base) && !empty($reval_token)) {
+            $reval_url = $frontend_base . '/api/revalidate?secret=' . urlencode($reval_token) . '&tag=wordpress';
+            $res = wp_remote_get($reval_url, array('timeout' => 5));
+            $results['revalidation_status'] = !is_wp_error($res) ? wp_remote_retrieve_response_code($res) : 'error';
+        } else {
+            $results['revalidation_status'] = 'skipped_missing_token';
+        }
 
         return $results;
     }

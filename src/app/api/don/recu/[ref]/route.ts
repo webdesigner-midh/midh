@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDonationReceiptPdf } from '@/services/receiptPdf';
+import { verifyReceiptSignature } from '@/lib/server-crypto';
 
 export async function GET(
   request: NextRequest,
@@ -9,23 +10,44 @@ export async function GET(
     const { ref } = await params;
     const { searchParams } = new URL(request.url);
 
-    const amount = searchParams.get('amount') || '10000';
-    const name = searchParams.get('name') || 'Donateur MIDH';
-    const email = searchParams.get('email') || 'info@midh-ci.org';
+    const amount = searchParams.get('amount') || '';
+    const name = searchParams.get('name') || '';
+    const email = searchParams.get('email') || '';
     const phone = searchParams.get('phone') || '';
     const donorType = (searchParams.get('type') === 'organisation' ? 'organisation' : 'particulier') as
       | 'particulier'
       | 'organisation';
-    const representativeName = searchParams.get('representative') || undefined;
+    const representativeName = searchParams.get('representative') || '';
+    const sig = searchParams.get('sig');
+
+    const isValidSignature = verifyReceiptSignature(
+      {
+        ref,
+        amount,
+        name,
+        email,
+        phone,
+        donorType,
+        representativeName,
+      },
+      sig
+    );
+
+    if (!isValidSignature) {
+      return NextResponse.json(
+        { error: 'Signature de reçu invalide ou manquante.' },
+        { status: 403 }
+      );
+    }
 
     const pdfBytes = await generateDonationReceiptPdf({
       reference: ref,
       donorType,
-      donorName: name,
-      representativeName,
-      donorEmail: email,
+      donorName: name || 'Donateur MIDH',
+      representativeName: representativeName || undefined,
+      donorEmail: email || 'info@midh-ci.org',
       donorPhone: phone,
-      amount,
+      amount: amount || '10000',
       currency: 'FCFA',
       paymentMethod: 'WiniPayer (Mobile Money & Carte Bancaire)',
     });

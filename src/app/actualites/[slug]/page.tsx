@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getArticleBySlug, getArticles } from '@/services/wordpress';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { sanitizeRichHtml } from '@/lib/sanitize';
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
@@ -12,10 +13,7 @@ interface ArticlePageProps {
  */
 function sanitizeArticleHtml(html: string): string {
   if (!html) return '<p>Aucun contenu supplémentaire rédigé.</p>';
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/javascript:[^"]*/gi, '');
+  return sanitizeRichHtml(html);
 }
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {

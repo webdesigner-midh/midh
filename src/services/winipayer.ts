@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { signReceiptPayload, timingSafeEqualString } from '@/lib/server-crypto';
 
 /**
  * Service d'intégration WiniPayer 2.0 pour le MIDH
@@ -81,17 +82,36 @@ export async function createDonationInvoice(
   // Clé d'idempotence unique pour ce don
   const uniqueRef = `MIDH-DON-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
+  const returnQuery = new URLSearchParams({
+    ref: uniqueRef,
+    amount: String(params.amount),
+    name: params.donorName,
+    email: params.donorEmail,
+    phone: params.donorPhone || '',
+    type: params.donorType || 'particulier',
+    representative: params.representativeName || '',
+  });
+  const receiptSig = signReceiptPayload({
+    ref: uniqueRef,
+    amount: params.amount,
+    name: params.donorName,
+    email: params.donorEmail,
+    phone: params.donorPhone || '',
+    donorType: params.donorType || 'particulier',
+    representativeName: params.representativeName || '',
+  });
+  returnQuery.set('sig', receiptSig);
+
   // Vérification de sécurité des identifiants
   if (!tokenKey) {
     console.warn(
       '[WiniPayer] WINIPAYER_TOKEN_KEY non défini dans les variables d\'environnement. Mode simulation actif.'
     );
-    // Mode simulation / fallback gracieux pour tester l'UI sans bloquer
+    const simQuery = new URLSearchParams(returnQuery);
+    simQuery.set('simulated', 'true');
     return {
       success: true,
-      checkoutUrl: `${baseUrl}/don/succes?ref=${uniqueRef}&amount=${params.amount}&simulated=true&name=${encodeURIComponent(
-        params.donorName
-      )}`,
+      checkoutUrl: `${baseUrl}/don/succes?${simQuery.toString()}`,
       uuid: `simulated-${uniqueRef}`,
       reference: uniqueRef,
       isSimulated: true,
@@ -103,7 +123,7 @@ export async function createDonationInvoice(
     amount: Math.round(params.amount),
     description: `Don MIDH - ${params.donorName.slice(0, 40)}`,
     cancel_url: `${baseUrl}/don?status=cancelled&ref=${encodeURIComponent(uniqueRef)}`,
-    return_url: `${baseUrl}/don/succes?ref=${encodeURIComponent(uniqueRef)}&amount=${params.amount}&name=${encodeURIComponent(params.donorName)}&email=${encodeURIComponent(params.donorEmail)}&phone=${encodeURIComponent(params.donorPhone || '')}&type=${encodeURIComponent(params.donorType || 'particulier')}`,
+    return_url: `${baseUrl}/don/succes?${returnQuery.toString()}`,
     callback_url: `${baseUrl}/api/don/ipn`,
     custom_data: JSON.stringify({
       ref: uniqueRef,
@@ -207,19 +227,27 @@ export function verifyIpnSignature(payload: WiniPayerIpnPayload): boolean {
   const privateKey = process.env.WINIPAYER_PRIVATE_KEY?.trim();
   const env = (process.env.WINIPAYER_ENV?.toLowerCase() === 'prod' ? 'prod' : 'test') as 'prod' | 'test';
 
-  // En environnement de test ou sans clé privée, autoriser le traitement
-  if (env === 'test' || !privateKey) {
-    return true;
+  if (env === 'prod') {
+    if (!privateKey) {
+      console.error('[WiniPayer IPN] WINIPAYER_PRIVATE_KEY manquante en production : requête rejetée.');
+      return false;
+    }
+    if (!payload.hash || !payload.uuid) {
+      return false;
+    }
+    const rawString = `${privateKey}${payload.uuid}${payload.crypto || ''}${payload.amount || ''}${payload.created_at || ''}`;
+    const calculatedHash = crypto.createHash('sha256').update(rawString).digest('hex');
+    return timingSafeEqualString(calculatedHash.toLowerCase(), payload.hash.toLowerCase());
   }
 
-  if (!payload.hash || !payload.uuid) {
-    return false;
+  // En mode TEST : si une clé privée et un hash sont présents, vérifier cryptographiquement
+  if (privateKey && payload.hash && payload.uuid) {
+    const rawString = `${privateKey}${payload.uuid}${payload.crypto || ''}${payload.amount || ''}${payload.created_at || ''}`;
+    const calculatedHash = crypto.createHash('sha256').update(rawString).digest('hex');
+    return timingSafeEqualString(calculatedHash.toLowerCase(), payload.hash.toLowerCase());
   }
 
-  // WiniPayer concatène la clé privée avec uuid, crypto, amount, created_at
-  const rawString = `${privateKey}${payload.uuid}${payload.crypto || ''}${payload.amount || ''}${payload.created_at || ''}`;
-  const calculatedHash = crypto.createHash('sha256').update(rawString).digest('hex');
-
-  return calculatedHash.toLowerCase() === payload.hash.toLowerCase();
+  console.warn('[WiniPayer IPN] Notification acceptée en mode TEST sans signature complète.');
+  return true;
 }
 

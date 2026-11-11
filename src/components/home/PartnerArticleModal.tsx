@@ -3,6 +3,7 @@
 import { MIDHPartner } from '@/types/wordpress';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { sanitizeRichHtml } from '@/lib/sanitize';
 
 interface PartnerArticleModalProps {
   partner: MIDHPartner | null;
@@ -15,10 +16,7 @@ interface PartnerArticleModalProps {
  */
 function sanitizePartnerHtml(html: string): string {
   if (!html) return '<p>Aucun contenu supplémentaire rédigé.</p>';
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/javascript:[^"]*/gi, '');
+  return sanitizeRichHtml(html);
 }
 
 export default function PartnerArticleModal({

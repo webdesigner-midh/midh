@@ -2,6 +2,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import { resend, DEFAULT_FROM } from './resend';
+import { escapeHtml } from '@/lib/sanitize';
 
 export interface DonationReceiptData {
   reference: string;
@@ -549,7 +550,7 @@ export async function sendDonationConfirmationEmail(data: DonationReceiptData): 
           <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <h2 style="color: #0B3827; font-size: 17px; margin-top: 0; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">Confirmation de versement de don</h2>
             
-            <p style="font-size: 14px; margin-top: 14px;">Chère / Cher <strong>${data.donorName}</strong>,</p>
+            <p style="font-size: 14px; margin-top: 14px;">Chère / Cher <strong>${escapeHtml(data.donorName)}</strong>,</p>
             
             <p style="font-size: 14px;">Le Bureau Exécutif National du <strong>Mouvement Ivoirien des Droits Humains (MIDH)</strong> vous remercie chaleureusement pour votre généreuse contribution citoyenne.</p>
             
@@ -557,11 +558,11 @@ export async function sendDonationConfirmationEmail(data: DonationReceiptData): 
               <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                 <tr>
                   <td style="padding: 6px 0; color: #475569; width: 45%;"><strong>Référence transaction :</strong></td>
-                  <td style="padding: 6px 0; color: #0B3827; font-family: monospace; font-weight: bold;">${data.reference}</td>
+                  <td style="padding: 6px 0; color: #0B3827; font-family: monospace; font-weight: bold;">${escapeHtml(data.reference)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; color: #475569;"><strong>Montant versé :</strong></td>
-                  <td style="padding: 6px 0; color: #138A2E; font-size: 16px; font-weight: bold;">${amountStr}</td>
+                  <td style="padding: 6px 0; color: #138A2E; font-size: 16px; font-weight: bold;">${escapeHtml(amountStr)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; color: #475569;"><strong>Date de règlement :</strong></td>
@@ -569,7 +570,7 @@ export async function sendDonationConfirmationEmail(data: DonationReceiptData): 
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; color: #475569;"><strong>Moyen de règlement :</strong></td>
-                  <td style="padding: 6px 0; color: #1e293b;">${data.paymentMethod || 'WiniPayer (Mobile Money & CB)'}</td>
+                  <td style="padding: 6px 0; color: #1e293b;">${escapeHtml(data.paymentMethod || 'WiniPayer (Mobile Money & CB)')}</td>
                 </tr>
               </table>
             </div>

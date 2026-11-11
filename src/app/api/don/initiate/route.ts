@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const donationSchema = z.object({
   amount: z
-    .number({ invalid_type_error: 'Le montant doit être un nombre valide.' })
+    .number({ error: 'Le montant doit être un nombre valide.' })
     .min(100, 'Le montant minimum d’un don est de 100 FCFA.')
     .max(50000000, 'Montant supérieur à la limite autorisée.'),
   donorType: z.enum(['particulier', 'organisation']).optional().default('particulier'),
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const parseResult = donationSchema.safeParse(rawData);
 
     if (!parseResult.success) {
-      const firstError = parseResult.error.errors[0]?.message || 'Données du formulaire invalides.';
+      const firstError = parseResult.error.issues[0]?.message || 'Données du formulaire invalides.';
       return NextResponse.json(
         { success: false, error: firstError },
         { status: 400 }

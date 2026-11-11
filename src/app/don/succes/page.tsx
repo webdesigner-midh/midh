@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CheckCircle2, ShieldCheck, ArrowRight, HeartHandshake, Download } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ArrowRight, HeartHandshake, Download, AlertTriangle } from 'lucide-react';
 import { formatFcfa, sendDonationConfirmationEmail } from '@/services/receiptPdf';
+import { verifyReceiptSignature } from '@/lib/server-crypto';
 
 export const metadata: Metadata = {
   title: 'Merci pour votre Don | MIDH',
@@ -14,8 +15,8 @@ interface DonSuccessPageProps {
 
 export default async function DonSuccessPage({ searchParams }: DonSuccessPageProps) {
   const params = await searchParams;
-  const ref = (params.ref as string) || (params.uuid as string) || `MIDH-DON-${Date.now().toString().slice(-6)}`;
-  const amount = (params.amount as string) || 'Libre';
+  const ref = (params.ref as string) || (params.uuid as string) || '';
+  const amount = (params.amount as string) || '';
   const name = (params.name as string) || '';
   const email = (params.email as string) || '';
   const phone = (params.phone as string) || '';
@@ -23,10 +24,62 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
     | 'particulier'
     | 'organisation';
   const representative = (params.representative as string) || '';
+  const sig = (params.sig as string) || '';
   const isSimulated = params.simulated === 'true';
 
+  const isSignatureValid =
+    Boolean(ref) &&
+    verifyReceiptSignature(
+      {
+        ref,
+        amount,
+        name,
+        email,
+        phone,
+        donorType,
+        representativeName: representative,
+      },
+      sig
+    );
+
+  if (!isSignatureValid) {
+    return (
+      <div className="min-h-[85vh] bg-gradient-to-b from-slate-50 to-white py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-xl w-full bg-white rounded-3xl p-8 sm:p-12 shadow-xl border border-amber-200 flex flex-col items-center text-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center text-amber-600">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-extrabold text-[#0B3827] font-display">
+              Lien de confirmation non vérifié
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Ce lien de confirmation de don est incomplet, expiré ou a été modifié. Si vous venez d&apos;effectuer un don, votre attestation officielle vous est transmise directement par e-mail après validation de la passerelle WiniPayer.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center pt-2">
+            <Link
+              href="/don"
+              className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors"
+            >
+              Effectuer un don
+            </Link>
+            <Link
+              href="/"
+              className="px-6 py-3 rounded-xl bg-[#0B3827] hover:bg-[#0A2F21] text-white font-bold text-sm transition-colors"
+            >
+              Retour à l&apos;accueil
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayAmount = amount || 'Libre';
+
   // Déclenchement automatique et sécurisé de l'e-mail officiel avec reçu PDF attaché
-  // Idempotent : ne sera envoyé qu'une seule et unique fois par référence de transaction
+  // Idempotent : ne sera envoyé qu'une seule et unique fois par référence de transaction signée
   if (email && email.includes('@')) {
     try {
       await sendDonationConfirmationEmail({
@@ -36,7 +89,7 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
         representativeName: representative || undefined,
         donorEmail: email,
         donorPhone: phone || undefined,
-        amount,
+        amount: displayAmount,
         currency: 'FCFA',
         paymentMethod: 'WiniPayer (Mobile Money & Carte Bancaire)',
       });
@@ -49,7 +102,9 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
     amount
   )}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(
     phone
-  )}&type=${encodeURIComponent(donorType)}`;
+  )}&type=${encodeURIComponent(donorType)}&representative=${encodeURIComponent(
+    representative
+  )}&sig=${encodeURIComponent(sig)}`;
 
   return (
     <div className="min-h-[85vh] bg-gradient-to-b from-[#f0fdf4] via-[#f8fafc] to-white py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -98,7 +153,7 @@ export default async function DonSuccessPage({ searchParams }: DonSuccessPagePro
           <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
             <span className="text-slate-500 font-medium">Montant du don :</span>
             <span className="font-bold text-lg text-[#138A2E]">
-              {amount !== 'Libre' ? `${formatFcfa(amount)} FCFA` : 'Don enregistré'}
+              {displayAmount !== 'Libre' ? `${formatFcfa(displayAmount)} FCFA` : 'Don enregistré'}
             </span>
           </div>
 

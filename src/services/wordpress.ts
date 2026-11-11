@@ -28,6 +28,23 @@ import {
   PublicationCategory,
 } from '@/types/wordpress';
 
+interface WPRestRecord {
+  id: number;
+  slug: string;
+  date?: string;
+  sticky?: boolean;
+  menu_order?: number;
+  title?: { rendered?: string };
+  excerpt?: { rendered?: string };
+  content?: { rendered?: string };
+  meta?: Record<string, string | undefined>;
+  _embedded?: {
+    author?: Array<{ name?: string }>;
+    'wp:featuredmedia'?: Array<{ source_url?: string }>;
+    'wp:term'?: Array<Array<{ slug?: string; name?: string }>>;
+  };
+}
+
 function getWordPressBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '';
   if (envUrl && !envUrl.includes('.local')) {
@@ -152,7 +169,7 @@ export async function getInterventionDomains(): Promise<MIDHDomainInfo[]> {
  * Récupère les projets et actions de terrain
  */
 export async function getProjects(): Promise<MIDHProject[]> {
-  const wpProjects = await fetchWordPressAPI<any[]>('/wp-json/wp/v2/midh_project?_embed&per_page=20');
+  const wpProjects = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_project?_embed&per_page=20');
   
   if (wpProjects && Array.isArray(wpProjects) && wpProjects.length > 0) {
     return wpProjects.map((item) => {
@@ -170,7 +187,7 @@ export async function getProjects(): Promise<MIDHProject[]> {
         excerpt: cleanExcerpt,
         content: rawContent,
         coverImage: sanitizeUrl(item._embedded?.['wp:featuredmedia']?.[0]?.source_url || item.meta?.cover_image),
-        status: item.meta?.status || 'actif',
+        status: (item.meta?.status as MIDHProject['status']) || 'actif',
         statusLabel: item.meta?.status_label || 'Projet actif',
         domain: item.meta?.domain || 'bonne-gouvernance',
         period: item.meta?.period || '',
@@ -201,13 +218,14 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
     endpoint += `&category_slug=${encodeURIComponent(category)}`;
   }
 
-  const wpPosts = await fetchWordPressAPI<any[]>(endpoint);
+  const wpPosts = await fetchWordPressAPI<WPRestRecord[]>(endpoint);
 
   if (wpPosts && Array.isArray(wpPosts) && wpPosts.length > 0) {
     const mapped = wpPosts.map((post) => {
       const catSlug = post._embedded?.['wp:term']?.[0]?.[0]?.slug || 'actualites';
       const catName = post._embedded?.['wp:term']?.[0]?.[0]?.name || 'Actualité';
-      const dateObj = new Date(post.date);
+      const postDate = post.date || new Date().toISOString();
+      const dateObj = new Date(postDate);
       const formattedDate = dateObj.toLocaleDateString('fr-FR', {
         day: 'numeric',
         month: 'long',
@@ -221,7 +239,7 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
         excerpt: post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '',
         content: post.content?.rendered || '',
         featuredImage: sanitizeUrl(post._embedded?.['wp:featuredmedia']?.[0]?.source_url),
-        date: post.date,
+        date: postDate,
         formattedDate,
         author: post._embedded?.author?.[0]?.name || 'MIDH',
         category: (catSlug as PublicationCategory) || 'actualites',
@@ -265,7 +283,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
   }
 
   // 2. Tente l'endpoint REST standard WP CPT
-  const wpDocs = await fetchWordPressAPI<any[]>('/wp-json/wp/v2/midh_document?_embed&per_page=50');
+  const wpDocs = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_document?_embed&per_page=50');
   if (wpDocs && Array.isArray(wpDocs) && wpDocs.length > 0) {
     return wpDocs.map((doc) => ({
       id: doc.id,
@@ -275,7 +293,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
       fileUrl: sanitizeUrl(doc.meta?.file_url || '#'),
       fileSize: doc.meta?.file_size || 'PDF',
       fileFormat: doc.meta?.file_format || 'PDF',
-      category: doc.meta?.category || 'rapport_annuel',
+      category: (doc.meta?.category as MIDHDocument['category']) || 'rapport_annuel',
       categoryLabel: doc.meta?.category_label || 'Rapport annuel',
       publicationDate: doc.meta?.publication_date || '',
     }));
@@ -288,7 +306,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
  * Récupère les membres de l'équipe et l'organigramme
  */
 export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
-  const wpTeam = await fetchWordPressAPI<any[]>('/wp-json/wp/v2/midh_team?_embed&per_page=50');
+  const wpTeam = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_team?_embed&per_page=50');
 
   if (wpTeam && Array.isArray(wpTeam) && wpTeam.length > 0) {
     return wpTeam.map((m) => {
@@ -343,7 +361,7 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
  * Récupère les partenaires institutionnels
  */
 export async function getPartners(): Promise<MIDHPartner[]> {
-  const wpPartners = await fetchWordPressAPI<any[]>('/wp-json/wp/v2/midh_partner?_embed&per_page=50');
+  const wpPartners = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_partner?_embed&per_page=50');
 
   if (wpPartners && Array.isArray(wpPartners) && wpPartners.length > 0) {
     return wpPartners.map((p) => {
@@ -358,7 +376,7 @@ export async function getPartners(): Promise<MIDHPartner[]> {
         slug: p.slug || `partenaire-${p.id}`,
         logoUrl: featuredMedia || p.meta?.logo_url,
         featuredImage: featuredMedia || p.meta?.featured_image || p.meta?.logo_url,
-        type: p.meta?.type || 'technique',
+        type: (p.meta?.type as MIDHPartner['type']) || 'technique',
         typeLabel: p.meta?.type_label || (p.meta?.type === 'bailleur' ? 'Bailleur Institutionnel' : p.meta?.type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'),
         websiteUrl: p.meta?.website_url,
         description: cleanExcerpt || p.meta?.description,
@@ -376,7 +394,7 @@ export async function getPartners(): Promise<MIDHPartner[]> {
  * Récupère un partenaire spécifique par son slug
  */
 export async function getPartnerBySlug(slug: string): Promise<MIDHPartner | null> {
-  const wpPartners = await fetchWordPressAPI<any[]>(`/wp-json/wp/v2/midh_partner?slug=${encodeURIComponent(slug)}&_embed`);
+  const wpPartners = await fetchWordPressAPI<WPRestRecord[]>(`/wp-json/wp/v2/midh_partner?slug=${encodeURIComponent(slug)}&_embed`);
 
   if (wpPartners && Array.isArray(wpPartners) && wpPartners.length > 0) {
     const p = wpPartners[0];
@@ -391,7 +409,7 @@ export async function getPartnerBySlug(slug: string): Promise<MIDHPartner | null
       slug: p.slug,
       logoUrl: featuredMedia || p.meta?.logo_url,
       featuredImage: featuredMedia || p.meta?.featured_image || p.meta?.logo_url,
-      type: p.meta?.type || 'technique',
+      type: (p.meta?.type as MIDHPartner['type']) || 'technique',
       typeLabel: p.meta?.type_label || (p.meta?.type === 'bailleur' ? 'Bailleur Institutionnel' : p.meta?.type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'),
       websiteUrl: p.meta?.website_url,
       description: cleanExcerpt || p.meta?.description,
@@ -574,11 +592,21 @@ export async function recordDonationInWordPress(
   payload: WordPressDonationPayload
 ): Promise<{ success: boolean; message?: string }> {
   try {
+    const bridgeKey =
+      process.env.MIDH_WP_BRIDGE_SECRET?.trim() ||
+      process.env.REVALIDATE_SECRET_TOKEN?.trim() ||
+      '';
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (bridgeKey) {
+      headers['X-MIDH-Key'] = bridgeKey;
+    }
+
     const res = await fetchWordPressAPI<{ success: boolean; message?: string }>('/wp-json/midh/v1/donations/record', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload),
     });
 

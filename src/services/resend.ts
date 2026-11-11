@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { escapeHtml } from '@/lib/sanitize';
 
 // Initialisation du client Resend avec la variable d'environnement sécurisée
 const resendApiKey = process.env.RESEND_API_KEY?.trim() || 're_placeholder_midh';
@@ -113,6 +114,13 @@ export async function sendContactNotification({
     timeZone: 'Africa/Abidjan',
   });
   const waNumber = cleanPhoneForWhatsApp(phone);
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeEmailHref = encodeURIComponent(email.trim());
+  const safePhone = phone ? escapeHtml(phone) : '';
+  const safePhoneHref = phone ? escapeHtml(phone.replace(/[^\d+\-().\s]/g, '')) : '';
+  const safeSubject = escapeHtml(subject);
+  const safeMessage = escapeHtml(message);
 
   const htmlContent = `
   <!DOCTYPE html>
@@ -120,7 +128,7 @@ export async function sendContactNotification({
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>[MIDH] Nouveau message : ${subject}</title>
+      <title>[MIDH] Nouveau message : ${safeSubject}</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #f0f4f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1e293b;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0f4f1; padding: 30px 10px;">
@@ -183,10 +191,10 @@ export async function sendContactNotification({
                             <td>
                               <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Expéditeur</div>
                               <div style="font-size: 15px; font-weight: 700; color: #0f172a; margin-top: 2px;">
-                                ${name}
+                                ${safeName}
                               </div>
                               <div style="font-size: 13.5px; color: #0284c7; margin-top: 2px;">
-                                <a href="mailto:${email}" style="color: #0284c7; text-decoration: none; font-weight: 500;">${email}</a>
+                                <a href="mailto:${safeEmailHref}" style="color: #0284c7; text-decoration: none; font-weight: 500;">${safeEmail}</a>
                               </div>
                             </td>
                           </tr>
@@ -221,7 +229,7 @@ export async function sendContactNotification({
                             <td>
                               <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Téléphone / WhatsApp</div>
                               <div style="font-size: 14.5px; font-weight: 600; color: #0f172a; margin-top: 2px;">
-                                <a href="tel:${phone}" style="color: #0f172a; text-decoration: none;">${phone}</a>
+                                <a href="tel:${safePhoneHref}" style="color: #0f172a; text-decoration: none;">${safePhone}</a>
                               </div>
                             </td>
                           </tr>
@@ -253,12 +261,12 @@ export async function sendContactNotification({
                     </span>
                   </div>
                   <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 800; color: #0B3827; line-height: 1.4;">
-                    ${subject}
+                    ${safeSubject}
                   </h2>
 
                   <!-- Boîte du contenu du message -->
                   <div style="background-color: #fcfdfc; border-left: 4px solid #0B3827; border-top: 1px solid #eef2ef; border-right: 1px solid #eef2ef; border-bottom: 1px solid #eef2ef; border-radius: 8px; padding: 20px 22px; margin-bottom: 28px;">
-                    <div style="font-size: 14.5px; line-height: 1.7; color: #334155; white-space: pre-wrap;">${message}</div>
+                    <div style="font-size: 14.5px; line-height: 1.7; color: #334155; white-space: pre-wrap;">${safeMessage}</div>
                   </div>
 
                   <!-- Boutons d'action rapide -->
@@ -268,9 +276,9 @@ export async function sendContactNotification({
                         <table cellpadding="0" cellspacing="0" border="0">
                           <tr>
                             <td style="padding: 0 8px 10px 8px;">
-                              <a href="mailto:${email}?subject=Re: [MIDH] ${encodeURIComponent(subject)}" 
+                              <a href="mailto:${safeEmailHref}?subject=Re: [MIDH] ${encodeURIComponent(subject)}" 
                                  style="display: inline-block; background: linear-gradient(135deg, #0B3827 0%, #12573c 100%); color: #ffffff !important; text-decoration: none; padding: 13px 26px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 10px rgba(11, 56, 39, 0.25);">
-                                ✉️ Répondre à ${name}
+                                ✉️ Répondre à ${safeName}
                               </a>
                             </td>
                             ${waNumber ? `
@@ -380,6 +388,16 @@ export async function sendVolunteerNotification({
     timeZone: 'Africa/Abidjan',
   });
   const waNumber = cleanPhoneForWhatsApp(phone);
+  const safeFullName = escapeHtml(fullName);
+  const safePrenom = escapeHtml(prenom);
+  const safeLocation = escapeHtml(location);
+  const safeEmail = escapeHtml(email);
+  const safeEmailHref = encodeURIComponent(email.trim());
+  const safePhone = escapeHtml(phone);
+  const safePhoneHref = escapeHtml(phone.replace(/[^\d+\-().\s]/g, ''));
+  const safeDomain = domain ? escapeHtml(domain) : '';
+  const safeAvailability = availability ? escapeHtml(availability) : '';
+  const safeMessage = message ? escapeHtml(message) : '';
 
   const htmlContent = `
   <!DOCTYPE html>
@@ -387,7 +405,7 @@ export async function sendVolunteerNotification({
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>[MIDH Bénévolat] Candidature de ${fullName}</title>
+      <title>[MIDH Bénévolat] Candidature de ${safeFullName}</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #f0f4f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1e293b;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0f4f1; padding: 30px 10px;">
@@ -439,8 +457,8 @@ export async function sendVolunteerNotification({
                   <!-- En-tête profil candidat -->
                   <div style="margin-bottom: 20px; text-align: center;">
                     <div style="font-size: 12px; text-transform: uppercase; font-weight: 700; color: #166534; letter-spacing: 0.8px; margin-bottom: 4px;">Fiche Candidat(e)</div>
-                    <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0B3827;">${fullName}</h2>
-                    <div style="font-size: 13px; color: #64748b; margin-top: 4px;">📍 Résidence : <strong>${location}</strong></div>
+                    <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #0B3827;">${safeFullName}</h2>
+                    <div style="font-size: 13px; color: #64748b; margin-top: 4px;">📍 Résidence : <strong>${safeLocation}</strong></div>
                   </div>
 
                   <!-- Fiche Bénévole détaillée -->
@@ -457,7 +475,7 @@ export async function sendVolunteerNotification({
                             <td>
                               <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Email</div>
                               <div style="font-size: 14.5px; font-weight: 600; color: #0284c7; margin-top: 2px;">
-                                <a href="mailto:${email}" style="color: #0284c7; text-decoration: none;">${email}</a>
+                                <a href="mailto:${safeEmailHref}" style="color: #0284c7; text-decoration: none;">${safeEmail}</a>
                               </div>
                             </td>
                           </tr>
@@ -471,13 +489,13 @@ export async function sendVolunteerNotification({
                             <td>
                               <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Téléphone / WhatsApp</div>
                               <div style="font-size: 14.5px; font-weight: 700; color: #0f172a; margin-top: 2px;">
-                                <a href="tel:${phone}" style="color: #0f172a; text-decoration: none;">${phone}</a>
+                                <a href="tel:${safePhoneHref}" style="color: #0f172a; text-decoration: none;">${safePhone}</a>
                               </div>
                             </td>
                           </tr>
                         </table>
 
-                        ${domain ? `
+                        ${safeDomain ? `
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 12px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
                           <tr>
                             <td width="30" valign="top" style="padding-top: 2px;">
@@ -486,13 +504,13 @@ export async function sendVolunteerNotification({
                             <td>
                               <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Domaine de compétence souhaité</div>
                               <div style="font-size: 14px; font-weight: 700; color: #166534; margin-top: 2px;">
-                                ${domain}
+                                ${safeDomain}
                               </div>
                             </td>
                           </tr>
                         </table>` : ''}
 
-                        ${availability ? `
+                        ${safeAvailability ? `
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 12px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
                           <tr>
                             <td width="30" valign="top" style="padding-top: 2px;">
@@ -501,7 +519,7 @@ export async function sendVolunteerNotification({
                             <td>
                               <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">Disponibilité</div>
                               <div style="font-size: 13.5px; font-weight: 600; color: #334155; margin-top: 2px;">
-                                ${availability}
+                                ${safeAvailability}
                               </div>
                             </td>
                           </tr>
@@ -525,7 +543,7 @@ export async function sendVolunteerNotification({
                     </tr>
                   </table>
 
-                  ${message ? `
+                  ${safeMessage ? `
                   <!-- Motivations -->
                   <div style="margin-bottom: 10px;">
                     <span style="display: inline-block; background-color: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">
@@ -533,7 +551,7 @@ export async function sendVolunteerNotification({
                     </span>
                   </div>
                   <div style="background-color: #fcfdfc; border-left: 4px solid #16a34a; border-top: 1px solid #eef2ef; border-right: 1px solid #eef2ef; border-bottom: 1px solid #eef2ef; border-radius: 8px; padding: 20px 22px; margin-bottom: 28px;">
-                    <div style="font-size: 14.5px; line-height: 1.7; color: #334155; white-space: pre-wrap;">${message}</div>
+                    <div style="font-size: 14.5px; line-height: 1.7; color: #334155; white-space: pre-wrap;">${safeMessage}</div>
                   </div>` : ''}
 
                   <!-- Boutons d'action -->
@@ -543,9 +561,9 @@ export async function sendVolunteerNotification({
                         <table cellpadding="0" cellspacing="0" border="0">
                           <tr>
                             <td style="padding: 0 8px 10px 8px;">
-                              <a href="mailto:${email}?subject=Votre candidature bénévole au sein du MIDH" 
+                              <a href="mailto:${safeEmailHref}?subject=Votre candidature bénévole au sein du MIDH" 
                                  style="display: inline-block; background: linear-gradient(135deg, #0B3827 0%, #12573c 100%); color: #ffffff !important; text-decoration: none; padding: 13px 26px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 10px rgba(11, 56, 39, 0.25);">
-                                ✉️ Contacter ${prenom} par Email
+                                ✉️ Contacter ${safePrenom} par Email
                               </a>
                             </td>
                             ${waNumber ? `
@@ -636,6 +654,9 @@ export async function sendNewsletterNotificationToTeam({
     timeZone: 'Africa/Abidjan',
   });
 
+  const safeSubscriberEmail = escapeHtml(subscriberEmail);
+  const safeSubscriberHref = encodeURIComponent(subscriberEmail.trim());
+
   const htmlContent = `
   <!DOCTYPE html>
   <html lang="fr">
@@ -668,7 +689,7 @@ export async function sendNewsletterNotificationToTeam({
                       Adresse e-mail du nouvel abonné
                     </div>
                     <div style="font-size: 17px; font-weight: 800; color: #0B3827;">
-                      <a href="mailto:${subscriberEmail}" style="color: #0B3827; text-decoration: none;">${subscriberEmail}</a>
+                      <a href="mailto:${safeSubscriberHref}" style="color: #0B3827; text-decoration: none;">${safeSubscriberEmail}</a>
                     </div>
                     <div style="font-size: 12px; color: #64748b; margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
                       🗓️ <strong>Date :</strong> ${dateStr} (Heure d'Abidjan)<br>
@@ -758,7 +779,7 @@ export async function sendNewsletterWelcomeEmail({
                   </p>
 
                   <p style="font-size: 14.5px; line-height: 1.7; color: #334155; margin: 0 0 20px 0;">
-                    Nous vous remercions pour votre intérêt envers l'action du <strong>Mouvement Ivoirien des Droits Humains (MIDH)</strong>. Votre adresse (<code>${subscriberEmail}</code>) a bien été enregistrée dans notre liste de diffusion officielle.
+                    Nous vous remercions pour votre intérêt envers l'action du <strong>Mouvement Ivoirien des Droits Humains (MIDH)</strong>. Votre adresse (<code>${escapeHtml(subscriberEmail)}</code>) a bien été enregistrée dans notre liste de diffusion officielle.
                   </p>
 
                   <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 24px;">

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { GalleryPhoto, GalleryVideo, OFFICIAL_GALLERY_PHOTOS, OFFICIAL_GALLERY_VIDEOS } from '@/data/galleryData';
+import { sanitizeVideoEmbed } from '@/lib/sanitize';
 
 interface GalleryClientProps {
   initialPhotos?: GalleryPhoto[];
@@ -293,7 +294,7 @@ export default function GalleryClient({
                     {video.videoEmbed ? (
                       <div
                         className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:border-0"
-                        dangerouslySetInnerHTML={{ __html: video.videoEmbed }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeVideoEmbed(video.videoEmbed) }}
                       />
                     ) : video.youtubeId ? (
                       <iframe
