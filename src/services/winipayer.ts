@@ -184,13 +184,49 @@ export async function createDonationInvoice(
       };
     }
 
-    const results = data.results || {};
+    const results = (typeof data.results === 'object' && data.results !== null ? data.results : {}) as Record<string, unknown>;
+    const root = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>;
+
+    const cryptoToken =
+      (typeof results.crypto === 'string' && results.crypto ? results.crypto : null) ||
+      (typeof root.crypto === 'string' && root.crypto ? root.crypto : null);
+
+    const uuid =
+      (typeof results.uuid === 'string' && results.uuid ? results.uuid : null) ||
+      (typeof root.uuid === 'string' && root.uuid ? root.uuid : null);
+
+    const expiredAt =
+      (typeof results.expired_at === 'string' && results.expired_at ? results.expired_at : null) ||
+      (typeof root.expired_at === 'string' && root.expired_at ? root.expired_at : null);
+
+    // Résolution robuste de l'URL de paiement officielle WiniPayer v2
+    // Évite l'URL erronée se terminant par /null lorsque checkout_process est mal renseigné
+    const candidateUrls = [
+      typeof root.checkout_link === 'string' ? root.checkout_link : null,
+      typeof results.checkout_link === 'string' ? results.checkout_link : null,
+      typeof results.checkout_process === 'string' ? results.checkout_process : null,
+      typeof root.checkout_process === 'string' ? root.checkout_process : null,
+      cryptoToken ? `https://checkout.winipayer.com/process/tng/${cryptoToken}` : null,
+    ];
+
+    const validCheckoutUrl = candidateUrls.find(
+      (url): url is string => Boolean(url && url.startsWith('http') && !url.endsWith('/null') && !url.includes('/null?'))
+    );
+
+    if (!validCheckoutUrl) {
+      console.error('[WiniPayer] Impossible de résoudre le lien de paiement valide :', data);
+      return {
+        success: false,
+        error: 'Lien de paiement WiniPayer invalide ou indisponible.',
+      };
+    }
+
     return {
       success: true,
-      checkoutUrl: results.checkout_process,
-      uuid: results.uuid,
-      crypto: results.crypto,
-      expiredAt: results.expired_at,
+      checkoutUrl: validCheckoutUrl,
+      uuid: uuid || undefined,
+      crypto: cryptoToken || undefined,
+      expiredAt: expiredAt || undefined,
       reference: uniqueRef,
     };
   } catch (error) {
