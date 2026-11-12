@@ -146,6 +146,9 @@ async function handleIpnNotification(payload: WiniPayerIpnPayload) {
           from: DEFAULT_FROM,
           to: adminRecipients,
           subject: `[Nouveau Don Reçu] ${String(amount)} ${String(currency)} de ${donorName} (WiniPayer)`,
+          headers: {
+            'X-Entity-Ref-ID': `admin-don-${transactionUuid}`,
+          },
           html: `
             <p>Bonjour à l'équipe du MIDH,</p>
             <p>Un nouveau don vient d'être validé avec succès via la passerelle <strong>WiniPayer</strong> :</p>

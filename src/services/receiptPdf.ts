@@ -533,6 +533,9 @@ export async function sendDonationConfirmationEmail(data: DonationReceiptData): 
       from: DEFAULT_FROM,
       to: data.donorEmail,
       subject: `Attestation de don & Reçu officiel MIDH — Réf: ${data.reference}`,
+      headers: {
+        'X-Entity-Ref-ID': data.reference,
+      },
       attachments: [
         {
           filename: `attestation-don-midh-${data.reference}.pdf`,
