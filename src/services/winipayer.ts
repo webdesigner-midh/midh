@@ -118,6 +118,19 @@ export async function createDonationInvoice(
     };
   }
 
+  // Nettoyage et formatage du téléphone pour l'API WiniPayer (10 chiffres sans indicatif)
+  const rawDigits = (params.donorPhone || '').replace(/[^0-9]/g, '');
+  const cleanPhone = rawDigits.startsWith('225') && rawDigits.length === 13 ? rawDigits.slice(3) : rawDigits;
+
+  const referencePayload: Record<string, string> = {
+    identifier: uniqueRef,
+    name: params.donorName.slice(0, 80),
+    email: params.donorEmail.slice(0, 80),
+  };
+  if (cleanPhone) {
+    referencePayload.phone = cleanPhone;
+  }
+
   const payload = {
     env,
     amount: Math.round(params.amount),
@@ -125,6 +138,15 @@ export async function createDonationInvoice(
     cancel_url: `${baseUrl}/don?status=cancelled&ref=${encodeURIComponent(uniqueRef)}`,
     return_url: `${baseUrl}/don/succes?${returnQuery.toString()}`,
     callback_url: `${baseUrl}/api/don/ipn`,
+    client_pay_fee: false,
+    reference: referencePayload,
+    items: [
+      {
+        name: `Don MIDH (${params.donorType === 'organisation' ? 'Organisation' : 'Particulier'})`,
+        quantity: 1,
+        unit_price: Math.round(params.amount),
+      },
+    ],
     custom_data: JSON.stringify({
       ref: uniqueRef,
       donor_type: params.donorType || 'particulier',
