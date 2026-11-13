@@ -140,13 +140,13 @@ export async function createDonationInvoice(
     callback_url: `${baseUrl}/api/don/ipn`,
     client_pay_fee: false,
     reference: referencePayload,
-    items: [
+    items: JSON.stringify([
       {
         name: `Don MIDH (${params.donorType === 'organisation' ? 'Organisation' : 'Particulier'})`,
         quantity: 1,
         unit_price: Math.round(params.amount),
       },
-    ],
+    ]),
     custom_data: JSON.stringify({
       ref: uniqueRef,
       donor_type: params.donorType || 'particulier',
