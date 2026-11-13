@@ -138,7 +138,7 @@ export async function createDonationInvoice(
     cancel_url: `${baseUrl}/don?status=cancelled&ref=${encodeURIComponent(uniqueRef)}`,
     return_url: `${baseUrl}/don/succes?${returnQuery.toString()}`,
     callback_url: `${baseUrl}/api/don/ipn`,
-    reference: referencePayload,
+    reference: JSON.stringify(referencePayload),
     items: JSON.stringify([
       {
         name: `Don MIDH (${params.donorType === 'organisation' ? 'Organisation' : 'Particulier'})`,
