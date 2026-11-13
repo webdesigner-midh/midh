@@ -143,7 +143,8 @@ export async function createDonationInvoice(
       {
         name: `Don MIDH (${params.donorType === 'organisation' ? 'Organisation' : 'Particulier'})`,
         quantity: 1,
-        unit_price: Math.round(params.amount),
+        price_unit: Math.round(params.amount),
+        total_price: Math.round(params.amount),
       },
     ]),
     custom_data: JSON.stringify({
