@@ -138,7 +138,6 @@ export async function createDonationInvoice(
     cancel_url: `${baseUrl}/don?status=cancelled&ref=${encodeURIComponent(uniqueRef)}`,
     return_url: `${baseUrl}/don/succes?${returnQuery.toString()}`,
     callback_url: `${baseUrl}/api/don/ipn`,
-    client_pay_fee: false,
     reference: referencePayload,
     items: JSON.stringify([
       {
