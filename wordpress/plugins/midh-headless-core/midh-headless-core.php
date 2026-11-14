@@ -865,7 +865,8 @@ class MIDH_Headless_Core {
         );
 
         global $post;
-        if ($hook === 'toplevel_page_midh-headless-settings' || (($hook === 'post.php' || $hook === 'post-new.php') && isset($post) && ($post->post_type === 'midh_team' || $post->post_type === 'midh_slide' || $post->post_type === 'midh_document'))) {
+        $media_post_types = array('midh_team', 'midh_slide', 'midh_document', 'midh_gallery', 'midh_partner', 'midh_project');
+        if ($hook === 'toplevel_page_midh-headless-settings' || (($hook === 'post.php' || $hook === 'post-new.php') && isset($post) && in_array($post->post_type, $media_post_types, true))) {
             wp_enqueue_media();
         }
     }
@@ -2452,7 +2453,7 @@ class MIDH_Headless_Core {
                         <label for="midh_video_url" class="midh-gal-label">
                             Option A : Lien direct de la vidéo (YouTube, Facebook, Dailymotion...) :
                         </label>
-                        <input type="url" name="midh_video_url" id="midh_video_url" value="<?php echo esc_url($video_url); ?>" class="midh-gal-input" placeholder="ex: https://www.youtube.com/watch?v=dQw4w9WgXcQ ou https://fb.watch/..." />
+                        <input type="url" name="midh_video_url" id="midh_video_url" value="<?php echo esc_url($video_url); ?>" class="midh-gal-input" placeholder="ex: https://www.youtube.com/watch?v=... ou https://fb.watch/..." />
                         <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
                             💡 Pour YouTube, collez simplement le lien classique, le lecteur Next.js s'adaptera automatiquement.
                         </p>
