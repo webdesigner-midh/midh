@@ -336,6 +336,10 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
         biography = m.content.rendered.replace(/<[^>]+>/g, '').trim();
       }
 
+      const rawMandateStatus = (m.meta?.mandate_status || '').toLowerCase().trim();
+      const mandateStatus: 'actuel' | 'ancien' = rawMandateStatus === 'ancien' || rawMandateStatus === 'former' ? 'ancien' : 'actuel';
+      const mandatePeriod = m.meta?.mandate_period || '';
+
       return {
         id: m.id,
         fullName: rawTitle,
@@ -346,6 +350,8 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
         linkedin: m.meta?.linkedin || '',
         twitter: m.meta?.twitter || '',
         order: m.menu_order || 0,
+        mandateStatus,
+        mandatePeriod,
       };
     }).sort((a, b) => {
       const orderA = a.order > 0 ? a.order : 999;

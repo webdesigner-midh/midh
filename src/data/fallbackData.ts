@@ -449,6 +449,8 @@ export const FALLBACK_TEAM: MIDHTeamMember[] = [
     role: "Direction Stratégique & Représentation Institutionnelle",
     biography: "Garant de l'orientation morale, de l'indépendance et des statuts du MIDH.",
     order: 1,
+    mandateStatus: 'actuel',
+    mandatePeriod: '2024 – Présent',
   },
   {
     id: 2,
@@ -456,6 +458,8 @@ export const FALLBACK_TEAM: MIDHTeamMember[] = [
     role: "Coordination Opérationnelle & Gestion des Sections",
     biography: "Supervision des activités courantes, animation des sections régionales et des missions.",
     order: 2,
+    mandateStatus: 'actuel',
+    mandatePeriod: '2024 – Présent',
   },
   {
     id: 3,
@@ -463,6 +467,8 @@ export const FALLBACK_TEAM: MIDHTeamMember[] = [
     role: "Responsable Juridique & Accompagnement des Victimes",
     biography: "Coordination du réseau d'avocats bénévoles, conseils juridiques et cliniques mobiles.",
     order: 3,
+    mandateStatus: 'actuel',
+    mandatePeriod: '2024 – Présent',
   },
 ];
 

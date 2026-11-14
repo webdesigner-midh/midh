@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTeamMembers, getSiteOptions } from '@/services/wordpress';
 import Link from 'next/link';
+import TeamTabs from '@/components/about/TeamTabs';
 
 export const metadata: Metadata = {
   title: 'À propos du MIDH | Histoire, Missions et Gouvernance',
@@ -110,118 +111,9 @@ export default async function AProposPage() {
           </div>
         </section>
 
-        {/* Gouvernance & Équipe */}
-        <section id="equipe" className="flex flex-col gap-space-lg pt-space-md">
-          <div className="max-w-2xl flex flex-col gap-2">
-            <span className="font-label-lg text-xs sm:text-sm text-primary uppercase tracking-wider font-semibold">
-              Gouvernance &amp; Direction
-            </span>
-            <h2 className="font-headline-lg text-xl sm:text-2xl md:text-3xl text-[#0B3827] font-bold">
-              L&apos;Équipe dirigeante du MIDH
-            </h2>
-            <p className="font-body-md text-body-md text-tertiary">
-              Données administrées depuis le back-office WordPress (organigramme en cours d&apos;actualisation après validation statutaire).
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {team.map((member) => (
-              <div
-                key={member.id}
-                className="group bg-white rounded-3xl border border-slate-200/80 hover:border-emerald-700/40 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col hover:-translate-y-1.5"
-              >
-                {/* Photo Portrait Card Header */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-b from-slate-100 to-slate-200">
-                  {member.photoUrl ? (
-                    <img
-                      src={member.photoUrl}
-                      alt={member.fullName}
-                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/5 via-slate-100 to-emerald-800/10 text-emerald-800 p-6">
-                      <div className="w-24 h-24 rounded-full bg-emerald-700/10 flex items-center justify-center mb-3">
-                        <span className="material-symbols-outlined text-5xl text-emerald-800">person</span>
-                      </div>
-                      <span className="text-xs uppercase tracking-wider font-semibold text-emerald-900/60">
-                        Portrait officiel en cours
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
-
-                  {/* Role Floating Badge */}
-                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-700 text-white shadow-md backdrop-blur-md">
-                      <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-                      {member.role || "Membre de l'équipe"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Body */}
-                <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-bold text-xl sm:text-2xl text-[#0B3827] tracking-tight group-hover:text-emerald-700 transition-colors">
-                      {member.fullName}
-                    </h3>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 mt-1">
-                      {member.role}
-                    </p>
-
-                    {member.biography ? (
-                      <p className="mt-4 text-sm text-slate-600 leading-relaxed font-normal line-clamp-4">
-                        {member.biography}
-                      </p>
-                    ) : (
-                      <p className="mt-4 text-sm text-slate-400 italic">
-                        Membre statutaire engagé au sein des instances dirigeantes du MIDH.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Contact & Social Links */}
-                  {(member.email || member.linkedin || member.twitter) && (
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-3">
-                      {member.email && (
-                        <a
-                          href={`mailto:${member.email}`}
-                          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-700 hover:text-white text-slate-600 flex items-center justify-center transition-all"
-                          title="Envoyer un courriel"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">mail</span>
-                        </a>
-                      )}
-                      {member.linkedin && (
-                        <a
-                          href={member.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-[#0077b5] hover:text-white text-slate-600 flex items-center justify-center transition-all font-bold text-xs"
-                          title="Profil LinkedIn"
-                        >
-                          in
-                        </a>
-                      )}
-                      {member.twitter && (
-                        <a
-                          href={member.twitter}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-black hover:text-white text-slate-600 flex items-center justify-center transition-all font-bold text-xs"
-                          title="Profil X (Twitter)"
-                        >
-                          𝕏
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Gouvernance & Équipe avec Onglets Direction Actuelle / Anciennes Équipes */}
+        <section id="equipe" className="pt-space-md">
+          <TeamTabs team={team} />
         </section>
 
         {/* CTA Contact */}

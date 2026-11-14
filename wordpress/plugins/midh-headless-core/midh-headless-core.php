@@ -336,7 +336,7 @@ class MIDH_Headless_Core {
         }
 
         // Équipe
-        $team_metas = array('role', 'photo_url', 'biography', 'email', 'linkedin', 'twitter');
+        $team_metas = array('role', 'photo_url', 'biography', 'email', 'linkedin', 'twitter', 'mandate_status', 'mandate_period');
         foreach ($team_metas as $key) {
             register_post_meta('midh_team', $key, array(
                 'show_in_rest' => true,
@@ -1660,6 +1660,8 @@ class MIDH_Headless_Core {
 
     public function render_team_meta_box($post) {
         wp_nonce_field('midh_team_meta_save', 'midh_team_nonce');
+        $mandate_status = get_post_meta($post->ID, 'mandate_status', true) ?: 'actuel';
+        $mandate_period = get_post_meta($post->ID, 'mandate_period', true) ?: '';
         $role = get_post_meta($post->ID, 'role', true) ?: '';
         $photo_url = get_post_meta($post->ID, 'photo_url', true) ?: '';
         if (!$photo_url && has_post_thumbnail($post->ID)) {
@@ -1799,6 +1801,32 @@ class MIDH_Headless_Core {
 
             <!-- Colonne Droite : Formulaire complet du profil -->
             <div>
+                <!-- Statut du Mandat & Période d'exercice -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div class="midh-field-group" style="margin-bottom: 0;">
+                        <label for="midh_team_mandate_status" class="midh-label">
+                            <?php _e('Statut du Mandat', 'midh-headless'); ?> <span style="color: #dc2626;">*</span>
+                        </label>
+                        <select name="midh_team_mandate_status" id="midh_team_mandate_status" class="midh-input" style="font-weight: 600;">
+                            <option value="actuel" <?php selected($mandate_status, 'actuel'); ?>>🟢 Direction actuelle (Mandat en cours)</option>
+                            <option value="ancien" <?php selected($mandate_status, 'ancien'); ?>>🏛️ Ancienne équipe dirigeante (Mandat précédent / Honoraire)</option>
+                        </select>
+                        <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">
+                            <?php _e('Détermine l\'onglet d\'affichage ("Direction actuelle" ou "Anciennes équipes").', 'midh-headless'); ?>
+                        </p>
+                    </div>
+
+                    <div class="midh-field-group" style="margin-bottom: 0;">
+                        <label for="midh_team_mandate_period" class="midh-label">
+                            <?php _e('Période du mandat (ex: 2018 – 2022)', 'midh-headless'); ?>
+                        </label>
+                        <input type="text" name="midh_team_mandate_period" id="midh_team_mandate_period" value="<?php echo esc_attr($mandate_period); ?>" class="midh-input" placeholder="ex: 2018 – 2022 ou 2024 – Présent" />
+                        <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">
+                            <?php _e('S\'affiche sur le badge supérieur de la carte.', 'midh-headless'); ?>
+                        </p>
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
                     <div class="midh-field-group">
                         <label for="midh_team_role" class="midh-label">
@@ -1898,20 +1926,30 @@ class MIDH_Headless_Core {
 
         // Définition explicite du schéma d'entrée à la frontière de l'API
         $schema = array(
-            'midh_team_nonce'     => array('type' => 'string', 'max_length' => 100),
-            'midh_team_role'      => array('type' => 'string', 'max_length' => 150),
-            'midh_team_photo_url' => array('type' => 'string', 'sanitize' => 'url', 'validate' => 'url'),
-            'midh_team_biography' => array('type' => 'string', 'max_length' => 1000),
-            'midh_team_email'     => array('type' => 'string', 'max_length' => 120),
-            'midh_team_linkedin'  => array('type' => 'string', 'sanitize' => 'url', 'validate' => 'url'),
-            'midh_team_twitter'   => array('type' => 'string', 'sanitize' => 'url', 'validate' => 'url'),
-            'menu_order'          => array('type' => 'int', 'min' => 0),
+            'midh_team_nonce'          => array('type' => 'string', 'max_length' => 100),
+            'midh_team_mandate_status' => array('type' => 'string', 'max_length' => 20),
+            'midh_team_mandate_period' => array('type' => 'string', 'max_length' => 80),
+            'midh_team_role'           => array('type' => 'string', 'max_length' => 150),
+            'midh_team_photo_url'      => array('type' => 'string', 'sanitize' => 'url', 'validate' => 'url'),
+            'midh_team_biography'      => array('type' => 'string', 'max_length' => 1000),
+            'midh_team_email'          => array('type' => 'string', 'max_length' => 120),
+            'midh_team_linkedin'       => array('type' => 'string', 'sanitize' => 'url', 'validate' => 'url'),
+            'midh_team_twitter'        => array('type' => 'string', 'sanitize' => 'url', 'validate' => 'url'),
+            'menu_order'               => array('type' => 'int', 'min' => 0),
         );
         $clean = self::validate_request_payload($_POST, $schema);
 
         $nonce = isset($clean['midh_team_nonce']) ? $clean['midh_team_nonce'] : '';
         if (empty($nonce) || !wp_verify_nonce($nonce, 'midh_team_meta_save')) {
             return;
+        }
+
+        if (isset($clean['midh_team_mandate_status'])) {
+            update_post_meta($post_id, 'mandate_status', $clean['midh_team_mandate_status']);
+        }
+
+        if (isset($clean['midh_team_mandate_period'])) {
+            update_post_meta($post_id, 'mandate_period', $clean['midh_team_mandate_period']);
         }
 
         if (isset($clean['midh_team_role'])) {

@@ -95,6 +95,8 @@ export interface MIDHTeamMember {
   linkedin?: string;
   twitter?: string;
   order: number;
+  mandateStatus?: 'actuel' | 'ancien';
+  mandatePeriod?: string;
 }
 
 export interface MIDHHeroSlide {
