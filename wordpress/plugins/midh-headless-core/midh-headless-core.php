@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.5.0 avec durcissement sécuritaire OWASP (secrets dynamiques, whitelist options, CORS strict, CPT privés) et Tableau de bord 2x2.
- * Version: 1.5.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.6.0 avec gestion des mandats de direction, initialisation Galerie et durcissement OWASP.
+ * Version: 1.6.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
