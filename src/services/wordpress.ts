@@ -13,7 +13,6 @@ import {
   GalleryPhoto,
   GalleryVideo,
   OFFICIAL_GALLERY_PHOTOS,
-  OFFICIAL_GALLERY_VIDEOS,
 } from '@/data/galleryData';
 import {
   MIDHArticle,
@@ -538,7 +537,7 @@ export async function getGalleryData(): Promise<{
 
     return {
       photos: photos.length > 0 ? photos : OFFICIAL_GALLERY_PHOTOS,
-      videos: videos.length > 0 ? videos : OFFICIAL_GALLERY_VIDEOS,
+      videos,
       homePhotos:
         homePhotos.length > 0
           ? homePhotos
@@ -550,7 +549,7 @@ export async function getGalleryData(): Promise<{
 
   return {
     photos: OFFICIAL_GALLERY_PHOTOS,
-    videos: OFFICIAL_GALLERY_VIDEOS,
+    videos: [],
     homePhotos: OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
   };
 }

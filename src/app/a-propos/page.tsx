@@ -112,7 +112,7 @@ export default async function AProposPage() {
         </section>
 
         {/* Gouvernance & Équipe avec Onglets Direction Actuelle / Anciennes Équipes */}
-        <section id="equipe" className="pt-space-md">
+        <section id="equipe" className="scroll-mt-32 pt-6 sm:pt-10">
           <TeamTabs team={team} />
         </section>
 

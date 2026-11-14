@@ -108,53 +108,5 @@ export const OFFICIAL_GALLERY_PHOTOS: GalleryPhoto[] = [
   },
 ];
 
-export const OFFICIAL_GALLERY_VIDEOS: GalleryVideo[] = [
-  {
-    id: 'v-1',
-    title: "Reportage officiel : 26 ans d'engagement du MIDH pour les droits humains",
-    category: 'reportage',
-    categoryLabel: 'Documentaire Institutionnel',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    youtubeId: 'dQw4w9WgXcQ', // ID de démonstration prêt à être remplacé par les liens officiels MIDH
-    date: 'Octobre 2026',
-    duration: '12:45',
-    source: 'YouTube',
-    description: "Rétrospective complète sur les actions majeures menées par le MIDH depuis sa fondation le 8 octobre 2000 : assistance juridique, monitoring électoral et plaidoyer international.",
-  },
-  {
-    id: 'v-2',
-    title: "Intervention télévisée : La protection des libertés fondamentales en Côte d'Ivoire",
-    category: 'plaidoyer',
-    categoryLabel: 'Débat & Plaidoyer',
-    videoUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
-    youtubeId: 'ScMzIvxBSi4',
-    date: 'Septembre 2026',
-    duration: '08:20',
-    source: 'Télévision',
-    description: "Prise de parole de la direction exécutive du MIDH sur le respect des droits humains, le renforcement du système judiciaire et l'égalité des chances.",
-  },
-  {
-    id: 'v-3',
-    title: "Atelier national : La justice de proximité au service des populations vulnérables",
-    category: 'formation',
-    categoryLabel: 'Formation & Séminaire',
-    videoUrl: 'https://www.youtube.com/watch?v=L_LUpnjgPso',
-    youtubeId: 'L_LUpnjgPso',
-    date: 'Août 2026',
-    duration: '15:10',
-    source: 'YouTube',
-    description: "Synthèse des travaux et témoignages des bénéficiaires des cliniques juridiques mobiles déployées dans les 20 sections territoriales du MIDH.",
-  },
-  {
-    id: 'v-4',
-    title: "Conférence de presse : Déclaration conjointe sur la transparence du scrutin",
-    category: 'declaration',
-    categoryLabel: 'Déclaration Officielle',
-    videoUrl: 'https://www.youtube.com/watch?v=kJQP7kiw5Fk',
-    youtubeId: 'kJQP7kiw5Fk',
-    date: 'Juillet 2026',
-    duration: '06:35',
-    source: 'Facebook',
-    description: "Lecture de la déclaration officielle du MIDH et des partenaires de la société civile appelant à un processus électoral pacifique, transparent et respectueux des libertés.",
-  },
-];
+// Les vidéos officielles sont administrées depuis le back-office WordPress (/wp-admin > Galerie Photo & Vidéo MIDH)
+export const OFFICIAL_GALLERY_VIDEOS: GalleryVideo[] = [];

@@ -107,7 +107,7 @@ export default function GalleryClient({
               }`}
             >
               <span className="material-symbols-outlined text-[18px]">photo_camera</span>
-              <span>Galerie Photos ({OFFICIAL_GALLERY_PHOTOS.length})</span>
+              <span>Galerie Photos ({initialPhotos.length})</span>
             </button>
 
             <button
@@ -120,7 +120,7 @@ export default function GalleryClient({
               }`}
             >
               <span className="material-symbols-outlined text-[18px]">smart_display</span>
-              <span>Vidéos & Reportages ({OFFICIAL_GALLERY_VIDEOS.length})</span>
+              <span>Vidéos & Reportages ({initialVideos.length})</span>
             </button>
           </div>
         </div>
@@ -282,92 +282,109 @@ export default function GalleryClient({
               </span>
             </div>
 
-            {/* Grille des vidéos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {initialVideos.map((video) => (
-                <div
-                  key={video.id}
-                  className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xs hover:shadow-md transition-all flex flex-col"
-                >
-                  {/* Lecteur Vidéo Embed Responsive (YouTube ou iframe directe) */}
-                  <div className="relative aspect-video bg-black w-full overflow-hidden">
-                    {video.videoEmbed ? (
-                      <div
-                        className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:border-0"
-                        dangerouslySetInnerHTML={{ __html: sanitizeVideoEmbed(video.videoEmbed) }}
-                      />
-                    ) : video.youtubeId ? (
-                      <iframe
-                        src={`https://www.youtube-nocookie.com/embed/${video.youtubeId}`}
-                        title={video.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full border-0"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-6 text-white text-center">
-                        <span className="material-symbols-outlined text-[48px] text-red-500 mb-2">play_circle</span>
+            {/* Grille des vidéos ou État vide institutionnel */}
+            {initialVideos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {initialVideos.map((video) => (
+                  <div
+                    key={video.id}
+                    className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xs hover:shadow-md transition-all flex flex-col"
+                  >
+                    {/* Lecteur Vidéo Embed Responsive (YouTube ou iframe directe) */}
+                    <div className="relative aspect-video bg-black w-full overflow-hidden">
+                      {video.videoEmbed ? (
+                        <div
+                          className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:border-0"
+                          dangerouslySetInnerHTML={{ __html: sanitizeVideoEmbed(video.videoEmbed) }}
+                        />
+                      ) : video.youtubeId ? (
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${video.youtubeId}`}
+                          title={video.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-white text-center">
+                          <span className="material-symbols-outlined text-[48px] text-red-500 mb-2">play_circle</span>
+                          <a
+                            href={video.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-bold underline"
+                          >
+                            Visionner la vidéo sur {video.source}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Descriptif détaillé sous la vidéo */}
+                    <div className="p-5 sm:p-6 flex flex-col gap-2.5 flex-grow">
+                      <div className="flex items-center justify-between text-xs text-tertiary">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container font-semibold text-primary">
+                          <span className="material-symbols-outlined text-[14px]">label</span>
+                          {video.categoryLabel}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          {video.duration && (
+                            <span className="flex items-center gap-1 font-mono font-medium">
+                              <span className="material-symbols-outlined text-[13px]">schedule</span>
+                              {video.duration}
+                            </span>
+                          )}
+                          <span>•</span>
+                          <span>{video.date}</span>
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-on-surface text-base sm:text-lg leading-snug">
+                        {video.title}
+                      </h3>
+
+                      {/* Courte description explicative */}
+                      <p className="font-body-sm text-xs sm:text-body-sm text-tertiary leading-relaxed mt-1">
+                        {video.description}
+                      </p>
+
+                      <div className="pt-3 mt-auto border-t border-surface-container flex items-center justify-between">
+                        <span className="text-xs text-tertiary font-medium flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[15px] text-red-600">smart_display</span>
+                          <span>Source : <strong>{video.source}</strong></span>
+                        </span>
+
                         <a
                           href={video.videoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-bold underline"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-emerald-700 transition-colors"
                         >
-                          Visionner la vidéo sur {video.source}
+                          <span>Ouvrir sur {video.source}</span>
+                          <span className="material-symbols-outlined text-[14px]">open_in_new</span>
                         </a>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Descriptif détaillé sous la vidéo */}
-                  <div className="p-5 sm:p-6 flex flex-col gap-2.5 flex-grow">
-                    <div className="flex items-center justify-between text-xs text-tertiary">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container font-semibold text-primary">
-                        <span className="material-symbols-outlined text-[14px]">label</span>
-                        {video.categoryLabel}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        {video.duration && (
-                          <span className="flex items-center gap-1 font-mono font-medium">
-                            <span className="material-symbols-outlined text-[13px]">schedule</span>
-                            {video.duration}
-                          </span>
-                        )}
-                        <span>•</span>
-                        <span>{video.date}</span>
-                      </span>
-                    </div>
-
-                    <h3 className="font-bold text-on-surface text-base sm:text-lg leading-snug">
-                      {video.title}
-                    </h3>
-
-                    {/* Courte description explicative */}
-                    <p className="font-body-sm text-xs sm:text-body-sm text-tertiary leading-relaxed mt-1">
-                      {video.description}
-                    </p>
-
-                    <div className="pt-3 mt-auto border-t border-surface-container flex items-center justify-between">
-                      <span className="text-xs text-tertiary font-medium flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[15px] text-red-600">smart_display</span>
-                        <span>Source : <strong>{video.source}</strong></span>
-                      </span>
-
-                      <a
-                        href={video.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-emerald-700 transition-colors"
-                      >
-                        <span>Ouvrir sur {video.source}</span>
-                        <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                      </a>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-8 sm:p-14 text-center flex flex-col items-center gap-4 max-w-xl mx-auto animate-in fade-in-50 duration-300">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-100/70 text-[#0B3827] flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl">smart_display</span>
                 </div>
-              ))}
-            </div>
+                <h3 className="font-bold text-xl text-[#0B3827]">
+                  Médiathèque Vidéo en cours d’alimentation
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed max-w-md">
+                  Les reportages institutionnels, débats télévisés et déclarations officielles du MIDH sont en cours de référencement par le secrétariat.
+                </p>
+                <div className="pt-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200/60">
+                  🎥 Les administrateurs peuvent intégrer des vidéos YouTube ou Facebook directement depuis le back-office WordPress.
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>

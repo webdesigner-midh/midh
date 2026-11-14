@@ -68,6 +68,8 @@ class MIDH_Headless_Core {
         add_action('save_post_midh_gallery', array($this, 'save_midh_gallery_meta_box'), 10, 2);
         add_filter('manage_midh_gallery_posts_columns', array($this, 'customize_gallery_columns'));
         add_action('manage_midh_gallery_posts_custom_column', array($this, 'render_gallery_custom_column'), 10, 2);
+        add_action('admin_notices', array($this, 'render_gallery_admin_notice'));
+        add_action('admin_post_midh_seed_gallery', array($this, 'handle_seed_gallery_photos'));
 
         // Sauvegarde des métadonnées pour Dons & Mécénat MIDH
         add_action('save_post_midh_donation', array($this, 'save_midh_donation_meta_box'), 10, 2);
@@ -2724,6 +2726,144 @@ class MIDH_Headless_Core {
                 echo '<span style="color: #94a3b8; font-size: 13px;">⚪ Non</span>';
             }
         }
+    }
+
+    /**
+     * Bannière d'administration et Initialisation en 1 clic de la Galerie
+     */
+    public function render_gallery_admin_notice() {
+        global $typenow, $pagenow;
+        if ($typenow === 'midh_gallery' && $pagenow === 'edit.php') {
+            if (isset($_GET['seeded']) && $_GET['seeded'] === '1') {
+                echo '<div class="notice notice-success is-dismissible" style="padding: 14px 18px; border-left-color: #16a34a; background: #f0fdf4; border-radius: 8px; margin: 15px 0;">
+                    <p style="margin: 0; font-weight: 700; color: #166534; font-size: 14px;">
+                        ✅ Les 8 photos institutionnelles officielles du MIDH ont été importées avec succès dans la Galerie ! Vous pouvez désormais les modifier, changer leurs photos ou ajouter de nouvelles photos et vidéos.
+                    </p>
+                </div>';
+            }
+
+            $count_obj = wp_count_posts('midh_gallery');
+            $count = isset($count_obj->publish) ? (int) $count_obj->publish : 0;
+            if ($count === 0) {
+                $nonce_url = wp_nonce_url(admin_url('admin-post.php?action=midh_seed_gallery'), 'midh_seed_gallery_nonce');
+                echo '<div class="notice notice-info" style="padding: 16px 20px; border-left: 5px solid #0B3827; background: #f8fafc; border-radius: 8px; margin: 15px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+                        <div>
+                            <h3 style="margin: 0 0 6px 0; color: #0B3827; font-size: 16px; font-weight: 800;">
+                                📸 Galerie Photo &amp; Vidéo MIDH — Initialisation rapide
+                            </h3>
+                            <p style="margin: 0; font-size: 13px; color: #475569; max-width: 720px; line-height: 1.5;">
+                                Aucune publication n\'est encore enregistrée dans cette section. Cliquez sur le bouton ci-contre pour importer instantanément les <strong>8 photos institutionnelles officielles du MIDH</strong>. Elles apparaîtront directement ici pour être gérées, modifiées ou complétées par les administrateurs.
+                            </p>
+                        </div>
+                        <a href="' . esc_url($nonce_url) . '" class="button button-primary" style="background: #0B3827; border-color: #0B3827; font-weight: 700; height: 38px; line-height: 36px; padding: 0 18px; border-radius: 8px; font-size: 13px; box-shadow: 0 2px 6px rgba(11,56,39,0.25);">
+                            🚀 Initialiser les 8 photos officielles du MIDH
+                        </a>
+                    </div>
+                </div>';
+            }
+        }
+    }
+
+    /**
+     * Traitement de l'import des 8 photos officielles du MIDH
+     */
+    public function handle_seed_gallery_photos() {
+        if (!current_user_can('edit_posts')) {
+            wp_die(__('Action non autorisée.', 'midh-headless'));
+        }
+        check_admin_referer('midh_seed_gallery_nonce');
+
+        $initial_photos = array(
+            array(
+                'title'       => "Session de travail et de concertation avec les forces de l'ordre",
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.06.42.webp',
+                'category'    => 'Formation & Sécurité',
+                'location'    => 'Abidjan, Côte d’Ivoire',
+                'date'        => '14 Octobre 2026',
+                'description' => "Atelier d'échange et de sensibilisation mutuelle entre les juristes du MIDH et les représentants de la gendarmerie et de la police nationale sur les garanties légales de garde à vue.",
+            ),
+            array(
+                'title'       => 'Dialogue institutionnel avec les partenaires techniques et financiers',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.06.38-1.webp',
+                'category'    => 'Partenariat International',
+                'location'    => 'Siège du MIDH, Cocody',
+                'date'        => '12 Octobre 2026',
+                'description' => "Rencontre de cadrage stratégique avec les délégations internationales pour le suivi des programmes de consolidation de la justice de proximité en Côte d’Ivoire.",
+            ),
+            array(
+                'title'       => 'Formation citoyenne et renforcement des capacités communautaires',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Vue-de-la-salle.webp',
+                'category'    => 'Éducation Civique',
+                'location'    => 'Bouaké, Région du Gbêkê',
+                'date'        => '08 Octobre 2026',
+                'description' => "Vue d'ensemble de la salle lors de la session de vulgarisation des instruments juridiques de protection contre les violations des droits humains.",
+            ),
+            array(
+                'title'       => 'Mission de veille et plaidoyer du Chargé de Programmes',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Image-charge-de-programme-MIDH.webp',
+                'category'    => 'Plaidoyer & Veille',
+                'location'    => 'Abidjan, Plateau',
+                'date'        => '28 Septembre 2026',
+                'description' => "Intervention du pôle programmes lors d'une table ronde sur la protection des défenseurs des droits humains et le droit d'accès universel à la justice.",
+            ),
+            array(
+                'title'       => 'Observation et monitoring de terrain dans le Woroba',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Image-agent-de-monitoring-woroba.webp',
+                'category'    => 'Monitoring de Terrain',
+                'location'    => 'Séguéla, District du Woroba',
+                'date'        => '15 Septembre 2026',
+                'description' => "Déploiement des observateurs du MIDH pour la collecte rigoureuse des données factuelles sur les libertés publiques et la paix communautaire.",
+            ),
+            array(
+                'title'       => 'Assemblée générale et photo institutionnelle du MIDH',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Photo-de-famille-2.webp',
+                'category'    => 'Vie de l’Organisation',
+                'location'    => 'Abidjan, Côte d’Ivoire',
+                'date'        => '08 Octobre 2026',
+                'description' => "Rassemblement des membres du Conseil d’Administration, du Secrétariat Général et des coordonnateurs des sections régionales à l'occasion du 26e anniversaire.",
+            ),
+            array(
+                'title'       => 'Conférence de presse sur la transparence électorale et la paix sociale',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.21.15-2.webp',
+                'category'    => 'Veille & Presse',
+                'location'    => 'Abidjan, Cocody',
+                'date'        => '02 Septembre 2026',
+                'description' => "Restitution publique des recommandations du MIDH aux institutions nationales pour la garantie d'un climat électoral démocratique, inclusif et apaisé.",
+            ),
+            array(
+                'title'       => 'Caravane de sensibilisation aux droits civils et politiques',
+                'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.21.16.webp',
+                'category'    => 'Sensibilisation',
+                'location'    => 'Daloa, Région du Haut-Sassandra',
+                'date'        => '18 Août 2026',
+                'description' => "Échanges directs avec les jeunes et les associations de femmes sur la prévention des conflits et la promotion de l'État de droit.",
+            ),
+        );
+
+        $order = 1;
+        foreach ($initial_photos as $p) {
+            $post_id = wp_insert_post(array(
+                'post_title'   => $p['title'],
+                'post_type'    => 'midh_gallery',
+                'post_status'  => 'publish',
+                'menu_order'   => $order++,
+                'post_excerpt' => $p['description'],
+            ));
+
+            if ($post_id && !is_wp_error($post_id)) {
+                update_post_meta($post_id, 'media_type', 'photo');
+                update_post_meta($post_id, 'media_url', esc_url_raw($p['image']));
+                update_post_meta($post_id, 'category_name', sanitize_text_field($p['category']));
+                update_post_meta($post_id, 'location', sanitize_text_field($p['location']));
+                update_post_meta($post_id, 'event_date', sanitize_text_field($p['date']));
+                update_post_meta($post_id, 'show_on_home', '1');
+                update_post_meta($post_id, 'description', sanitize_textarea_field($p['description']));
+            }
+        }
+
+        wp_safe_redirect(admin_url('edit.php?post_type=midh_gallery&seeded=1'));
+        exit;
     }
 
     /**
