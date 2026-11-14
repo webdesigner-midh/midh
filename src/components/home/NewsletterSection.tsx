@@ -5,9 +5,9 @@ import { useState } from 'react';
 export default function NewsletterSection() {
   const [email, setEmail] = useState('');
   const [honeyPot, setHoneyPot] = useState('');
-  const [consent, setConsent] = useState(true);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const consent = true;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
