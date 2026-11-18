@@ -60,6 +60,8 @@ async function handleRevalidation(request: NextRequest) {
     let tag = queryTag;
     let path = queryPath;
 
+    let slug: string | undefined;
+
     // 2. Validation explicite du corps (Body JSON) pour les requêtes POST
     if (request.method === 'POST') {
       const rawBody = await request.json().catch(() => ({}));
@@ -78,15 +80,31 @@ async function handleRevalidation(request: NextRequest) {
       if (bodyValidation.data?.path) {
         path = bodyValidation.data.path;
       }
+      if (bodyValidation.data?.slug) {
+        slug = bodyValidation.data.slug;
+      }
     }
 
-    // 3. Exécution de la revalidation Next.js
+    // 3. Exécution de la revalidation Next.js pour toutes les vues pertinentes
     revalidateTag(tag);
-    revalidatePath(path);
-    revalidatePath('/galerie');
+    revalidatePath('/', 'page');
     revalidatePath('/', 'layout');
+    revalidatePath('/actualites', 'page');
+    revalidatePath('/actualites/[slug]', 'page');
+    if (slug) {
+      revalidatePath(`/actualites/${slug}`, 'page');
+      revalidatePath(`/nos-actions/${slug}`, 'page');
+      revalidatePath(`/partenaires/${slug}`, 'page');
+    }
+    revalidatePath('/nos-actions', 'page');
+    revalidatePath('/documents-rapports', 'page');
+    revalidatePath('/galerie', 'page');
+    revalidatePath('/a-propos', 'page');
+    if (path && path !== '/') {
+      revalidatePath(path, 'page');
+    }
 
-    console.info(`[Revalidation Webhook] Tag "${tag}" et chemin "${path}" revalidés avec succès.`);
+    console.info(`[Revalidation Webhook] Tag "${tag}", chemin "${path}", slug "${slug || 'aucun'}" revalidés avec succès.`);
 
     return NextResponse.json({
       revalidated: true,

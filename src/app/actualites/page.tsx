@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Toutes les actualités, déclarations publiques et communiqués de presse du Mouvement Ivoirien des Droits Humains.',
 };
 
-export const revalidate = 60; // Revalidation ISR
+export const revalidate = 30; // Revalidation ISR toutes les 30s pour réactivité éditoriale
 
 export default async function ActualitesPage() {
   const articles = await getArticles();

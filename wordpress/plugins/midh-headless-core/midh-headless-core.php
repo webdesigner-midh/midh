@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.7.0 : API REST /team dédiée, support custom-fields, prévisualisation vidéo YouTube & auto-seeding Galerie.
- * Version: 1.7.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.7.1 : API REST /team dédiée, support custom-fields, prévisualisation vidéo YouTube, cache-busting & webhook auto-revalidation Next.js.
+ * Version: 1.7.1
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -546,6 +546,11 @@ class MIDH_Headless_Core {
                 header('Access-Control-Allow-Credentials: true');
                 header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce, X-MIDH-Key');
             }
+
+            // Forcer l'absence de cache sur toutes les réponses de l'API REST pour garantir la synchronisation instantanée avec Next.js
+            header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('Expires: 0');
             return $value;
         });
 
@@ -594,34 +599,60 @@ class MIDH_Headless_Core {
             return;
         }
 
-        $frontend_url = get_option('midh_frontend_url', '');
-        $secret_token = get_option('midh_revalidate_token', '');
-
-        if (empty($frontend_url) || empty($secret_token)) {
+        // Ne déclencher que pour les statuts publics
+        if (!in_array($post->post_status, array('publish', 'trash'), true)) {
             return;
         }
 
+        $frontend_url = get_option('midh_frontend_url', 'https://www.midh-ci.org');
+        if (empty($frontend_url)) {
+            $frontend_url = 'https://www.midh-ci.org';
+        }
+
+        $secret_token = get_option('midh_revalidate_token', 'midh_revalidate_secret_2026');
+        if (empty($secret_token)) {
+            $secret_token = 'midh_revalidate_secret_2026';
+        }
+
         $clean_url = rtrim($frontend_url, '/') . '/api/revalidate?secret=' . urlencode($secret_token);
+
+        $target_path = '/';
+        if ($post->post_type === 'post') {
+            $target_path = '/actualites';
+        } elseif ($post->post_type === 'midh_action') {
+            $target_path = '/nos-actions';
+        } elseif ($post->post_type === 'midh_document') {
+            $target_path = '/documents-rapports';
+        } elseif ($post->post_type === 'midh_gallery') {
+            $target_path = '/galerie';
+        } elseif ($post->post_type === 'midh_team_member') {
+            $target_path = '/a-propos';
+        }
 
         wp_remote_post($clean_url, array(
             'blocking' => false,
             'timeout'  => 5,
             'headers'  => array('Content-Type' => 'application/json'),
             'body'     => wp_json_encode(array(
-                'tag'     => 'wordpress',
-                'post_id' => $post_id,
-                'slug'    => $post->post_name,
+                'tag'       => 'wordpress',
+                'path'      => $target_path,
+                'post_id'   => $post_id,
+                'post_type' => $post->post_type,
+                'slug'      => $post->post_name,
             )),
         ));
     }
 
     public function trigger_nextjs_settings_revalidation($option, $old_value, $value) {
         if (strpos($option, 'midh_') === 0) {
-            $frontend_url = get_option('midh_frontend_url', '');
-            $secret_token = get_option('midh_revalidate_token', '');
+            $frontend_url = get_option('midh_frontend_url', 'https://www.midh-ci.org');
+            if (empty($frontend_url)) {
+                $frontend_url = 'https://www.midh-ci.org';
+            }
 
-            if (empty($frontend_url) || empty($secret_token)) {
-                return;
+            $secret_token = get_option('midh_revalidate_token', 'midh_revalidate_secret_2026');
+            if (empty($secret_token)) {
+                $secret_token = 'midh_revalidate_secret_2026';
             }
 
             $clean_url = rtrim($frontend_url, '/') . '/api/revalidate?secret=' . urlencode($secret_token);

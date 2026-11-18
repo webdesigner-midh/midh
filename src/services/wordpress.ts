@@ -91,21 +91,12 @@ async function fetchWordPressAPI<T>(endpoint: string, options?: RequestInit): Pr
   // Cache buster pour contourner le cache Nginx/Varnish agressif de l'hébergeur LWS
   const url = `${cleanBase}${cleanEndpoint}${separator}_t=${Date.now()}`;
 
-  const isDev = process.env.NODE_ENV === 'development';
-  // En dev : pas de cache pour synchronisation instantanée dès publication dans WordPress
-  // En prod : ISR 30s et webhook de revalidation à la demande
-  const cacheConfig = isDev
-    ? { cache: 'no-store' as const }
-    : {
-        next: {
-          revalidate: 30,
-          tags: ['wordpress'],
-        },
-      };
+  // Bypass complet du cache de fetch pour interroger en direct le CMS WordPress (l'ISR gère le cache au niveau page)
+  const cacheConfig = { cache: 'no-store' as const };
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout pour hébergement mutualisé LWS
 
     const res = await fetch(url, {
       ...options,
@@ -113,6 +104,8 @@ async function fetchWordPressAPI<T>(endpoint: string, options?: RequestInit): Pr
       ...cacheConfig,
       headers: {
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
         ...(options?.headers || {}),
       },
     });
@@ -264,7 +257,39 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
  */
 export async function getArticleBySlug(slug: string): Promise<MIDHArticle | null> {
   const articles = await getArticles();
-  return articles.find((a) => a.slug === slug) || null;
+  const found = articles.find((a) => a.slug === slug);
+  if (found) {
+    return found;
+  }
+
+  // Si pas encore présent dans la liste paginée, interroger directement par slug
+  const wpPost = await fetchWordPressAPI<WPRestRecord[]>(`/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed`);
+  if (wpPost && Array.isArray(wpPost) && wpPost.length > 0) {
+    const post = wpPost[0];
+    const catSlug = post._embedded?.['wp:term']?.[0]?.[0]?.slug || 'actualites';
+    const catName = post._embedded?.['wp:term']?.[0]?.[0]?.name || 'Actualité';
+    const postDate = post.date || new Date().toISOString();
+    return {
+      id: post.id,
+      title: decodeHtml(post.title?.rendered || 'Sans titre'),
+      slug: post.slug,
+      excerpt: post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '',
+      content: post.content?.rendered || '',
+      featuredImage: sanitizeUrl(post._embedded?.['wp:featuredmedia']?.[0]?.source_url),
+      date: postDate,
+      formattedDate: new Date(postDate).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+      author: post._embedded?.author?.[0]?.name || 'MIDH',
+      category: (catSlug as PublicationCategory) || 'actualites',
+      categoryLabel: catName,
+      isFeatured: post.sticky || false,
+    };
+  }
+
+  return null;
 }
 
 /**

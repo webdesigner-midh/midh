@@ -66,6 +66,7 @@ export function sanitizeRichHtml(html: string): string {
       'div',
       'sub',
       'sup',
+      'iframe',
     ],
     allowedAttributes: {
       a: ['href', 'name', 'target', 'rel', 'title', 'class'],
@@ -85,14 +86,36 @@ export function sanitizeRichHtml(html: string): string {
       ul: ['class'],
       ol: ['class'],
       blockquote: ['class'],
+      iframe: [
+        'src',
+        'width',
+        'height',
+        'title',
+        'allow',
+        'allowfullscreen',
+        'frameborder',
+        'referrerpolicy',
+        'loading',
+        'class',
+      ],
     },
     allowedSchemes: ['http', 'https', 'mailto', 'tel'],
     allowedSchemesByTag: {
       img: ['http', 'https'],
+      iframe: ['https'],
     },
+    allowedIframeHostnames: ALLOWED_VIDEO_IFRAME_HOSTS,
     allowProtocolRelative: false,
     transformTags: {
       a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer' }),
+      iframe: (tagName, attribs) => ({
+        tagName,
+        attribs: {
+          ...attribs,
+          referrerpolicy: attribs.referrerpolicy || 'strict-origin-when-cross-origin',
+          loading: attribs.loading || 'lazy',
+        },
+      }),
     },
   });
 }

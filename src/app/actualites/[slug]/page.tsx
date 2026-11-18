@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanitizeRichHtml } from '@/lib/sanitize';
 
+export const revalidate = 30; // Revalidation ISR toutes les 30s
+export const dynamicParams = true; // Permet aux nouveaux articles publiés d'être servis immédiatement
+
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
 }

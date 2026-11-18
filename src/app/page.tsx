@@ -18,7 +18,7 @@ import {
   getGalleryData,
 } from '@/services/wordpress';
 
-export const revalidate = 60; // Revalidation ISR toutes les 60s
+export const revalidate = 30; // Revalidation ISR toutes les 30s
 
 export default async function HomePage() {
   const [projects, articles, documents, sections, partners, team, slides, galleryData] = await Promise.all([
