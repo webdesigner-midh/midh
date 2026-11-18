@@ -305,6 +305,42 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
  * Récupère les membres de l'équipe et l'organigramme
  */
 export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
+  // 1. Tenter d'abord l'endpoint dédié /wp-json/midh/v1/team avec métadonnées résolues
+  const customTeam = await fetchWordPressAPI<Array<{
+    id: number;
+    fullName: string;
+    role: string;
+    photoUrl: string;
+    biography: string;
+    mandateStatus: 'actuel' | 'ancien';
+    mandatePeriod: string;
+    email?: string;
+    linkedin?: string;
+    twitter?: string;
+    order: number;
+  }>>('/wp-json/midh/v1/team');
+
+  if (customTeam && Array.isArray(customTeam) && customTeam.length > 0) {
+    return customTeam.map((m) => ({
+      id: m.id,
+      fullName: decodeHtml(m.fullName || 'Membre du MIDH'),
+      role: m.role || 'Membre de la Direction',
+      photoUrl: sanitizeUrl(m.photoUrl || ''),
+      biography: decodeHtml(m.biography || ''),
+      email: m.email || '',
+      linkedin: m.linkedin || '',
+      twitter: m.twitter || '',
+      order: m.order || 0,
+      mandateStatus: (m.mandateStatus === 'ancien' ? 'ancien' : 'actuel') as 'actuel' | 'ancien',
+      mandatePeriod: m.mandatePeriod || '',
+    })).sort((a, b) => {
+      const orderA = a.order > 0 ? a.order : 999;
+      const orderB = b.order > 0 ? b.order : 999;
+      return orderA - orderB;
+    });
+  }
+
+  // 2. Fallback sur l'API standard /wp-json/wp/v2/midh_team
   const wpTeam = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_team?_embed&per_page=50');
 
   if (wpTeam && Array.isArray(wpTeam) && wpTeam.length > 0) {

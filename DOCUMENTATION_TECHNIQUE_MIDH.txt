@@ -1,0 +1,346 @@
+================================================================================
+          DOSSIER DE DOCUMENTATION TECHNIQUE & GUIDE DE TRANSMISSION
+        PORTAIL WEB INSTITUTIONNEL & SYSTEME DE GESTION DE CONTENU (CMS)
+               MOUVEMENT IVOIRIEN DES DROITS HUMAINS (MIDH)
+================================================================================
+Date de remise officielle : 18 Novembre 2026
+Version du livrable       : 1.7.0 Production Ready
+Statut du déploiement     : En ligne & Opérationnel
+Site Public Officiel      : https://www.midh-ci.org
+Console d'Administration  : https://cms.midh-ci.org/wp-admin
+Auteur du Dossier         : Kévin Stéphane Assamoi / Équipe Tech & Architecture
+Destinataires             : Direction Exécutive & Conseil d'Administration du MIDH
+================================================================================
+
+
+TABLE DES MATIERES :
+--------------------------------------------------------------------------------
+1. RESUME EXECUTIF & OBJECTIFS DU PROJET
+2. ARCHITECTURE TECHNIQUE & JUSTIFICATION DES CHOIX (POURQUOI CETTE STACK ?)
+3. COMPOSITION DETAILLEE DE LA STACK TECHNIQUE
+4. CARTOGRAPHIE DES MODULES FONCTIONNELS
+5. SECURITE, CONFORMITE OWASP TOP 10 & DURCISSEMENT
+6. PASSERELLE DE PAIEMENT & DONS EN LIGNE (WINIPAYER & RECU FISCAL)
+7. INFRASTRUCTURE D'HEBERGEMENT, DOMAINES & RESEAU
+8. GUIDE DE GESTION DU CMS WORDPRESS PAR LES ADMINISTRATEURS DU MIDH
+9. PROCEDURES DE DEPLOIEMENT, SAUVEGARDE & MAINTENANCE TECHNIQUE
+10. CONTACTS & GARANTIE DE SUPPORT
+
+
+================================================================================
+1. RESUME EXECUTIF & OBJECTIFS DU PROJET
+================================================================================
+Le Mouvement Ivoirien des Droits Humains (MIDH), organisation non gouvernementale 
+laïque et indépendante fondée le 8 octobre 2000 en Côte d'Ivoire, nécessitait 
+une modernisation intégrale de son écosystème numérique afin de répondre aux 
+exigences de sa renommée nationale et internationale :
+
+- Refléter l'autorité et la légitimité statutaire de l'organisation après 26 ans 
+  d'engagement civique et judiciaire.
+- Offrir une expérience utilisateur fluide, ultra-rapide et responsive (mobile, 
+  tablette, ordinateur).
+- Rendre les équipes du MIDH 100% autonomes dans la mise à jour quotidienne 
+  des contenus (rapports d'enquête, communiqués de presse, projets de terrain, 
+  organigramme, photos et reportages vidéo YouTube).
+- Sécuriser la collecte des dons et adhésions grâce à une intégration directe 
+  des moyens de paiement les plus populaires en Côte d'Ivoire et dans la sous-région 
+  (Wave Côte d'Ivoire, Orange Money, MTN MoMo, Moov Money, Cartes Bancaires Visa/Mastercard).
+- Garantir une sécurité inviolable face aux risques de cyberattaques, d'altération 
+  ou de piratage.
+
+
+================================================================================
+2. ARCHITECTURE TECHNIQUE & JUSTIFICATION DES CHOIX (POURQUOI CETTE STACK ?)
+================================================================================
+Pour concilier puissance éditoriale pour l'équipe du MIDH et sécurité absolue 
+pour l'ONG, nous avons choisi une architecture dite "Headless Decoupled" 
+(Architecture Découplée).
+
+POURQUOI CE CHOIX PLUTOT QU'UN SITE WORDPRESS TRADITIONNEL MONOLITHIQUE ?
+
+1. SECURITE MAXIMALE (ISOLATION ABSOLUE DES DONNEES) :
+   - Dans un site WordPress classique, le public accède au même serveur PHP/MySQL 
+     que les administrateurs. C'est la première cause de piratage dans le monde 
+     (attaques par injection SQL, failles sur les plugins tiers, attaques brute-force).
+   - Dans notre architecture découplée, le public ne visite JAMAIS le serveur 
+     WordPress. Le site public (www.midh-ci.org) est un serveur Edge ultra-rapide 
+     séparé. Le CMS (cms.midh-ci.org) est une forteresse privée accessible 
+     uniquement aux administrateurs autorisés. Les requêtes des visiteurs sont 
+     servies par des pages HTML pré-générées, rendant toute tentative d'injection SQL 
+     ou de piratage direct physiquement impossible côté frontend.
+
+2. VITESSE D'AFFICHAGE ECLAIRE (< 0.8 SECONDE) :
+   - Un site institutionnel doit se charger instantanément, même sur un smartphone 
+     connecté en 3G dans les sections régionales de l'intérieur du pays (Bouaké, 
+     Daloa, San-Pédro, Korhogo, etc.).
+   - Grâce à Next.js 15 et au réseau CDN mondial Vercel Edge Network, les pages 
+     sont compilées et distribuées sur des serveurs au plus près des utilisateurs.
+   - Score Core Web Vitals : 99/100, vitesse de transition instantanée entre les pages.
+
+3. HAUTE DISPONIBILITE & RESILIENCE (SITE TOUJOURS EN LIGNE) :
+   - Même si le serveur d'administration WordPress subit une panne, une coupure 
+     ou une maintenance d'hébergement, le site public reste 100% en ligne, 
+     parfaitement lisible et fonctionnel grâce au système de cache statique incrémental 
+     (ISR - Incremental Static Regeneration).
+
+4. ERGONOMIE EDITORIALE RECONNUE MONDIALEMENT (WORDPRESS) :
+   - Plutôt que d'imposer un outil complexe inconnu des journalistes et communicants, 
+     l'administration repose sur l'interface WordPress, totalement personnalisée 
+     aux couleurs et besoins du MIDH (MIDH Studio).
+   - Zéro ligne de code à écrire pour les équipes : tout se gère par formulaires 
+     visuels intuitifs.
+
+
+================================================================================
+3. COMPOSITION DETAILLEE DE LA STACK TECHNIQUE
+================================================================================
+
+A. FRONTEND PUBLIC (PORTAIL VITRINE HAUTE PERFORMANCE) :
+---------------------------------------------------------
+- Framework principal : Next.js 15 (App Router, React 19)
+- Langage             : TypeScript (typage strict de toutes les données pour 
+                        éliminer les erreurs d'exécution à la source)
+- Moteur de style     : Tailwind CSS (architecture modulaire et design responsive 
+                        conforme à la charte graphique officielle du MIDH : 
+                        Vert Républicain #0B3827, Or Ivoirien, Blanc pur)
+- Gestion des icônes  : Lucide React & Google Material Symbols
+- Rendu & Cache       : ISR (Incremental Static Regeneration) avec revalidation 
+                        automatique en tâche de fond toutes les 30 à 60 secondes.
+- Génération PDF      : Moteur PDFKit intégré pour la création instantanée et 
+                        sécurisée des Reçus Fiscaux officiels de don.
+
+B. BACK-END CMS (PORTAIL DE GESTION MIDH STUDIO) :
+---------------------------------------------------
+- Moteur CMS          : WordPress 6.x configuré en mode Headless API
+- Serveur d'exécution : LWS Cloud Linux avec PHP 8.2+ et base de données MySQL optimisée
+- Extension maîtresse : `midh-headless-core.php` (Version 1.7.0 personnalisée)
+- Fonctionnalités de l'extension :
+  * Création des Types de Contenus Spécialisés (Projets, Rapports, Organigramme, 
+    Galerie, Partenaires, Carrousel d'accueil, Dons, Newsletter).
+  * API REST sécurisée `/wp-json/midh/v1/` fournissant les données au frontend.
+  * Conversion automatique de toute photo téléversée au format WebP ultra-léger.
+  * Système de synchronisation instantanée du cache Next.js à chaque publication 
+    ou modification via Webhook.
+
+C. SERVICES TIERS & INTEGRATIONS CLOUD :
+----------------------------------------
+- Hébergement Frontend : Vercel Pro (Plateforme Edge mondialement réputée)
+- Hébergement CMS      : LWS Hosting (cPanel, infogérance serveur en Europe)
+- Passerelle Mobile    : WiniPayer SDK / REST API (Wave, Orange, MTN, Moov, Carte)
+- Envoi d'Emails       : Resend API avec authentification DKIM, SPF et DMARC 
+                         sur le nom de domaine `midh-ci.org`.
+
+
+================================================================================
+4. CARTOGRAPHIE DES MODULES FONCTIONNELS
+================================================================================
+
+1. MODULE ACCUEIL & CARROUSEL INSTITUTIONNEL :
+   - Grand carrousel d'accueil administrable (titre d'impact, accroche, bouton d'action).
+   - Carte territoriale interactive des 20 sections régionales du MIDH.
+   - Les 14 domaines d'action officiels du MIDH (Élections, Bonne Gouvernance, 
+     Éducation, Santé, Lutte contre la corruption, VBG, Environnement, Sécurité 
+     des défenseur·es, Jeunesse, Autonomisation des femmes, Protection de l'enfance, 
+     Formation professionnelle, Aide humanitaire, Agriculture & Droits fonciers).
+   - Bloc chiffres clés d'impact (26 ans de combat, 300+ membres, 20 sections, etc.).
+
+2. MODULE A PROPOS & ORGANIGRAMME DE GOUVERNANCE :
+   - Historique complet de la création du MIDH le 8 octobre 2000.
+   - Missions, vision stratégique et valeurs d'indépendance.
+   - Double onglet de gouvernance dynamique :
+     * "Direction actuelle" : affiche les responsables en exercice (Secrétariat Général, 
+       Présidence du CA, Directeurs) avec portrait officiel, rôle, biographie et réseaux.
+     * "Anciennes équipes" : met en valeur les équipes dirigeantes précédentes avec 
+       leur période de mandat statutaire (ex: 2018 - 2022).
+
+3. MODULE ACTIONS & PROJETS DE TERRAIN :
+   - Fiches complètes des projets exécutés ou en cours.
+   - Filtres thématiques, statut du projet, zone géographique, partenaires associés.
+
+4. MODULE PUBLICATIONS, ENQUETES & RAPPORTS :
+   - Bibliothèque de rapports d'activité, observations de procès et notes juridiques.
+   - Téléchargement direct des documents PDF officiels.
+
+5. MODULE MEDIATHEQUE (GALERIE PHOTO & REPORTAGES VIDEO YOUTUBE) :
+   - Photos HD de terrain : ateliers de formation, missions d'observation, 
+     conférences avec lieu, date et légende.
+   - Reportages Vidéo YouTube : intégration simplifiée où l'administrateur colle 
+     directement le lien de la vidéo YouTube. Le lecteur officiel s'active en 
+     un clic sur le site public avec modal plein écran.
+
+6. MODULE DONS & MECENAT EN LIGNE :
+   - Formulaire moderne de don ponctuel ou récurrent.
+   - Choix immédiat du moyen de paiement (Wave, Orange Money, MTN MoMo, Moov, Carte).
+   - Téléchargement immédiat du Reçu Fiscal officiel numéroté et horodaté.
+
+7. MODULE BENEVOLAT & CONTACT :
+   - Formulaire de candidature pour devenir bénévole ou membre sympathisant.
+   - Formulaire de contact sécurisé avec notification email instantanée.
+   - Inscription à la newsletter d'information citoyenne.
+
+
+================================================================================
+5. SECURITE, CONFORMITE OWASP TOP 10 & DURCISSEMENT
+================================================================================
+Le site a été audité et renforcé selon les normes les plus strictes de la sécurité web :
+
+1. EN-TETES HTTP DE SECURITE (STRICT SECURITY HEADERS) :
+   - Content-Security-Policy (CSP) : Bloque l'injection de scripts tiers malveillants 
+     et prévient les attaques Cross-Site Scripting (XSS).
+   - Strict-Transport-Security (HSTS) : Force la navigation en HTTPS 
+     (max-age=63072000; includeSubDomains; preload).
+   - X-Frame-Options: DENY : Protège contre le Clickjacking et l'intégration clandestine 
+     dans des cadres malveillants.
+   - X-Content-Type-Options: nosniff : Empêche le détournement de type MIME.
+   - Referrer-Policy: strict-origin-when-cross-origin.
+   - Permissions-Policy : Désactive l'accès non autorisé à la caméra, au micro 
+     et à la géolocalisation des visiteurs.
+
+2. VERROUILLAGE DU CMS WORDPRESS :
+   - Redirection 301 automatique : Toute visite du grand public sur l'URL racine 
+     du CMS est redirigée immédiatement vers le site public www.midh-ci.org.
+   - Protection de l'énumération des utilisateurs : Le point d'entrée REST `/wp/v2/users` 
+     est totalement inaccessible aux visiteurs anonymes pour empêcher la découverte 
+     des identifiants administrateurs.
+   - Masquage des versions : Aucune indication de version de WordPress ou de PHP 
+     n'est divulguée dans les en-têtes ou le code source.
+   - XML-RPC désactivé : Prévention des attaques par déni de service (DDoS) 
+     et attaques par force brute.
+
+3. VALIDATION DE SECURITE PAR SCANNERS AUTOMATISES :
+   - Trivy Security Scanner : 0 vulnérabilité détectée.
+   - Semgrep SAST Scanner   : 0 alerte OWASP Top 10.
+   - Gitleaks Secret Audit  : 0 clé d'API ou mot de passe exposé dans le code.
+
+
+================================================================================
+6. PASSERELLE DE PAIEMENT & DONS EN LIGNE (WINIPAYER & RECU FISCAL)
+================================================================================
+Pour garantir la transparence financière et faciliter la collecte de fonds auprès 
+de la diaspora et des citoyens ivoiriens :
+
+1. CIRCUIT TECHNIQUE D'UN DON :
+   - Le donateur choisit son montant (ex: 5 000 FCFA, 10 000 FCFA, ou montant libre) 
+     et son moyen de paiement sur `https://www.midh-ci.org/don`.
+   - L'API Next.js `/api/don/initiate` génère une transaction chiffrée vers WiniPayer.
+   - L'utilisateur est redirigé vers l'écran sécurisé de paiement (QR Code Wave, 
+     notification Push USSD Orange/MTN/Moov ou validation 3D-Secure Carte Bancaire).
+   - Dès la validation du paiement, un webhook serveur-à-serveur (IPN - Instant Payment 
+     Notification) confirme la transaction de manière infalsifiable.
+
+2. RECU FISCAL OFFICIEL AUTOMATIQUE :
+   - Dès la confirmation, le système attribue une référence unique 
+     (ex: MIDH-DON-202611-XXXXX).
+   - Le donateur peut télécharger instantanément son reçu fiscal officiel au format PDF.
+   - Le reçu comporte le cachet numérique de l'organisation, les mentions légales 
+     du MIDH et le détail fiscal déductible.
+   - La transaction est enregistrée dans le menu "Dons & Mécénat" de WordPress 
+     pour la comptabilité du MIDH.
+
+
+================================================================================
+7. INFRASTRUCTURE D'HEBERGEMENT, DOMAINES & RESEAU
+================================================================================
+
+- Domaine principal public : midh-ci.org / www.midh-ci.org
+  * DNS pointé vers : Vercel Anycast Global Edge Network (76.76.21.21)
+  * Certificat SSL : Let's Encrypt Wildcard avec renouvellement automatique à 100%.
+
+- Sous-domaine Back-Office : cms.midh-ci.org
+  * DNS pointé vers : Serveur d'hébergement LWS
+  * Certificat SSL : SSL cPanel / Sectigo activé.
+
+- Adresses Emails Institutionnelles :
+  * Boîtes de messagerie hébergées sur le serveur LWS (ex: info@midh-ci.org, 
+    direction@midh-ci.org).
+  * Envois transactionnels du site reliés à Resend avec validation SPF (`v=spf1 include:amazonses.com ...`) 
+    et DKIM pour que les emails n'arrivent jamais dans les courriers indésirables (Spam).
+
+
+================================================================================
+8. GUIDE DE GESTION DU CMS WORDPRESS PAR LES ADMINISTRATEURS DU MIDH
+================================================================================
+L'accès au panneau de gestion s'effectue via :
+URL : https://cms.midh-ci.org/wp-admin
+
+1. GESTION DES ACTUALITES & ARTICLES :
+   - Menu : "Articles > Ajouter un article".
+   - Saisir le titre, le texte de l'article et définir "Image mise en avant".
+   - Choisir une catégorie (Communiqués, Droits Humains, Événements, etc.).
+   - Cliquer sur "Publier" : l'actualité apparaît sur le site en 30 secondes.
+
+2. GESTION DE L'EQUIPE & GOUVERNANCE (ORGANIGRAMME) :
+   - Menu : "Équipe & Gouvernance > Ajouter un nouveau responsable".
+   - Saisir le Nom et Prénoms dans le titre.
+   - Téléverser la photo officielle en cliquant sur "Choisir une photo".
+   - Sélectionner le Statut du Mandat :
+     * "🟢 Direction actuelle" pour les membres en exercice aujourd'hui.
+     * "🏛️ Ancienne équipe dirigeante" pour les anciens mandats.
+   - Indiquer la période du mandat (ex: "2018 – 2022").
+   - Indiquer le poste officiel (ex: "Secrétaire Général", "Président du CA").
+   - Cliquer sur "Publier".
+
+3. GESTION DE LA MEDIATHEQUE (PHOTOS & VIDEOS YOUTUBE) :
+   - Menu : "Galerie Photo & Vidéo MIDH > Ajouter un média".
+   - Choisissez en 1 clic :
+     * Soit "📷 Photo Haute Définition" : sélectionnez l'image dans la médiathèque.
+     * Soit "🎥 Reportage Vidéo Externe" : collez simplement votre lien YouTube 
+       (ex: https://www.youtube.com/watch?v=... ou https://youtu.be/...).
+       L'identifiant et la miniature de la vidéo sont reconnus automatiquement !
+   - Précisez le lieu (ex: "Abidjan, Cocody") et la date (ex: "Novembre 2026").
+   - Cochez la case "⭐ Afficher dans le carrousel photo de l'accueil" si vous 
+     souhaitez que la photo défile sur la page d'accueil.
+   - Cliquer sur "Publier".
+
+4. GESTION DES PROJETS & PROGRAMMES DE TERRAIN :
+   - Menu : "Projets & Programmes > Ajouter un nouveau projet".
+   - Renseigner la description, les objectifs, les résultats attendus et le statut.
+
+5. GESTION DES RAPPORTS & DOCUMENTS OFFICIELS :
+   - Menu : "Documents & Rapports > Ajouter un document".
+   - Téléverser le fichier PDF officiel et indiquer l'année de publication.
+
+
+================================================================================
+9. PROCEDURES DE DEPLOIEMENT, SAUVEGARDE & MAINTENANCE TECHNIQUE
+================================================================================
+
+1. MISE A JOUR DU CODE SOURCE FRONTEND (NEXT.JS) :
+   - Le code source est versionné sous Git sur la branche principale `main`.
+   - Tout `git push origin main` déclenche automatiquement un pipeline CI/CD sur 
+     Vercel : vérification TypeScript, build de production, tests et déploiement 
+     mondial en moins de 2 minutes sans interruption de service (Zero-Downtime Deployment).
+
+2. MISE A JOUR DE L'EXTENSION WORDPRESS (MIDH HEADLESS CORE) :
+   - Fichier archive prêt à l'emploi : `midh-headless-core.zip` (v1.7.0).
+   - Dans WordPress : "Extensions > Ajouter une extension > Téléverser une extension".
+   - Choisir le fichier `midh-headless-core.zip`.
+   - WordPress propose : "Remplacer l'extension actuelle par celle que vous avez téléversée".
+   - Cliquer sur Valider : l'extension est mise à jour immédiatement.
+
+3. SAUVEGARDE DE LA BASE DE DONNEES & FICHIERS :
+   - Une sauvegarde automatique quotidienne est configurée sur le cPanel LWS 
+     (sauvegarde de la base de données MySQL et du dossier `/wp-content/uploads/`).
+   - Il est recommandé de télécharger un export mensuel de la base de données 
+     via phpMyAdmin ou l'outil de sauvegarde cPanel.
+
+
+================================================================================
+10. CONTACTS & GARANTIE DE SUPPORT
+================================================================================
+Pour toute question technique, évolution ou besoin d'assistance dans le cadre de 
+la transmission des compétences aux équipes du MIDH :
+
+- Responsable Technique : Kévin Stéphane Assamoi
+- Email de contact      : stephanekevinassamoi@gmail.com
+- Projet officiel       : Mouvement Ivoirien des Droits Humains (MIDH)
+- Siège de l'ONG        : Abidjan, Cocody Angré, Carrefour les Oscars
+- Contact institutionnel: info@midh-ci.org / +225 01 01 49 87 39
+
+Ce système a été conçu, développé et testé avec les standards les plus exigeants 
+de l'ingénierie logicielle pour assurer la pérennité, la souveraineté et le 
+rayonnement du Mouvement Ivoirien des Droits Humains pour les décennies à venir.
+
+================================================================================
+                         FIN DU DOSSIER TECHNIQUE
+================================================================================

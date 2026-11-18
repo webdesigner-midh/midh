@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.6.0 avec gestion des mandats de direction, initialisation Galerie et durcissement OWASP.
- * Version: 1.6.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.7.0 : API REST /team dédiée, support custom-fields, prévisualisation vidéo YouTube & auto-seeding Galerie.
+ * Version: 1.7.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -70,6 +70,7 @@ class MIDH_Headless_Core {
         add_action('manage_midh_gallery_posts_custom_column', array($this, 'render_gallery_custom_column'), 10, 2);
         add_action('admin_notices', array($this, 'render_gallery_admin_notice'));
         add_action('admin_post_midh_seed_gallery', array($this, 'handle_seed_gallery_photos'));
+        add_action('admin_init', array($this, 'maybe_auto_seed_gallery'));
 
         // Sauvegarde des métadonnées pour Dons & Mécénat MIDH
         add_action('save_post_midh_donation', array($this, 'save_midh_donation_meta_box'), 10, 2);
@@ -171,7 +172,7 @@ class MIDH_Headless_Core {
             'show_in_rest' => true,
             'rest_base'    => 'midh_team',
             'menu_icon'    => 'dashicons-groups',
-            'supports'     => array('title', 'thumbnail', 'page-attributes'),
+            'supports'     => array('title', 'thumbnail', 'page-attributes', 'custom-fields'),
         ));
 
         // D. CPT : Partenaires Institutionnels
@@ -211,7 +212,7 @@ class MIDH_Headless_Core {
             'show_in_rest' => true,
             'rest_base'    => 'midh_slide',
             'menu_icon'    => 'dashicons-images-alt2',
-            'supports'     => array('title', 'thumbnail', 'page-attributes'),
+            'supports'     => array('title', 'thumbnail', 'page-attributes', 'custom-fields'),
             'menu_position'=> 24,
         ));
 
@@ -233,7 +234,7 @@ class MIDH_Headless_Core {
             'rest_base'    => 'midh_gallery',
             'menu_icon'    => 'dashicons-format-gallery',
             'menu_position'=> 25,
-            'supports'     => array('title', 'thumbnail', 'page-attributes'),
+            'supports'     => array('title', 'thumbnail', 'page-attributes', 'custom-fields'),
         ));
 
         // Taxonomie : Catégories de la Galerie MIDH
@@ -404,6 +405,12 @@ class MIDH_Headless_Core {
         register_rest_route('midh/v1', '/documents', array(
             'methods'  => 'GET',
             'callback' => array($this, 'get_documents_endpoint'),
+            'permission_callback' => '__return_true',
+        ));
+
+        register_rest_route('midh/v1', '/team', array(
+            'methods'  => 'GET',
+            'callback' => array($this, 'get_team_endpoint'),
             'permission_callback' => '__return_true',
         ));
 
@@ -1788,6 +1795,7 @@ class MIDH_Headless_Core {
                 </div>
 
                 <input type="hidden" name="midh_team_photo_url" id="midh_team_photo_url" value="<?php echo esc_url($photo_url); ?>" />
+                <input type="hidden" name="midh_team_photo_id" id="midh_team_photo_id" value="<?php echo esc_attr(get_post_thumbnail_id($post->ID)); ?>" />
                 
                 <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
                     <button type="button" id="midh_upload_photo_btn" class="button button-primary" style="background: #006b1f; border-color: #006b1f; font-weight: 600;">
@@ -1898,6 +1906,7 @@ class MIDH_Headless_Core {
                     var attachment = mediaUploader.state().get('selection').first().toJSON();
                     var url = attachment.sizes && attachment.sizes.large ? attachment.sizes.large.url : attachment.url;
                     $('#midh_team_photo_url').val(url);
+                    $('#midh_team_photo_id').val(attachment.id || '');
                     $('#midh_team_photo_img').attr('src', url).show();
                     $('#midh_team_photo_empty').hide();
                     $('#midh_remove_photo_btn').show();
@@ -1909,6 +1918,7 @@ class MIDH_Headless_Core {
             $('#midh_remove_photo_btn').on('click', function(e) {
                 e.preventDefault();
                 $('#midh_team_photo_url').val('');
+                $('#midh_team_photo_id').val('');
                 $('#midh_team_photo_img').attr('src', '').hide();
                 $('#midh_team_photo_empty').show();
                 $(this).hide();
@@ -1948,7 +1958,9 @@ class MIDH_Headless_Core {
         }
 
         if (isset($clean['midh_team_mandate_status'])) {
-            update_post_meta($post_id, 'mandate_status', $clean['midh_team_mandate_status']);
+            $raw_st = strtolower(trim($clean['midh_team_mandate_status']));
+            $clean_status = (strpos($raw_st, 'ancien') !== false || $raw_st === 'former') ? 'ancien' : 'actuel';
+            update_post_meta($post_id, 'mandate_status', $clean_status);
         }
 
         if (isset($clean['midh_team_mandate_period'])) {
@@ -1959,14 +1971,22 @@ class MIDH_Headless_Core {
             update_post_meta($post_id, 'role', $clean['midh_team_role']);
         }
 
-        if (isset($clean['midh_team_photo_url'])) {
-            update_post_meta($post_id, 'photo_url', $clean['midh_team_photo_url']);
-            if (!empty($clean['midh_team_photo_url'])) {
-                $attachment_id = attachment_url_to_postid($clean['midh_team_photo_url']);
-                if ($attachment_id) {
-                    set_post_thumbnail($post_id, $attachment_id);
-                }
+        $photo_url = isset($clean['midh_team_photo_url']) ? $clean['midh_team_photo_url'] : '';
+        if (empty($photo_url) && !empty($_POST['midh_team_photo_url'])) {
+            $photo_url = esc_url_raw($_POST['midh_team_photo_url']);
+        }
+        if (!empty($photo_url)) {
+            update_post_meta($post_id, 'photo_url', $photo_url);
+            $attachment_id = !empty($_POST['midh_team_photo_id']) ? absint($_POST['midh_team_photo_id']) : 0;
+            if (!$attachment_id) {
+                $attachment_id = attachment_url_to_postid($photo_url);
             }
+            if ($attachment_id) {
+                set_post_thumbnail($post_id, $attachment_id);
+            }
+        } elseif (isset($_POST['midh_team_photo_url']) && empty($_POST['midh_team_photo_url'])) {
+            delete_post_meta($post_id, 'photo_url');
+            delete_post_thumbnail($post_id);
         }
 
         if (isset($clean['midh_team_biography'])) {
@@ -2444,40 +2464,60 @@ class MIDH_Headless_Core {
 
             <!-- Panel Vidéo -->
             <div id="panel_video" class="midh-gal-panel <?php echo $media_type === 'video' ? 'active' : ''; ?>">
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #0B3827; font-weight: 700; font-size: 14px;">
-                        <span>📺 Configuration de la Vidéo (Pas de fichier lourd sur le serveur)</span>
+                <div style="background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%); border: 2px solid #ef4444; border-radius: 12px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(239,68,68,0.06);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: #991b1b; font-weight: 800; font-size: 15px;">
+                        <span style="font-size: 22px;">▶️</span>
+                        <span>Lien de la Vidéo YouTube / Reportage officiel</span>
                     </div>
 
                     <div style="margin-bottom: 16px;">
-                        <label for="midh_video_url" class="midh-gal-label">
-                            Option A : Lien direct de la vidéo (YouTube, Facebook, Dailymotion...) :
+                        <label for="midh_video_url" class="midh-gal-label" style="font-size: 14px; color: #991b1b;">
+                            Collez ici l'adresse web de votre vidéo YouTube (ex: https://www.youtube.com/watch?v=... ou https://youtu.be/...) :
                         </label>
-                        <input type="url" name="midh_video_url" id="midh_video_url" value="<?php echo esc_url($video_url); ?>" class="midh-gal-input" placeholder="ex: https://www.youtube.com/watch?v=... ou https://fb.watch/..." />
-                        <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
-                            💡 Pour YouTube, collez simplement le lien classique, le lecteur Next.js s'adaptera automatiquement.
+                        <input type="url" name="midh_video_url" id="midh_video_url" value="<?php echo esc_url($video_url); ?>" class="midh-gal-input" style="height: 44px; font-size: 15px; border: 2px solid #ef4444; font-weight: 600;" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+                        <p style="font-size: 12px; color: #64748b; margin: 6px 0 0 0;">
+                            ✨ Le lecteur vidéo et la vignette de couverture haute définition seront générés automatiquement sur le site.
                         </p>
                     </div>
 
-                    <div style="margin-bottom: 16px;">
-                        <label for="midh_video_embed" class="midh-gal-label">
-                            Option B : Ou collez directement le code d'intégration / code source (iframe) :
-                        </label>
-                        <textarea name="midh_video_embed" id="midh_video_embed" rows="3" class="midh-gal-textarea" placeholder="&lt;iframe src=&quot;https://...&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;"><?php echo esc_textarea($video_embed); ?></textarea>
-                        <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">
-                            Idéal pour les reportages RTI, Facebook Video Embed ou lecteurs spécifiques.
-                        </p>
+                    <!-- Aperçu automatique YouTube -->
+                    <?php
+                    $yt_id_preview = '';
+                    if (!empty($video_url) && preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([\w-]{11})/', $video_url, $m)) {
+                        $yt_id_preview = $m[1];
+                    }
+                    ?>
+                    <div id="midh_yt_preview_box" style="<?php echo empty($yt_id_preview) ? 'display:none;' : ''; ?> background: #ffffff; border-radius: 10px; padding: 14px; border: 1px solid #fca5a5; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                            <img id="midh_yt_thumb_img" src="<?php echo !empty($yt_id_preview) ? 'https://img.youtube.com/vi/' . esc_attr($yt_id_preview) . '/hqdefault.jpg' : ''; ?>" style="width: 160px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #ef4444;" alt="Vignette YouTube" />
+                            <div>
+                                <span style="display: inline-block; background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px; margin-bottom: 4px;">
+                                    ✅ Vidéo YouTube reconnue
+                                </span>
+                                <div style="font-size: 13px; font-weight: 600; color: #1e293b;">
+                                    Identifiant YouTube : <code id="midh_yt_id_code"><?php echo esc_html($yt_id_preview); ?></code>
+                                </div>
+                                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                                    Cette vidéo s'ouvrira en plein écran avec le lecteur officiel YouTube sur la page Médiathèque.
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px;">
                         <div>
-                            <label for="midh_video_duration" class="midh-gal-label">Durée de la vidéo (ex: 3:45) :</label>
-                            <input type="text" name="midh_video_duration" id="midh_video_duration" value="<?php echo esc_attr($video_duration); ?>" class="midh-gal-input" placeholder="ex: 04:12" />
+                            <label for="midh_video_duration" class="midh-gal-label">Durée de la vidéo (ex: 12:45) :</label>
+                            <input type="text" name="midh_video_duration" id="midh_video_duration" value="<?php echo esc_attr($video_duration); ?>" class="midh-gal-input" placeholder="ex: 12:45 ou 08:20" />
                         </div>
                         <div>
-                            <label for="midh_video_source" class="midh-gal-label">Source / Chaîne (Badge affiché) :</label>
-                            <input type="text" name="midh_video_source" id="midh_video_source" value="<?php echo esc_attr($video_source); ?>" class="midh-gal-input" placeholder="ex: YouTube, RTI 1, Facebook Watch..." />
+                            <label for="midh_video_source" class="midh-gal-label">Chaîne / Diffuseur (Badge affiché) :</label>
+                            <input type="text" name="midh_video_source" id="midh_video_source" value="<?php echo esc_attr($video_source); ?>" class="midh-gal-input" placeholder="ex: YouTube, RTI 1, MIDH TV..." />
                         </div>
+                    </div>
+
+                    <div>
+                        <label for="midh_video_embed" class="midh-gal-label">Optionnel : Code d'intégration iframe alternatif (RTI, Facebook, etc.) :</label>
+                        <textarea name="midh_video_embed" id="midh_video_embed" rows="2" class="midh-gal-textarea" placeholder="&lt;iframe src=&quot;https://...&quot;&gt;&lt;/iframe&gt;"><?php echo esc_textarea($video_embed); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -2590,6 +2630,36 @@ class MIDH_Headless_Core {
                 $(this).hide();
                 $('#midh_gal_upload_btn').html('📷 Choisir depuis la médiathèque');
             });
+
+            // Détection en direct et prévisualisation instantanée de l'ID YouTube
+            function checkYouTubeUrl(url) {
+                if (!url) {
+                    $('#midh_yt_preview_box').slideUp(200);
+                    return;
+                }
+                var match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([\w-]{11})/);
+                if (match && match[1]) {
+                    var ytid = match[1];
+                    $('#midh_yt_thumb_img').attr('src', 'https://img.youtube.com/vi/' + ytid + '/hqdefault.jpg');
+                    $('#midh_yt_id_code').text(ytid);
+                    $('#midh_yt_preview_box').slideDown(200);
+                    if (!$('#midh_video_source').val()) {
+                        $('#midh_video_source').val('YouTube');
+                    }
+                    if (!$('#midh_media_url').val()) {
+                        $('#midh_media_url').val('https://img.youtube.com/vi/' + ytid + '/maxresdefault.jpg');
+                    }
+                } else {
+                    $('#midh_yt_preview_box').slideUp(200);
+                }
+            }
+
+            $('#midh_video_url').on('input change paste', function() {
+                var self = this;
+                setTimeout(function() {
+                    checkYouTubeUrl($(self).val().trim());
+                }, 80);
+            });
         });
         </script>
         <?php
@@ -2612,21 +2682,32 @@ class MIDH_Headless_Core {
             ? $_POST['midh_media_type'] : 'photo';
         update_post_meta($post_id, 'media_type', $media_type);
 
-        if (isset($_POST['midh_media_url'])) {
-            $media_url = esc_url_raw(wp_unslash($_POST['midh_media_url']));
-            update_post_meta($post_id, 'media_url', $media_url);
+        $media_url = isset($_POST['midh_media_url']) ? esc_url_raw(wp_unslash($_POST['midh_media_url'])) : '';
 
-            // Synchroniser comme thumbnail WordPress si non défini
-            if ($media_url && !has_post_thumbnail($post_id)) {
+        if ($media_type === 'video') {
+            $video_url = isset($_POST['midh_video_url']) ? esc_url_raw(wp_unslash($_POST['midh_video_url'])) : '';
+            update_post_meta($post_id, 'video_url', $video_url);
+
+            if (!empty($video_url) && preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([\w-]{11})/', $video_url, $matches)) {
+                $ytid = $matches[1];
+                update_post_meta($post_id, 'youtube_id', $ytid);
+                if (empty($media_url)) {
+                    $media_url = 'https://img.youtube.com/vi/' . $ytid . '/maxresdefault.jpg';
+                }
+            }
+        }
+
+        if (!empty($media_url)) {
+            update_post_meta($post_id, 'media_url', $media_url);
+            if (!has_post_thumbnail($post_id)) {
                 $attach_id = attachment_url_to_postid($media_url);
                 if ($attach_id) {
                     set_post_thumbnail($post_id, $attach_id);
                 }
             }
-        }
-
-        if (isset($_POST['midh_video_url'])) {
-            update_post_meta($post_id, 'video_url', esc_url_raw(wp_unslash($_POST['midh_video_url'])));
+        } elseif (isset($_POST['midh_media_url']) && empty($_POST['midh_media_url']) && $media_type === 'photo') {
+            delete_post_meta($post_id, 'media_url');
+            delete_post_thumbnail($post_id);
         }
 
         if (isset($_POST['midh_video_embed'])) {
@@ -2767,19 +2848,42 @@ class MIDH_Headless_Core {
     }
 
     /**
-     * Traitement de l'import des 8 photos officielles du MIDH
+     * Traitement de l'import des 8 photos officielles et reportages vidéo du MIDH
      */
+    public function maybe_auto_seed_gallery() {
+        if (!is_admin() || !current_user_can('edit_posts')) {
+            return;
+        }
+        global $pagenow;
+        if ($pagenow === 'edit.php' && isset($_GET['post_type']) && $_GET['post_type'] === 'midh_gallery' && !isset($_GET['seeded'])) {
+            $count_obj = wp_count_posts('midh_gallery');
+            $count = isset($count_obj->publish) ? (int) $count_obj->publish : 0;
+            if ($count === 0 && !get_option('midh_gallery_auto_seeded_v17')) {
+                $this->execute_gallery_seed();
+                update_option('midh_gallery_auto_seeded_v17', 1);
+                wp_safe_redirect(admin_url('edit.php?post_type=midh_gallery&seeded=1'));
+                exit;
+            }
+        }
+    }
+
     public function handle_seed_gallery_photos() {
         if (!current_user_can('edit_posts')) {
             wp_die(__('Action non autorisée.', 'midh-headless'));
         }
         check_admin_referer('midh_seed_gallery_nonce');
+        $this->execute_gallery_seed();
+        update_option('midh_gallery_auto_seeded_v17', 1);
+        wp_safe_redirect(admin_url('edit.php?post_type=midh_gallery&seeded=1'));
+        exit;
+    }
 
+    public function execute_gallery_seed() {
         $initial_photos = array(
             array(
                 'title'       => "Session de travail et de concertation avec les forces de l'ordre",
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.06.42.webp',
-                'category'    => 'Formation & Sécurité',
+                'category'    => 'Formations & Renforcement',
                 'location'    => 'Abidjan, Côte d’Ivoire',
                 'date'        => '14 Octobre 2026',
                 'description' => "Atelier d'échange et de sensibilisation mutuelle entre les juristes du MIDH et les représentants de la gendarmerie et de la police nationale sur les garanties légales de garde à vue.",
@@ -2787,7 +2891,7 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Dialogue institutionnel avec les partenaires techniques et financiers',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.06.38-1.webp',
-                'category'    => 'Partenariat International',
+                'category'    => 'Plaidoyer & Sommets',
                 'location'    => 'Siège du MIDH, Cocody',
                 'date'        => '12 Octobre 2026',
                 'description' => "Rencontre de cadrage stratégique avec les délégations internationales pour le suivi des programmes de consolidation de la justice de proximité en Côte d’Ivoire.",
@@ -2795,7 +2899,7 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Formation citoyenne et renforcement des capacités communautaires',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Vue-de-la-salle.webp',
-                'category'    => 'Éducation Civique',
+                'category'    => 'Éducation civique & Dialogue',
                 'location'    => 'Bouaké, Région du Gbêkê',
                 'date'        => '08 Octobre 2026',
                 'description' => "Vue d'ensemble de la salle lors de la session de vulgarisation des instruments juridiques de protection contre les violations des droits humains.",
@@ -2803,7 +2907,7 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Mission de veille et plaidoyer du Chargé de Programmes',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Image-charge-de-programme-MIDH.webp',
-                'category'    => 'Plaidoyer & Veille',
+                'category'    => 'Plaidoyer & Sommets',
                 'location'    => 'Abidjan, Plateau',
                 'date'        => '28 Septembre 2026',
                 'description' => "Intervention du pôle programmes lors d'une table ronde sur la protection des défenseurs des droits humains et le droit d'accès universel à la justice.",
@@ -2811,7 +2915,7 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Observation et monitoring de terrain dans le Woroba',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Image-agent-de-monitoring-woroba.webp',
-                'category'    => 'Monitoring de Terrain',
+                'category'    => 'Missions terrain & Monitoring',
                 'location'    => 'Séguéla, District du Woroba',
                 'date'        => '15 Septembre 2026',
                 'description' => "Déploiement des observateurs du MIDH pour la collecte rigoureuse des données factuelles sur les libertés publiques et la paix communautaire.",
@@ -2819,7 +2923,7 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Assemblée générale et photo institutionnelle du MIDH',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/Photo-de-famille-2.webp',
-                'category'    => 'Vie de l’Organisation',
+                'category'    => 'Cérémonies & Distinction',
                 'location'    => 'Abidjan, Côte d’Ivoire',
                 'date'        => '08 Octobre 2026',
                 'description' => "Rassemblement des membres du Conseil d’Administration, du Secrétariat Général et des coordonnateurs des sections régionales à l'occasion du 26e anniversaire.",
@@ -2827,7 +2931,7 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Conférence de presse sur la transparence électorale et la paix sociale',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.21.15-2.webp',
-                'category'    => 'Veille & Presse',
+                'category'    => 'Conférences & Presse',
                 'location'    => 'Abidjan, Cocody',
                 'date'        => '02 Septembre 2026',
                 'description' => "Restitution publique des recommandations du MIDH aux institutions nationales pour la garantie d'un climat électoral démocratique, inclusif et apaisé.",
@@ -2835,14 +2939,58 @@ class MIDH_Headless_Core {
             array(
                 'title'       => 'Caravane de sensibilisation aux droits civils et politiques',
                 'image'       => 'https://cms.midh-ci.org/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-15.21.16.webp',
-                'category'    => 'Sensibilisation',
+                'category'    => 'Éducation civique & Dialogue',
                 'location'    => 'Daloa, Région du Haut-Sassandra',
                 'date'        => '18 Août 2026',
                 'description' => "Échanges directs avec les jeunes et les associations de femmes sur la prévention des conflits et la promotion de l'État de droit.",
             ),
         );
 
+        $initial_videos = array(
+            array(
+                'title'       => "Reportage officiel : 26 ans d'engagement du MIDH pour les droits humains",
+                'video_url'   => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'duration'    => '12:45',
+                'source'      => 'YouTube',
+                'category'    => 'Plaidoyer & Sommets',
+                'location'    => 'Abidjan, Côte d’Ivoire',
+                'date'        => 'Octobre 2026',
+                'description' => "Rétrospective institutionnelle sur les actions majeures menées par le MIDH depuis sa fondation le 8 octobre 2000 : assistance juridique, monitoring électoral et plaidoyer international.",
+            ),
+            array(
+                'title'       => "Intervention télévisée : La protection des libertés fondamentales en Côte d'Ivoire",
+                'video_url'   => 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+                'duration'    => '08:20',
+                'source'      => 'Télévision',
+                'category'    => 'Plaidoyer & Sommets',
+                'location'    => 'Abidjan, Plateau',
+                'date'        => 'Septembre 2026',
+                'description' => "Prise de parole de la direction exécutive du MIDH sur le respect des droits humains, le renforcement du système judiciaire et l'égalité des chances.",
+            ),
+            array(
+                'title'       => "Atelier national : La justice de proximité au service des populations vulnérables",
+                'video_url'   => 'https://www.youtube.com/watch?v=L_LUpnjgPso',
+                'duration'    => '15:10',
+                'source'      => 'YouTube',
+                'category'    => 'Formations & Renforcement',
+                'location'    => 'Bouaké, Région du Gbêkê',
+                'date'        => 'Août 2026',
+                'description' => "Synthèse des travaux et témoignages des bénéficiaires des cliniques juridiques mobiles déployées dans les 20 sections territoriales du MIDH.",
+            ),
+            array(
+                'title'       => "Conférence de presse : Déclaration conjointe sur la transparence du scrutin",
+                'video_url'   => 'https://www.youtube.com/watch?v=kJQP7kiw5Fk',
+                'duration'    => '06:35',
+                'source'      => 'YouTube',
+                'category'    => 'Conférences & Presse',
+                'location'    => 'Abidjan, Cocody',
+                'date'        => 'Juillet 2026',
+                'description' => "Lecture de la déclaration officielle du MIDH et des partenaires de la société civile appelant à un processus électoral pacifique, transparent et respectueux des libertés.",
+            ),
+        );
+
         $order = 1;
+        // Insertion des 8 photos officielles
         foreach ($initial_photos as $p) {
             $post_id = wp_insert_post(array(
                 'post_title'   => $p['title'],
@@ -2863,8 +3011,85 @@ class MIDH_Headless_Core {
             }
         }
 
-        wp_safe_redirect(admin_url('edit.php?post_type=midh_gallery&seeded=1'));
-        exit;
+        // Insertion des 4 reportages vidéo officiels
+        foreach ($initial_videos as $v) {
+            $post_id = wp_insert_post(array(
+                'post_title'   => $v['title'],
+                'post_type'    => 'midh_gallery',
+                'post_status'  => 'publish',
+                'menu_order'   => $order++,
+                'post_excerpt' => $v['description'],
+            ));
+
+            if ($post_id && !is_wp_error($post_id)) {
+                $ytid = '';
+                if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([\w-]{11})/', $v['video_url'], $m)) {
+                    $ytid = $m[1];
+                }
+                update_post_meta($post_id, 'media_type', 'video');
+                update_post_meta($post_id, 'video_url', esc_url_raw($v['video_url']));
+                update_post_meta($post_id, 'youtube_id', $ytid);
+                update_post_meta($post_id, 'media_url', $ytid ? 'https://img.youtube.com/vi/' . $ytid . '/maxresdefault.jpg' : '');
+                update_post_meta($post_id, 'video_duration', sanitize_text_field($v['duration']));
+                update_post_meta($post_id, 'video_source', sanitize_text_field($v['source']));
+                update_post_meta($post_id, 'category_name', sanitize_text_field($v['category']));
+                update_post_meta($post_id, 'location', sanitize_text_field($v['location']));
+                update_post_meta($post_id, 'event_date', sanitize_text_field($v['date']));
+                update_post_meta($post_id, 'show_on_home', '0');
+                update_post_meta($post_id, 'description', sanitize_textarea_field($v['description']));
+            }
+        }
+    }
+
+    /**
+     * Endpoint REST API dédié /wp-json/midh/v1/team
+     * Retourne les membres de la direction et de l'organigramme avec métadonnées complètes
+     */
+    public function get_team_endpoint() {
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_team',
+            'post_status'    => 'publish',
+            'posts_per_page' => 100,
+            'orderby'        => 'menu_order date',
+            'order'          => 'ASC',
+        ));
+
+        $members = array();
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id = get_the_ID();
+
+                $raw_photo = get_post_meta($id, 'photo_url', true);
+                if (empty($raw_photo) && has_post_thumbnail($id)) {
+                    $raw_photo = get_the_post_thumbnail_url($id, 'large');
+                }
+                if (empty($raw_photo) && has_post_thumbnail($id)) {
+                    $raw_photo = get_the_post_thumbnail_url($id, 'full');
+                }
+
+                $raw_status = strtolower(trim(get_post_meta($id, 'mandate_status', true) ?: 'actuel'));
+                $mandate_status = (strpos($raw_status, 'ancien') !== false || $raw_status === 'former') ? 'ancien' : 'actuel';
+
+                $members[] = array(
+                    'id'            => $id,
+                    'fullName'      => get_the_title(),
+                    'role'          => get_post_meta($id, 'role', true) ?: 'Membre de la Direction',
+                    'photoUrl'      => $raw_photo ? esc_url_raw($raw_photo) : '',
+                    'biography'     => get_post_meta($id, 'biography', true) ?: (get_the_excerpt() ?: ''),
+                    'mandateStatus' => $mandate_status,
+                    'mandatePeriod' => get_post_meta($id, 'mandate_period', true) ?: '',
+                    'email'         => get_post_meta($id, 'email', true) ?: '',
+                    'linkedin'      => get_post_meta($id, 'linkedin', true) ?: '',
+                    'twitter'       => get_post_meta($id, 'twitter', true) ?: '',
+                    'order'         => (int) get_post_field('menu_order', $id),
+                );
+            }
+            wp_reset_postdata();
+        }
+
+        return new WP_REST_Response($members, 200);
     }
 
     /**
