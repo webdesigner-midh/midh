@@ -4320,7 +4320,7 @@ class MIDH_Headless_Core {
         $sub_date     = get_post_meta($post->ID, 'submission_date', true) ?: get_the_date('d/m/Y H:i', $post->ID);
 
         // Nettoyage numéro pour lien WhatsApp
-        $clean_phone = preg_replace('/[^0-9]/', '', $phone);
+        $clean_phone = preg_replace('/[^0-9]/', '', (string)$phone);
         ?>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:12px 0;">
             <div>
@@ -4677,7 +4677,7 @@ class MIDH_Headless_Core {
      */
     public function render_newsletter_campaign_page() {
         // Compter les abonnés actifs
-        $subscribers_count = wp_count_posts('midh_subscriber')->publish;
+        $count_obj = wp_count_posts('midh_subscriber'); $subscribers_count = ($count_obj && isset($count_obj->publish)) ? intval($count_obj->publish) : 0;
 
         // Récupérer les 15 articles récents pour sélection automatique
         $recent_posts = get_posts(array(
@@ -4697,7 +4697,7 @@ class MIDH_Headless_Core {
             'order'          => 'DESC',
         ));
 
-        $admin_email = wp_get_current_user()->user_email;
+        $u = wp_get_current_user(); $admin_email = ($u && isset($u->user_email)) ? $u->user_email : get_option('admin_email');
         $campaign_history = get_option('midh_newsletter_campaign_history', array());
 
         // Traitement des notifications de succès ou d'erreur
@@ -4749,7 +4749,7 @@ class MIDH_Headless_Core {
                                 <?php foreach ($recent_posts as $p): ?>
                                     <option value="post_<?php echo $p->ID; ?>" 
                                             data-title="<?php echo esc_attr($p->post_title); ?>" 
-                                            data-excerpt="<?php echo esc_attr(wp_strip_all_tags(get_the_excerpt($p))); ?>"
+                                            data-excerpt="<?php $ex = !empty($p->post_excerpt) ? $p->post_excerpt : wp_trim_words($p->post_content, 25); echo esc_attr(wp_strip_all_tags($ex)); ?>"
                                             data-url="<?php echo esc_attr('https://www.midh-ci.org/actualites/' . $p->post_name); ?>">
                                         <?php echo esc_html($p->post_title); ?>
                                     </option>
@@ -4759,7 +4759,7 @@ class MIDH_Headless_Core {
                                 <?php foreach ($recent_projects as $pr): ?>
                                     <option value="proj_<?php echo $pr->ID; ?>" 
                                             data-title="<?php echo esc_attr($pr->post_title); ?>" 
-                                            data-excerpt="<?php echo esc_attr(wp_strip_all_tags(get_the_excerpt($pr))); ?>"
+                                            data-excerpt="<?php $ex = !empty($pr->post_excerpt) ? $pr->post_excerpt : wp_trim_words($pr->post_content, 25); echo esc_attr(wp_strip_all_tags($ex)); ?>"
                                             data-url="<?php echo esc_attr('https://www.midh-ci.org/nos-actions/' . $pr->post_name); ?>">
                                         <?php echo esc_html($pr->post_title); ?>
                                     </option>
