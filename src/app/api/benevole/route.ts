@@ -71,7 +71,29 @@ export async function POST(request: Request) {
 
     console.info(`[Bénévolat MIDH] Nouvelle adhésion reçue : ${prenom} ${nom} (${email}) - Tél : ${phone} - Lieu : ${location} - Domaine : ${domain || 'Non spécifié'}`);
 
-    // Envoi de l'e-mail via Resend
+    // 1. Enregistrement direct dans WordPress (CPT Candidatures Bénévoles & Export)
+    try {
+      const { submitVolunteerInWordPress } = await import('@/services/wordpress');
+      const wpResult = await submitVolunteerInWordPress({
+        nom,
+        prenom,
+        email,
+        phone,
+        location,
+        domain,
+        availability,
+        message,
+      });
+      if (wpResult.success) {
+        console.info(`[Bénévolat API] Enregistré dans WordPress avec succès (ID: ${wpResult.id})`);
+      } else {
+        console.warn(`[Bénévolat API] Avertissement WordPress: ${wpResult.message}`);
+      }
+    } catch (wpErr) {
+      console.warn("[Bénévolat API] Erreur d'enregistrement WordPress:", (wpErr as Error).message);
+    }
+
+    // 2. Envoi de l'e-mail d'alerte à l'équipe via Resend
     try {
       const { sendVolunteerNotification } = await import('@/services/resend');
       const emailResult = await sendVolunteerNotification({

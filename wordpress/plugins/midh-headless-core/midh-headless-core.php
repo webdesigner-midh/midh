@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.7.1 : API REST /team dédiée, support custom-fields, prévisualisation vidéo YouTube, cache-busting & webhook auto-revalidation Next.js.
- * Version: 1.7.1
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.8.0 : Module complet Bénévolat (gestion & export des candidatures) + Module Diffusion de Newsletter & Campagnes e-mails avec gabarit officiel MIDH.
+ * Version: 1.8.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -89,6 +89,17 @@ class MIDH_Headless_Core {
         add_action('manage_midh_subscriber_posts_custom_column', array($this, 'render_subscriber_custom_column'), 10, 2);
         add_action('manage_posts_extra_tablenav', array($this, 'render_subscriber_export_button'));
         add_action('admin_post_midh_export_subscribers', array($this, 'export_subscribers_csv'));
+
+        // Diffusion de Newsletter & Campagnes e-mails MIDH
+        add_action('admin_menu', array($this, 'register_newsletter_campaign_menu'));
+        add_action('admin_post_midh_send_newsletter_campaign', array($this, 'handle_send_newsletter_campaign'));
+
+        // Gestion des Candidatures Bénévoles MIDH
+        add_action('save_post_midh_volunteer', array($this, 'save_midh_volunteer_meta_box'), 10, 2);
+        add_filter('manage_midh_volunteer_posts_columns', array($this, 'customize_volunteer_columns'));
+        add_action('manage_midh_volunteer_posts_custom_column', array($this, 'render_volunteer_custom_column'), 10, 2);
+        add_action('manage_posts_extra_tablenav', array($this, 'render_volunteer_export_button'));
+        add_action('admin_post_midh_export_volunteers', array($this, 'export_volunteers_csv'));
 
         // Gestion de l'historique des Dons & Mécénat MIDH
         add_filter('manage_midh_donation_posts_columns', array($this, 'customize_donation_columns'));
@@ -310,6 +321,28 @@ class MIDH_Headless_Core {
             'menu_position'=> 27,
             'supports'     => array('title'),
         ));
+
+        // I. CPT : Candidatures Bénévoles MIDH
+        register_post_type('midh_volunteer', array(
+            'labels' => array(
+                'name'               => __('Candidatures Bénévoles', 'midh-headless'),
+                'singular_name'      => __('Bénévole', 'midh-headless'),
+                'add_new'            => __('Ajouter un bénévole', 'midh-headless'),
+                'add_new_item'       => __('Ajouter une nouvelle candidature', 'midh-headless'),
+                'edit_item'          => __('Détails du bénévole', 'midh-headless'),
+                'all_items'          => __('Toutes les candidatures', 'midh-headless'),
+                'menu_name'          => __('🤝 Bénévolat (MIDH)', 'midh-headless'),
+                'search_items'       => __('Rechercher un candidat, email ou localité', 'midh-headless'),
+                'not_found'          => __('Aucune candidature trouvée', 'midh-headless'),
+            ),
+            'public'       => false,
+            'show_ui'      => true,
+            'show_in_menu' => true,
+            'show_in_rest' => false,
+            'menu_icon'    => 'dashicons-groups',
+            'menu_position'=> 28,
+            'supports'     => array('title'),
+        ));
     }
 
     /**
@@ -449,6 +482,20 @@ class MIDH_Headless_Core {
             'methods'             => 'POST',
             'callback'            => array($this, 'register_donation_endpoint'),
             'permission_callback' => array($this, 'check_donation_record_permission'),
+        ));
+
+        // Enregistrement des candidatures bénévoles depuis Next.js
+        register_rest_route('midh/v1', '/volunteers/submit', array(
+            'methods'             => 'POST',
+            'callback'            => array($this, 'register_volunteer_endpoint'),
+            'permission_callback' => '__return_true',
+        ));
+
+        // Consultation de la liste des bénévoles (sécurisée par clé pont)
+        register_rest_route('midh/v1', '/volunteers/list', array(
+            'methods'             => 'GET',
+            'callback'            => array($this, 'get_volunteers_endpoint'),
+            'permission_callback' => array($this, 'check_bridge_permission'),
         ));
     }
 
@@ -1339,6 +1386,15 @@ class MIDH_Headless_Core {
             __('💚 Fiche Officielle du Donateur & Transaction', 'midh-headless'),
             array($this, 'render_donation_meta_box'),
             'midh_donation',
+            'normal',
+            'high'
+        );
+
+        add_meta_box(
+            'midh_volunteer_details',
+            __('🤝 Fiche Complète de la Candidature Bénévole MIDH', 'midh-headless'),
+            array($this, 'render_volunteer_meta_box'),
+            'midh_volunteer',
             'normal',
             'high'
         );
@@ -4240,6 +4296,758 @@ class MIDH_Headless_Core {
         }
         return $actions;
     }
+
+    // =========================================================================
+    // SECTION : GESTION DES CANDIDATURES BÉNÉVOLES (MIDH VOLUNTEERS)
+    // =========================================================================
+
+    /**
+     * Boîte de métadonnées pour la fiche bénévole
+     */
+    public function render_volunteer_meta_box($post) {
+        wp_nonce_field('midh_volunteer_meta_save', 'midh_volunteer_nonce');
+
+        $nom          = get_post_meta($post->ID, 'volunteer_nom', true);
+        $prenom       = get_post_meta($post->ID, 'volunteer_prenom', true);
+        $email        = get_post_meta($post->ID, 'volunteer_email', true);
+        $phone        = get_post_meta($post->ID, 'volunteer_phone', true);
+        $location     = get_post_meta($post->ID, 'volunteer_location', true);
+        $domain       = get_post_meta($post->ID, 'volunteer_domain', true);
+        $availability = get_post_meta($post->ID, 'volunteer_availability', true);
+        $message      = get_post_meta($post->ID, 'volunteer_message', true);
+        $status       = get_post_meta($post->ID, 'volunteer_status', true) ?: 'nouveau';
+        $notes        = get_post_meta($post->ID, 'volunteer_internal_notes', true);
+        $sub_date     = get_post_meta($post->ID, 'submission_date', true) ?: get_the_date('d/m/Y H:i', $post->ID);
+
+        // Nettoyage numéro pour lien WhatsApp
+        $clean_phone = preg_replace('/[^0-9]/', '', $phone);
+        ?>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:12px 0;">
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">👤 Nom de famille :</label>
+                <input type="text" name="midh_vol_nom" value="<?php echo esc_attr($nom); ?>" class="widefat" placeholder="ex: KOUASSI" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">👤 Prénoms :</label>
+                <input type="text" name="midh_vol_prenom" value="<?php echo esc_attr($prenom); ?>" class="widefat" placeholder="ex: Jean-Marc" />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📧 Adresse E-mail :</label>
+                <input type="email" name="midh_vol_email" value="<?php echo esc_attr($email); ?>" class="widefat" placeholder="ex: candidat@domaine.ci" />
+                <?php if (!empty($email)): ?>
+                    <p style="margin:4px 0 0; font-size:12px;">
+                        <a href="mailto:<?php echo esc_attr($email); ?>" style="color:#005a36; text-decoration:none; font-weight:600;">✉️ Écrire un e-mail au candidat</a>
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📱 Téléphone / WhatsApp :</label>
+                <input type="text" name="midh_vol_phone" value="<?php echo esc_attr($phone); ?>" class="widefat" placeholder="ex: +225 07 00 00 00 00" />
+                <?php if (!empty($clean_phone)): ?>
+                    <p style="margin:4px 0 0; font-size:12px;">
+                        <a href="https://wa.me/<?php echo esc_attr($clean_phone); ?>" target="_blank" rel="noopener noreferrer" style="color:#16a34a; text-decoration:none; font-weight:600;">💬 Ouvrir dans WhatsApp</a>
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📍 Localité / Section régionale :</label>
+                <input type="text" name="midh_vol_location" value="<?php echo esc_attr($location); ?>" class="widefat" placeholder="ex: Abidjan (Cocody), Bouaké, Daloa..." />
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">⚖️ Domaine d'intérêt / Compétence :</label>
+                <input type="text" name="midh_vol_domain" value="<?php echo esc_attr($domain); ?>" class="widefat" placeholder="ex: Plaidoyer, Clinique juridique, Communication..." />
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">⏱️ Disponibilité indiquée :</label>
+                <input type="text" name="midh_vol_availability" value="<?php echo esc_attr($availability); ?>" class="widefat" placeholder="ex: Week-ends / Flexible / Régulièrement en semaine" />
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">💬 Message & Motivation du candidat :</label>
+                <textarea name="midh_vol_message" rows="5" class="widefat" style="font-family:monospace; background:#fafafa;"><?php echo esc_textarea($message); ?></textarea>
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">🚦 Statut du traitement de la candidature :</label>
+                <select name="midh_vol_status" class="widefat" style="height:36px; font-weight:600;">
+                    <option value="nouveau" <?php selected($status, 'nouveau'); ?>>🔵 Nouveau - À contacter</option>
+                    <option value="contacte" <?php selected($status, 'contacte'); ?>>🟡 Contacté par le Secrétariat</option>
+                    <option value="valide" <?php selected($status, 'valide'); ?>>🟢 Candidature validée & Bénévole actif</option>
+                    <option value="archive" <?php selected($status, 'archive'); ?>>⚪ Archivé / Non retenu</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📅 Date d'enregistrement :</label>
+                <input type="text" readonly value="<?php echo esc_attr($sub_date); ?>" class="widefat" style="background:#f1f5f9; color:#64748b;" />
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+                <label style="display:block; font-weight:700; margin-bottom:6px; color:#0B3827;">📝 Notes internes du Secrétariat Général (Confidentiel) :</label>
+                <textarea name="midh_vol_notes" rows="3" class="widefat" placeholder="Ex: Entretien téléphonique le 12/11/2026. Affecté à la section de Bouaké."><?php echo esc_textarea($notes); ?></textarea>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Sauvegarde de la fiche bénévole
+     */
+    public function save_midh_volunteer_meta_box($post_id, $post) {
+        if (!isset($_POST['midh_volunteer_nonce']) || !wp_verify_nonce($_POST['midh_volunteer_nonce'], 'midh_volunteer_meta_save')) {
+            return;
+        }
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        $fields = array(
+            'midh_vol_nom'          => 'volunteer_nom',
+            'midh_vol_prenom'       => 'volunteer_prenom',
+            'midh_vol_email'        => 'volunteer_email',
+            'midh_vol_phone'        => 'volunteer_phone',
+            'midh_vol_location'     => 'volunteer_location',
+            'midh_vol_domain'       => 'volunteer_domain',
+            'midh_vol_availability' => 'volunteer_availability',
+            'midh_vol_status'       => 'volunteer_status',
+        );
+
+        foreach ($fields as $post_key => $meta_key) {
+            if (isset($_POST[$post_key])) {
+                update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$post_key]));
+            }
+        }
+
+        if (isset($_POST['midh_vol_message'])) {
+            update_post_meta($post_id, 'volunteer_message', sanitize_textarea_field($_POST['midh_vol_message']));
+        }
+        if (isset($_POST['midh_vol_notes'])) {
+            update_post_meta($post_id, 'volunteer_internal_notes', sanitize_textarea_field($_POST['midh_vol_notes']));
+        }
+    }
+
+    /**
+     * Colonnes personnalisées dans la liste des Bénévoles
+     */
+    public function customize_volunteer_columns($columns) {
+        $new = array();
+        if (isset($columns['cb'])) {
+            $new['cb'] = $columns['cb'];
+        }
+        $new['title']           = __('Nom complet du candidat', 'midh-headless');
+        $new['vol_contact']     = __('Contact (Email & Téléphone)', 'midh-headless');
+        $new['vol_location']    = __('Localité', 'midh-headless');
+        $new['vol_domain']      = __('Domaine souhaité', 'midh-headless');
+        $new['vol_status']      = __('Statut', 'midh-headless');
+        $new['vol_date']        = __('Date de candidature', 'midh-headless');
+        return $new;
+    }
+
+    public function render_volunteer_custom_column($column, $post_id) {
+        if ($column === 'vol_contact') {
+            $email = get_post_meta($post_id, 'volunteer_email', true);
+            $phone = get_post_meta($post_id, 'volunteer_phone', true);
+            $clean_phone = preg_replace('/[^0-9]/', '', $phone);
+
+            echo '<div style="font-size:12.5px; line-height:1.6;">';
+            if ($email) {
+                echo '<a href="mailto:' . esc_attr($email) . '" style="color:#005a36; font-weight:600; text-decoration:none;">✉️ ' . esc_html($email) . '</a><br>';
+            }
+            if ($phone) {
+                echo '<span style="color:#1e293b; font-weight:600;">📞 ' . esc_html($phone) . '</span> ';
+                if ($clean_phone) {
+                    echo '<a href="https://wa.me/' . esc_attr($clean_phone) . '" target="_blank" rel="noopener noreferrer" style="color:#16a34a; font-size:11px; font-weight:700; background:#dcfce7; padding:2px 6px; border-radius:4px; text-decoration:none; margin-left:4px;">WhatsApp</a>';
+                }
+            }
+            echo '</div>';
+        } elseif ($column === 'vol_location') {
+            $loc = get_post_meta($post_id, 'volunteer_location', true) ?: 'Non précisé';
+            echo '<span style="font-weight:600; color:#334155;">📍 ' . esc_html($loc) . '</span>';
+        } elseif ($column === 'vol_domain') {
+            $domain = get_post_meta($post_id, 'volunteer_domain', true) ?: 'Général';
+            echo '<span style="display:inline-block; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; border:1px solid #e2e8f0;">' . esc_html($domain) . '</span>';
+        } elseif ($column === 'vol_status') {
+            $status = get_post_meta($post_id, 'volunteer_status', true) ?: 'nouveau';
+            $badge_style = 'padding:4px 10px; border-radius:12px; font-size:11.5px; font-weight:700; display:inline-block;';
+            if ($status === 'valide') {
+                echo '<span style="' . $badge_style . ' background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">🟢 Retenu / Actif</span>';
+            } elseif ($status === 'contacte') {
+                echo '<span style="' . $badge_style . ' background:#fef9c3; color:#854d0e; border:1px solid #fef08a;">🟡 Contacté</span>';
+            } elseif ($status === 'archive') {
+                echo '<span style="' . $badge_style . ' background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0;">⚪ Archivé</span>';
+            } else {
+                echo '<span style="' . $badge_style . ' background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe;">🔵 Nouveau</span>';
+            }
+        } elseif ($column === 'vol_date') {
+            $sub_date = get_post_meta($post_id, 'submission_date', true) ?: get_the_date('d/m/Y H:i', $post_id);
+            echo '<span style="font-size:12px; color:#64748b;">' . esc_html($sub_date) . '</span>';
+        }
+    }
+
+    /**
+     * Bouton d'exportation Excel/CSV pour les bénévoles
+     */
+    public function render_volunteer_export_button($which) {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'midh_volunteer' && $which === 'top') {
+            $export_url = admin_url('admin-post.php?action=midh_export_volunteers&_wpnonce=' . wp_create_nonce('midh_export_volunteers_nonce'));
+            echo '<div class="alignleft actions" style="display:inline-flex; align-items:center; margin-left:10px;">';
+            echo '<a href="' . esc_url($export_url) . '" class="button button-primary" style="background:#005a36; border-color:#00462a; font-weight:bold; height:32px; line-height:30px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,90,54,0.2);">';
+            echo '<span>📥</span> <span>Exporter la liste des Bénévoles (Excel / CSV)</span>';
+            echo '</a>';
+            echo '</div>';
+        }
+    }
+
+    /**
+     * Traitement du téléchargement CSV des bénévoles
+     */
+    public function export_volunteers_csv() {
+        if (!current_user_can('edit_posts')) {
+            wp_die(__('Autorisations insuffisantes.', 'midh-headless'));
+        }
+        check_admin_referer('midh_export_volunteers_nonce');
+
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_volunteer',
+            'post_status'    => array('publish', 'private'),
+            'posts_per_page' => -1,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $filename = 'midh-candidatures-benevoles-' . date('Y-m-d_H-i') . '.csv';
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        echo "\xEF\xBB\xBF"; // UTF-8 BOM
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array('Nom', 'Prénoms', 'Email', 'Téléphone', 'Localité', 'Domaine souhaité', 'Disponibilité', 'Statut', 'Date de soumission', 'Motivation', 'Notes'), ';');
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id = get_the_ID();
+                fputcsv($output, array(
+                    get_post_meta($id, 'volunteer_nom', true),
+                    get_post_meta($id, 'volunteer_prenom', true),
+                    get_post_meta($id, 'volunteer_email', true),
+                    get_post_meta($id, 'volunteer_phone', true),
+                    get_post_meta($id, 'volunteer_location', true),
+                    get_post_meta($id, 'volunteer_domain', true),
+                    get_post_meta($id, 'volunteer_availability', true),
+                    get_post_meta($id, 'volunteer_status', true),
+                    get_post_meta($id, 'submission_date', true) ?: get_the_date('d/m/Y H:i', $id),
+                    get_post_meta($id, 'volunteer_message', true),
+                    get_post_meta($id, 'volunteer_internal_notes', true),
+                ), ';');
+            }
+            wp_reset_postdata();
+        }
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Endpoint API REST : POST /wp-json/midh/v1/volunteers/submit
+     */
+    public function register_volunteer_endpoint($request) {
+        $nom          = sanitize_text_field($request->get_param('nom'));
+        $prenom       = sanitize_text_field($request->get_param('prenom'));
+        $email        = sanitize_email($request->get_param('email'));
+        $phone        = sanitize_text_field($request->get_param('phone'));
+        $location     = sanitize_text_field($request->get_param('location'));
+        $domain       = sanitize_text_field($request->get_param('domain'));
+        $availability = sanitize_text_field($request->get_param('availability'));
+        $message      = sanitize_textarea_field($request->get_param('message'));
+
+        if (empty($nom) || empty($prenom) || !is_email($email)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Veuillez renseigner un nom, un prénom et une adresse e-mail valide.',
+            ), 400);
+        }
+
+        $title = trim($nom . ' ' . $prenom);
+        $post_id = wp_insert_post(array(
+            'post_type'   => 'midh_volunteer',
+            'post_title'  => $title,
+            'post_status' => 'publish',
+        ));
+
+        if (is_wp_error($post_id)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Erreur technique lors de l\'enregistrement dans WordPress.',
+            ), 500);
+        }
+
+        update_post_meta($post_id, 'volunteer_nom', $nom);
+        update_post_meta($post_id, 'volunteer_prenom', $prenom);
+        update_post_meta($post_id, 'volunteer_email', $email);
+        update_post_meta($post_id, 'volunteer_phone', $phone);
+        update_post_meta($post_id, 'volunteer_location', $location);
+        update_post_meta($post_id, 'volunteer_domain', $domain);
+        update_post_meta($post_id, 'volunteer_availability', $availability);
+        update_post_meta($post_id, 'volunteer_message', $message);
+        update_post_meta($post_id, 'volunteer_status', 'nouveau');
+        update_post_meta($post_id, 'submission_date', current_time('mysql'));
+
+        return new WP_REST_Response(array(
+            'success' => true,
+            'message' => 'Candidature bénévole enregistrée avec succès dans le fichier du MIDH.',
+            'id'      => $post_id,
+        ), 201);
+    }
+
+    /**
+     * Endpoint API REST : GET /wp-json/midh/v1/volunteers/list
+     */
+    public function get_volunteers_endpoint() {
+        $query = new WP_Query(array(
+            'post_type'      => 'midh_volunteer',
+            'post_status'    => array('publish', 'private'),
+            'posts_per_page' => 200,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $volunteers = array();
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $id = get_the_ID();
+                $volunteers[] = array(
+                    'id'           => $id,
+                    'name'         => get_the_title(),
+                    'nom'          => get_post_meta($id, 'volunteer_nom', true),
+                    'prenom'       => get_post_meta($id, 'volunteer_prenom', true),
+                    'email'        => get_post_meta($id, 'volunteer_email', true),
+                    'phone'        => get_post_meta($id, 'volunteer_phone', true),
+                    'location'     => get_post_meta($id, 'volunteer_location', true),
+                    'domain'       => get_post_meta($id, 'volunteer_domain', true),
+                    'availability' => get_post_meta($id, 'volunteer_availability', true),
+                    'status'       => get_post_meta($id, 'volunteer_status', true) ?: 'nouveau',
+                    'date'         => get_post_meta($id, 'submission_date', true) ?: get_the_date('Y-m-d H:i:s', $id),
+                );
+            }
+            wp_reset_postdata();
+        }
+
+        return new WP_REST_Response(array(
+            'success' => true,
+            'total'   => count($volunteers),
+            'items'   => $volunteers,
+        ), 200);
+    }
+
+
+    // =========================================================================
+    // SECTION : DIFFUSION DE NEWSLETTER & CAMPAGNES E-MAILS MIDH
+    // =========================================================================
+
+    /**
+     * Sous-menu dans Abonnés Newsletter
+     */
+    public function register_newsletter_campaign_menu() {
+        add_submenu_page(
+            'edit.php?post_type=midh_subscriber',
+            __('Diffuser une Newsletter', 'midh-headless'),
+            __('✉️ Diffuser une Newsletter', 'midh-headless'),
+            'manage_options',
+            'midh-newsletter-broadcast',
+            array($this, 'render_newsletter_campaign_page')
+        );
+    }
+
+    /**
+     * Page d'administration pour la diffusion de la Newsletter
+     */
+    public function render_newsletter_campaign_page() {
+        // Compter les abonnés actifs
+        $subscribers_count = wp_count_posts('midh_subscriber')->publish;
+
+        // Récupérer les 15 articles récents pour sélection automatique
+        $recent_posts = get_posts(array(
+            'post_type'      => 'post',
+            'posts_per_page' => 15,
+            'post_status'    => 'publish',
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        // Récupérer les 10 projets récents
+        $recent_projects = get_posts(array(
+            'post_type'      => 'midh_project',
+            'posts_per_page' => 10,
+            'post_status'    => 'publish',
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ));
+
+        $admin_email = wp_get_current_user()->user_email;
+        $campaign_history = get_option('midh_newsletter_campaign_history', array());
+
+        // Traitement des notifications de succès ou d'erreur
+        if (isset($_GET['campaign_sent']) && $_GET['campaign_sent'] === '1') {
+            $sent_count = intval($_GET['count'] ?? 0);
+            $mode = sanitize_text_field($_GET['mode'] ?? '');
+            if ($mode === 'test') {
+                echo '<div class="notice notice-success is-dismissible" style="padding:14px; border-left:4px solid #16a34a; margin:20px 0;"><p style="font-size:14px; margin:0;"><strong>✅ E-mail de test envoyé avec succès !</strong> Vérifiez votre boîte de réception à l\'adresse : <code>' . esc_html($admin_email) . '</code>.</p></div>';
+            } else {
+                echo '<div class="notice notice-success is-dismissible" style="padding:14px; border-left:4px solid #005a36; margin:20px 0;"><p style="font-size:14px; margin:0;"><strong>🚀 Félicitations ! Votre newsletter a été diffusée avec succès</strong> auprès de <strong>' . $sent_count . ' abonnés actifs</strong> du MIDH.</p></div>';
+            }
+        }
+        ?>
+        <div class="wrap" style="max-width: 1050px;">
+            <h1 style="display:flex; align-items:center; gap:10px; color:#0B3827;">
+                <span class="dashicons dashicons-email-alt" style="font-size:32px; width:32px; height:32px;"></span>
+                <?php _e('Diffuser une Lettre d\'Information (Newsletter MIDH)', 'midh-headless'); ?>
+            </h1>
+            <p style="font-size:14.5px; color:#475569;">
+                Rédigez un message institutionnel ou sélectionnez un article publié pour l'envoyer directement à tous les abonnés inscrits à la newsletter officielle du MIDH.
+            </p>
+
+            <!-- Bannière d'état des abonnés -->
+            <div style="background:#fff; border:1px solid #cbd5e1; border-left:5px solid #005a36; padding:18px 24px; border-radius:10px; margin:20px 0; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div>
+                    <h3 style="margin:0 0 4px 0; color:#0B3827; font-size:16px;">👥 Audience Active de la Newsletter</h3>
+                    <p style="margin:0; color:#64748b; font-size:13.5px;">Toutes les adresses e-mails validées via le site web officiel.</p>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:28px; font-weight:800; color:#005a36;"><?php echo intval($subscribers_count); ?></span>
+                    <span style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase;">Abonnés enregistrés</span>
+                </div>
+            </div>
+
+            <!-- Formulaire de composition -->
+            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:24px; margin-bottom:30px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="midh-campaign-form">
+                    <input type="hidden" name="action" value="midh_send_newsletter_campaign" />
+                    <?php wp_nonce_field('midh_send_campaign_nonce', 'midh_campaign_nonce'); ?>
+
+                    <!-- Option : Charger un contenu existant -->
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:20px;">
+                        <label style="display:block; font-weight:700; color:#0B3827; margin-bottom:6px; font-size:13.5px;">
+                            ⚡ Option rapide : Insérer automatiquement un article ou un projet récent
+                        </label>
+                        <select id="midh_preset_selector" style="max-width:100%; width:100%; height:38px; border-radius:6px; border:1px solid #cbd5e1;" onchange="midhApplyPreset(this)">
+                            <option value="">-- Choisir un article ou un projet pour pré-remplir le message --</option>
+                            <optgroup label="📰 Articles & Actualités récents">
+                                <?php foreach ($recent_posts as $p): ?>
+                                    <option value="post_<?php echo $p->ID; ?>" 
+                                            data-title="<?php echo esc_attr($p->post_title); ?>" 
+                                            data-excerpt="<?php echo esc_attr(wp_strip_all_tags(get_the_excerpt($p))); ?>"
+                                            data-url="<?php echo esc_attr('https://www.midh-ci.org/actualites/' . $p->post_name); ?>">
+                                        <?php echo esc_html($p->post_title); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                            <optgroup label="⚖️ Projets & Programmes récents">
+                                <?php foreach ($recent_projects as $pr): ?>
+                                    <option value="proj_<?php echo $pr->ID; ?>" 
+                                            data-title="<?php echo esc_attr($pr->post_title); ?>" 
+                                            data-excerpt="<?php echo esc_attr(wp_strip_all_tags(get_the_excerpt($pr))); ?>"
+                                            data-url="<?php echo esc_attr('https://www.midh-ci.org/nos-actions/' . $pr->post_name); ?>">
+                                        <?php echo esc_html($pr->post_title); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <table class="form-table" role="presentation" style="margin-top:0;">
+                        <tr>
+                            <th scope="row"><label for="campaign_subject" style="font-weight:700; color:#0B3827;">Objet de l'e-mail *</label></th>
+                            <td>
+                                <input type="text" name="campaign_subject" id="campaign_subject" class="large-text" required placeholder="ex: [MIDH] Déclaration officielle relative à la protection des libertés publiques" style="height:40px; font-size:15px; font-weight:600;" />
+                                <p class="description">Le sujet apparaîtra tel quel dans la boîte de messagerie des abonnés.</p>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row"><label for="campaign_headline" style="font-weight:700; color:#0B3827;">Titre principal (En-tête) *</label></th>
+                            <td>
+                                <input type="text" name="campaign_headline" id="campaign_headline" class="large-text" required placeholder="ex: Mobilisation pour la défense des droits humains en Côte d'Ivoire" style="height:38px; font-size:14px;" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row"><label for="campaign_content" style="font-weight:700; color:#0B3827;">Corps du message *</label></th>
+                            <td>
+                                <?php
+                                $editor_settings = array(
+                                    'textarea_name' => 'campaign_content',
+                                    'textarea_rows' => 12,
+                                    'media_buttons' => true,
+                                    'teeny'         => false,
+                                    'tinymce'       => true,
+                                    'quicktags'     => true,
+                                );
+                                wp_editor('', 'campaign_content', $editor_settings);
+                                ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row"><label style="font-weight:700; color:#0B3827;">Bouton d'action (Optionnel)</label></th>
+                            <td>
+                                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                                    <div style="flex:1; min-width:240px;">
+                                        <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:4px;">Texte du bouton :</label>
+                                        <input type="text" name="campaign_btn_text" id="campaign_btn_text" class="widefat" placeholder="ex: Lire l'article complet sur le site" />
+                                    </div>
+                                    <div style="flex:2; min-width:320px;">
+                                        <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:4px;">Lien URL de destination :</label>
+                                        <input type="url" name="campaign_btn_url" id="campaign_btn_url" class="widefat" placeholder="https://www.midh-ci.org/actualites/..." />
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="border-top:1px solid #e2e8f0; margin-top:24px; padding-top:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                        <!-- Mode Test -->
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="hidden" name="send_mode" id="send_mode" value="broadcast" />
+                            <button type="submit" onclick="document.getElementById('send_mode').value='test';" class="button button-secondary" style="height:40px; font-weight:600; padding:0 16px; display:inline-flex; align-items:center; gap:6px;">
+                                <span>👁️</span> <span>M'envoyer un e-mail de test (Aperçu)</span>
+                            </button>
+                            <span style="color:#64748b; font-size:12px;">Envoi vers <code><?php echo esc_html($admin_email); ?></code></span>
+                        </div>
+
+                        <!-- Diffusion Générale -->
+                        <div>
+                            <button type="submit" onclick="document.getElementById('send_mode').value='broadcast'; return confirm('Attention : vous êtes sur le point d\'envoyer cet e-mail à l\'ensemble des <?php echo intval($subscribers_count); ?> abonnés actifs de la newsletter du MIDH.\n\nConfirmez-vous la diffusion ?');" class="button button-primary" style="background:#005a36; border-color:#00462a; height:42px; font-size:14px; font-weight:700; padding:0 24px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 3px 6px rgba(0,90,54,0.3);">
+                                <span>🚀</span> <span>Diffuser à tous les abonnés (<?php echo intval($subscribers_count); ?>)</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Historique des campagnes envoyées -->
+            <?php if (!empty($campaign_history)): ?>
+                <div style="background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <h3 style="margin-top:0; color:#0B3827; display:flex; align-items:center; gap:8px;">
+                        <span class="dashicons dashicons-backup"></span>
+                        Historique des dernières diffusions
+                    </h3>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th style="width:160px;">Date & Heure</th>
+                                <th>Objet de la campagne</th>
+                                <th style="width:140px;">Destinataires</th>
+                                <th style="width:120px;">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach (array_reverse(array_slice($campaign_history, -10)) as $item): ?>
+                                <tr>
+                                    <td><?php echo esc_html($item['date'] ?? ''); ?></td>
+                                    <td><strong><?php echo esc_html($item['subject'] ?? ''); ?></strong></td>
+                                    <td><?php echo intval($item['recipients_count'] ?? 0); ?> abonnés</td>
+                                    <td><span style="background:#dcfce7; color:#166534; font-weight:700; padding:2px 8px; border-radius:10px; font-size:11px;">Diffusé</span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <script>
+        function midhApplyPreset(sel) {
+            const opt = sel.options[sel.selectedIndex];
+            if (!opt || !opt.value) return;
+            const title = opt.getAttribute('data-title') || '';
+            const excerpt = opt.getAttribute('data-excerpt') || '';
+            const url = opt.getAttribute('data-url') || '';
+
+            if (title) {
+                document.getElementById('campaign_subject').value = '[MIDH] ' + title;
+                document.getElementById('campaign_headline').value = title;
+            }
+            if (url) {
+                document.getElementById('campaign_btn_text').value = 'Lire la suite sur le site officiel';
+                document.getElementById('campaign_btn_url').value = url;
+            }
+            if (excerpt && typeof tinyMCE !== 'undefined' && tinyMCE.get('campaign_content')) {
+                tinyMCE.get('campaign_content').setContent('<p>' + excerpt + '</p>');
+            } else if (excerpt) {
+                const textarea = document.getElementById('campaign_content');
+                if (textarea) textarea.value = excerpt;
+            }
+        }
+        </script>
+        <?php
+    }
+
+    /**
+     * Traitement de l'envoi de la newsletter
+     */
+    public function handle_send_newsletter_campaign() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Autorisations insuffisantes.', 'midh-headless'));
+        }
+        check_admin_referer('midh_send_campaign_nonce', 'midh_campaign_nonce');
+
+        $subject   = sanitize_text_field($_POST['campaign_subject'] ?? '');
+        $headline  = sanitize_text_field($_POST['campaign_headline'] ?? '');
+        $content   = wp_kses_post($_POST['campaign_content'] ?? '');
+        $btn_text  = sanitize_text_field($_POST['campaign_btn_text'] ?? '');
+        $btn_url   = esc_url_raw($_POST['campaign_btn_url'] ?? '');
+        $send_mode = sanitize_text_field($_POST['send_mode'] ?? 'broadcast');
+
+        if (empty($subject) || empty($content)) {
+            wp_die(__('L\'objet et le corps du message sont obligatoires.', 'midh-headless'));
+        }
+
+        $html_email = $this->build_midh_email_template($subject, $headline, $content, $btn_text, $btn_url);
+        $from_email = get_option('midh_email', 'info@midh-ci.org');
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: Mouvement Ivoirien des Droits Humains (MIDH) <' . $from_email . '>',
+            'Reply-To: ' . $from_email,
+        );
+
+        if ($send_mode === 'test') {
+            $current_user = wp_get_current_user();
+            $test_email = $current_user->user_email;
+            wp_mail($test_email, '[TEST APERÇU] ' . $subject, $html_email, $headers);
+
+            wp_redirect(admin_url('edit.php?post_type=midh_subscriber&page=midh-newsletter-broadcast&campaign_sent=1&mode=test&count=1'));
+            exit;
+        }
+
+        // Mode diffusion générale
+        $subscribers = get_posts(array(
+            'post_type'      => 'midh_subscriber',
+            'post_status'    => array('publish'),
+            'posts_per_page' => -1,
+        ));
+
+        $sent_count = 0;
+        foreach ($subscribers as $sub) {
+            $email = sanitize_email($sub->post_title);
+            if (is_email($email)) {
+                wp_mail($email, $subject, $html_email, $headers);
+                $sent_count++;
+            }
+        }
+
+        // Enregistrer dans l'historique
+        $history = get_option('midh_newsletter_campaign_history', array());
+        $history[] = array(
+            'date'             => current_time('d/m/Y H:i'),
+            'subject'          => $subject,
+            'recipients_count' => $sent_count,
+        );
+        update_option('midh_newsletter_campaign_history', array_slice($history, -30));
+
+        wp_redirect(admin_url('edit.php?post_type=midh_subscriber&page=midh-newsletter-broadcast&campaign_sent=1&mode=broadcast&count=' . $sent_count));
+        exit;
+    }
+
+    /**
+     * Gabarit HTML officiel MIDH pour les e-mails de Newsletter
+     */
+    public function build_midh_email_template($subject, $headline, $content, $btn_text = '', $btn_url = '') {
+        $site_url = 'https://www.midh-ci.org';
+        $contact_email = get_option('midh_email', 'info@midh-ci.org');
+        $phone = get_option('midh_phone', '+225 01 01 49 87 39');
+
+        ob_start();
+        ?>
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title><?php echo esc_html($subject); ?></title>
+        </head>
+        <body style="margin:0; padding:0; background-color:#F4F6F5; font-family:'Segoe UI', Arial, sans-serif; color:#1e293b; line-height:1.6;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#F4F6F5; padding:30px 10px;">
+                <tr>
+                    <td align="center">
+                        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.06); max-width:600px; width:100%;">
+                            <!-- En-tête officiel Vert Républicain -->
+                            <tr>
+                                <td style="background-color:#0B3827; padding:28px 30px; text-align:center;">
+                                    <div style="color:#ffffff; font-size:18px; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
+                                        Mouvement Ivoirien des Droits Humains
+                                    </div>
+                                    <div style="color:#d1fae5; font-size:12px; font-weight:500; margin-top:4px; letter-spacing:0.5px;">
+                                        Organisation Non Gouvernementale fondée le 8 octobre 2000
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Liseré décoratif Or Ivoirien -->
+                            <tr>
+                                <td style="background-color:#D97706; height:4px; font-size:0; line-height:0;">&nbsp;</td>
+                            </tr>
+
+                            <!-- Corps du message -->
+                            <tr>
+                                <td style="padding:32px 30px;">
+                                    <?php if (!empty($headline)): ?>
+                                        <h1 style="color:#0B3827; font-size:20px; font-weight:700; margin:0 0 18px 0; line-height:1.4;">
+                                            <?php echo esc_html($headline); ?>
+                                        </h1>
+                                    <?php endif; ?>
+
+                                    <div style="color:#334155; font-size:15px; line-height:1.7;">
+                                        <?php echo wpautop($content); ?>
+                                    </div>
+
+                                    <?php if (!empty($btn_text) && !empty($btn_url)): ?>
+                                        <div style="text-align:center; margin:32px 0 16px 0;">
+                                            <a href="<?php echo esc_url($btn_url); ?>" target="_blank" style="display:inline-block; background-color:#138A2E; color:#ffffff; font-size:15px; font-weight:700; text-decoration:none; padding:13px 28px; border-radius:8px; box-shadow:0 3px 6px rgba(19,138,46,0.3);">
+                                                <?php echo esc_html($btn_text); ?> &rarr;
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+
+                            <!-- Pied de page officiel -->
+                            <tr>
+                                <td style="background-color:#072419; color:#94a3b8; padding:24px 30px; font-size:12px; line-height:1.6; text-align:center; border-top:1px solid #134e35;">
+                                    <div style="color:#ffffff; font-weight:700; font-size:13px; margin-bottom:4px;">
+                                        Siège National du MIDH
+                                    </div>
+                                    <div>Abidjan, Cocody Angré, Carrefour les Oscars | Tél : <?php echo esc_html($phone); ?></div>
+                                    <div style="margin-top:2px;">E-mail : <a href="mailto:<?php echo esc_attr($contact_email); ?>" style="color:#34d399; text-decoration:none;"><?php echo esc_html($contact_email); ?></a> | Site : <a href="<?php echo esc_url($site_url); ?>" style="color:#34d399; text-decoration:none;">www.midh-ci.org</a></div>
+                                    <div style="margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.1); color:#64748b; font-size:11px;">
+                                        Vous recevez cet e-mail car vous êtes inscrit(e) à la lettre d'information officielle du MIDH.<br>
+                                        Pour toute demande de désinscription, vous pouvez répondre directement à ce message avec la mention « Désinscription ».
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        <?php
+        return ob_get_clean();
+    }
+
 }
 
 new MIDH_Headless_Core();

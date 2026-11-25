@@ -638,6 +638,37 @@ export async function subscribeNewsletterInWordPress(email: string): Promise<{ s
   }
 }
 
+export interface VolunteerSubmissionPayload {
+  nom: string;
+  prenom: string;
+  email: string;
+  phone: string;
+  location: string;
+  domain?: string;
+  availability?: string;
+  message?: string;
+}
+
+export async function submitVolunteerInWordPress(payload: VolunteerSubmissionPayload): Promise<{ success: boolean; message?: string; id?: number }> {
+  try {
+    const res = await fetchWordPressAPI<{ success: boolean; message?: string; id?: number }>('/wp-json/midh/v1/volunteers/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res && res.success) {
+      return { success: true, message: res.message, id: res.id };
+    }
+    return { success: false, message: res?.message || 'Erreur d\'enregistrement WordPress' };
+  } catch (error) {
+    console.warn('[WordPress Volunteer] Erreur:', (error as Error).message);
+    return { success: false, message: (error as Error).message };
+  }
+}
+
 export interface WordPressDonationPayload {
   reference: string;
   donorName: string;
