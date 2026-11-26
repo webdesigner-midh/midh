@@ -177,8 +177,8 @@ export default function ProjectsCarousel({ projects }: ProjectsCarouselProps) {
                     </p>
                   </div>
                   <div className="pt-2 border-t border-surface-container flex items-center justify-between">
-                    <span className="font-caption text-caption text-tertiary">
-                      {project.location ? `Zone : ${project.location}` : 'Statut : Synchronisé CMS'}
+                    <span className="font-caption text-caption text-tertiary font-medium">
+                      {project.location ? `Zone : ${project.location}` : 'MIDH'}
                     </span>
                     <Link
                       href={`/nos-actions/${project.slug}`}

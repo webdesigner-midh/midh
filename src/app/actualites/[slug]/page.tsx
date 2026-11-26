@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanitizeRichHtml } from '@/lib/sanitize';
 import ArticleViewTracker from '@/components/articles/ArticleViewTracker';
+import ArticleShareBar from '@/components/articles/ArticleShareBar';
 
 export const revalidate = 30; // Revalidation ISR toutes les 30s
 export const dynamicParams = true; // Permet aux nouveaux articles publiés d'être servis immédiatement
@@ -30,15 +31,43 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     };
   }
 
+  // Titre optimisé et concis pour les partages sociaux et le SEO
+  const rawTitle = (article.title || '').trim();
+  const shortTitle = rawTitle.length > 68 ? `${rawTitle.slice(0, 65).trim()}…` : rawTitle;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://midh-ci.org';
+  const pageUrl = `${siteUrl.replace(/\/$/, '')}/actualites/${slug}`;
+
+  // Image OpenGraph absolue obligatoire pour WhatsApp, Facebook, X et LinkedIn
+  let ogImageUrl = article.featuredImage || `${siteUrl}/images/hero/hero-bg.jpg`;
+  if (ogImageUrl.startsWith('/')) {
+    ogImageUrl = `${siteUrl}${ogImageUrl}`;
+  }
+
   return {
-    title: `${article.title} — Mouvement Ivoirien des Droits Humains (MIDH)`,
-    description: article.excerpt || 'Article et publication officielle du MIDH.',
+    title: `${shortTitle} | MIDH`,
+    description: article.excerpt || 'Article et publication officielle du Mouvement Ivoirien des Droits Humains (MIDH).',
     openGraph: {
-      title: article.title,
-      description: article.excerpt,
+      title: shortTitle,
+      description: article.excerpt || 'Découvrez cette publication officielle du MIDH.',
+      url: pageUrl,
+      siteName: 'MIDH — Mouvement Ivoirien des Droits Humains',
       type: 'article',
       publishedTime: article.date,
-      images: article.featuredImage ? [{ url: article.featuredImage }] : [],
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: shortTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: shortTitle,
+      description: article.excerpt || 'Publication officielle du MIDH.',
+      images: [ogImageUrl],
+      creator: '@midh_ci',
     },
   };
 }
@@ -120,6 +149,18 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
               {article.excerpt}
             </p>
           )}
+
+          {/* Partage rapide en haut de page */}
+          <div className="pt-2">
+            <ArticleShareBar
+              title={article.title}
+              slug={article.slug}
+              featuredImage={article.featuredImage}
+              excerpt={article.excerpt}
+              views={article.views}
+              variant="compact"
+            />
+          </div>
         </div>
       </section>
 
@@ -175,36 +216,31 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
           </Link>
         </div>
 
-        {/* 4. ACTIONS DE PARTAGE & NAVIGATION RETOUR */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 py-6 border-y border-outline-variant/40">
-          <Link
-            href="/actualites"
-            className="inline-flex items-center gap-2 text-primary hover:text-[#0F7326] font-label-lg font-bold transition-all group"
-          >
-            <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
-            <span>Retour à toutes les actualités</span>
-          </Link>
+        {/* 4. ACTIONS DE PARTAGE AVEC APERÇU VISUEL & NAVIGATION RETOUR */}
+        <section aria-label="Partager cette publication" className="mt-10">
+          <ArticleShareBar
+            title={article.title}
+            slug={article.slug}
+            featuredImage={article.featuredImage}
+            excerpt={article.excerpt}
+            views={article.views}
+            variant="full"
+          />
 
-          <div className="flex items-center gap-2">
-            <span className="font-caption text-caption text-secondary font-semibold">Partager :</span>
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(article.title + ' ' + (typeof window !== 'undefined' ? window.location.href : ''))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 rounded-full bg-surface-container hover:bg-primary hover:text-white transition-colors text-secondary"
-              title="Partager sur WhatsApp"
+          <div className="flex items-center justify-between pt-4 border-t border-outline-variant/30">
+            <Link
+              href="/actualites"
+              className="inline-flex items-center gap-2 text-primary hover:text-[#0F7326] font-label-lg font-bold transition-all group"
             >
-              <span className="material-symbols-outlined text-[18px] block">chat</span>
-            </a>
-            <a
-              href="mailto:?subject=Article MIDH&body=Découvrez cet article du MIDH"
-              className="p-2.5 rounded-full bg-surface-container hover:bg-primary hover:text-white transition-colors text-secondary"
-              title="Partager par Email"
-            >
-              <span className="material-symbols-outlined text-[18px] block">mail</span>
-            </a>
+              <span className="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+              <span>Retour à toutes les actualités</span>
+            </Link>
+
+            <span className="text-caption text-secondary font-medium hidden sm:inline-block">
+              MIDH &copy; Défense et promotion des droits humains
+            </span>
           </div>
-        </div>
+        </section>
 
         {/* 5. AUTRES PUBLICATIONS RECOMMANDÉES */}
         {relatedArticles.length > 0 && (

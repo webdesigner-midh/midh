@@ -328,6 +328,44 @@ export async function recordArticleView(articleId: number | string): Promise<{ s
 }
 
 /**
+ * Récupère le nombre actuel de vues d'un article auprès de l'API WordPress MIDH
+ */
+export async function getArticleViews(articleId: number | string): Promise<{ success: boolean; views: number }> {
+  const cleanId = typeof articleId === 'string' ? parseInt(articleId, 10) : articleId;
+  if (!cleanId || isNaN(cleanId)) {
+    return { success: false, views: 0 };
+  }
+
+  try {
+    const res = await fetchWordPressAPI<{ success: boolean; id: number; views: number }>(
+      `/wp-json/midh/v1/articles/${cleanId}/view`,
+      {
+        method: 'GET',
+      }
+    );
+    if (res && res.success && typeof res.views === 'number') {
+      return { success: true, views: res.views };
+    }
+  } catch (err) {
+    // Fallback: interroger le post directement si GET /view n'est pas encore actif
+    try {
+      const post = await fetchWordPressAPI<{ id: number; views?: number; meta?: { midh_post_views?: number } }>(
+        `/wp-json/wp/v2/posts/${cleanId}`
+      );
+      if (post) {
+        const v = post.views !== undefined
+          ? Number(post.views)
+          : (post.meta?.midh_post_views ? Number(post.meta.midh_post_views) : 0);
+        return { success: true, views: v };
+      }
+    } catch {
+      // Ignorer les erreurs réseau pour le fallback
+    }
+  }
+  return { success: false, views: 0 };
+}
+
+/**
  * Récupère les documents institutionnels et rapports PDF
  */
 export async function getDocuments(): Promise<MIDHDocument[]> {

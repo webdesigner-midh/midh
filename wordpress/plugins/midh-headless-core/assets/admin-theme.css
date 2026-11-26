@@ -1021,7 +1021,14 @@ body.post-type-post.edit-php .wrap > hr.wp-header-end {
 /* ==========================================================
    TABLEAUX MODERNISÉS (WP-LIST-TABLE)
    ========================================================== */
-.wp-list-table {
+body.edit-php .wrap {
+  max-width: 100% !important;
+  margin: 20px 24px 40px 24px !important;
+}
+
+table.wp-list-table {
+  width: 100% !important;
+  table-layout: auto !important;
   border: 1px solid var(--midh-outline-variant) !important;
   border-radius: var(--midh-radius-md) !important;
   overflow: hidden !important;
@@ -1042,6 +1049,8 @@ body.post-type-post.edit-php .wrap > hr.wp-header-end {
   padding: 13px 16px !important;
   border-bottom: 1px solid var(--midh-outline-variant) !important;
   border-top: none !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 .wp-list-table thead th a,
@@ -1070,10 +1079,24 @@ body.post-type-post.edit-php .wrap > hr.wp-header-end {
   color: var(--midh-on-surface) !important;
 }
 
+/* ----------------------------------------------------
+   STRUCTURE DES COLONNES DE LA TABLE DES ARTICLES
+---------------------------------------------------- */
+body.post-type-post.edit-php .wp-list-table th.column-cb,
+body.post-type-post.edit-php .wp-list-table td.column-cb {
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  text-align: center !important;
+  padding: 12px 6px !important;
+}
+
 /* Colonne Visuel Miniature */
-th.column-midh_thumbnail,
-td.column-midh_thumbnail {
+body.post-type-post.edit-php th.column-midh_thumbnail,
+body.post-type-post.edit-php td.column-midh_thumbnail {
   width: 84px !important;
+  min-width: 84px !important;
+  max-width: 84px !important;
   text-align: center !important;
   padding: 10px 8px !important;
 }
@@ -1113,17 +1136,29 @@ td.column-midh_thumbnail {
   height: 22px;
 }
 
-/* Colonne Titre & Actions */
-.wp-list-table .row-title {
-  font-family: 'Manrope', 'Inter', sans-serif !important;
-  font-size: 14.5px !important;
-  font-weight: 700 !important;
-  color: #181d1a !important;
-  line-height: 1.4 !important;
-  text-decoration: none !important;
+/* Colonne Titre & Actions (La plus importante : Priorité absolue d'espace) */
+body.post-type-post.edit-php .wp-list-table th.column-title,
+body.post-type-post.edit-php .wp-list-table td.column-title {
+  width: auto !important;
+  min-width: 280px !important;
+  padding: 14px 18px !important;
 }
 
-.wp-list-table .row-title:hover {
+body.post-type-post.edit-php .wp-list-table .row-title {
+  display: inline-block !important;
+  font-family: 'Manrope', 'Inter', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #0B3827 !important;
+  line-height: 1.45 !important;
+  text-decoration: none !important;
+  word-break: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+}
+
+body.post-type-post.edit-php .wp-list-table .row-title:hover {
   color: var(--midh-primary) !important;
 }
 
@@ -1131,6 +1166,7 @@ td.column-midh_thumbnail {
   font-size: 11.5px !important;
   margin-top: 6px !important;
   color: #8b9987 !important;
+  white-space: normal !important;
 }
 
 .row-actions span a {
@@ -1159,6 +1195,55 @@ td.column-midh_thumbnail {
   background: #006b1f !important;
   color: #ffffff !important;
   text-decoration: none !important;
+}
+
+/* Rubriques */
+body.post-type-post.edit-php .wp-list-table th.column-categories,
+body.post-type-post.edit-php .wp-list-table td.column-categories {
+  width: 135px !important;
+  min-width: 125px !important;
+  white-space: nowrap !important;
+}
+
+/* Axe Thématique */
+body.post-type-post.edit-php .wp-list-table th.column-midh_action_domain,
+body.post-type-post.edit-php .wp-list-table td.column-midh_action_domain {
+  width: 160px !important;
+  min-width: 145px !important;
+  white-space: nowrap !important;
+}
+
+/* Vues */
+body.post-type-post.edit-php .wp-list-table th.column-midh_views,
+body.post-type-post.edit-php .wp-list-table td.column-midh_views {
+  width: 90px !important;
+  min-width: 85px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+/* Auteur */
+body.post-type-post.edit-php .wp-list-table th.column-author,
+body.post-type-post.edit-php .wp-list-table td.column-author {
+  width: 110px !important;
+  min-width: 100px !important;
+  white-space: nowrap !important;
+}
+
+/* Date de publication */
+body.post-type-post.edit-php .wp-list-table th.column-date,
+body.post-type-post.edit-php .wp-list-table td.column-date {
+  width: 140px !important;
+  min-width: 130px !important;
+  white-space: nowrap !important;
+}
+
+/* Masquer les 4 colonnes parasites de Yoast SEO sur la liste d'articles */
+body.post-type-post.edit-php .wp-list-table th[class*="column-wpseo"],
+body.post-type-post.edit-php .wp-list-table td[class*="column-wpseo"] {
+  display: none !important;
+  width: 0 !important;
+  padding: 0 !important;
 }
 
 /* Badges de Catégories et Domaines thématiques */
