@@ -36,7 +36,7 @@ interface WPRestRecord {
   title?: { rendered?: string };
   excerpt?: { rendered?: string };
   content?: { rendered?: string };
-  meta?: Record<string, string | number | undefined>;
+  meta?: Record<string, string | undefined>;
   views?: number | string;
   _embedded?: {
     author?: Array<{ name?: string }>;
@@ -347,7 +347,7 @@ export async function getArticleViews(articleId: number | string): Promise<{ suc
     if (res && res.success && typeof res.views === 'number') {
       return { success: true, views: res.views };
     }
-  } catch (err) {
+  } catch {
     // Fallback: interroger le post directement si GET /view n'est pas encore actif
     try {
       const post = await fetchWordPressAPI<{ id: number; views?: number; meta?: { midh_post_views?: number } }>(
