@@ -3,6 +3,7 @@ import { getArticleBySlug, getArticles } from '@/services/wordpress';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanitizeRichHtml } from '@/lib/sanitize';
+import ArticleViewTracker from '@/components/articles/ArticleViewTracker';
 
 export const revalidate = 30; // Revalidation ISR toutes les 30s
 export const dynamicParams = true; // Permet aux nouveaux articles publiés d'être servis immédiatement
@@ -105,6 +106,7 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
               <span className="material-symbols-outlined text-[14px]">verified_user</span>
               {article.author || 'MIDH'}
             </span>
+            <ArticleViewTracker articleId={article.id} initialViews={article.views || 0} />
           </div>
 
           {/* Grand Titre Éditorial */}

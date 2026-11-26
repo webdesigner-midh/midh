@@ -90,10 +90,21 @@ export default async function ActualitesPage() {
 
               {/* Pied de carte */}
               <div className="p-5 bg-surface-container-low/70 border-t border-outline-variant/20 flex items-center justify-between">
-                <span className="font-caption text-caption text-secondary font-medium flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[15px]">person</span>
-                  <span>{article.author || 'MIDH'}</span>
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="font-caption text-caption text-secondary font-medium flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[15px]">person</span>
+                    <span>{article.author || 'MIDH'}</span>
+                  </span>
+                  {typeof article.views === 'number' && (
+                    <span
+                      className="font-caption text-caption text-secondary font-medium flex items-center gap-1 bg-surface-container-high/60 px-2 py-0.5 rounded-full text-xs"
+                      title={`${article.views} consultations`}
+                    >
+                      <span className="material-symbols-outlined text-[13px] text-primary">visibility</span>
+                      <span>{article.views}</span>
+                    </span>
+                  )}
+                </div>
                 <Link
                   href={`/actualites/${article.slug}`}
                   className="inline-flex items-center gap-1.5 font-label-md text-sm text-primary group-hover:gap-2.5 font-bold transition-all"

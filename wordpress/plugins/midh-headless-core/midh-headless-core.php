@@ -2,8 +2,8 @@
 /**
  * Plugin Name: MIDH Headless Core
  * Plugin URI: https://midh-ci.org
- * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.8.0 : Module complet Bénévolat (gestion & export des candidatures) + Module Diffusion de Newsletter & Campagnes e-mails avec gabarit officiel MIDH.
- * Version: 1.8.0
+ * Description: Extension officielle du Mouvement Ivoirien des Droits Humains (MIDH) - Version 1.9.0 : Compteur et suivi des vues d'articles + Module complet Bénévolat + Module Diffusion de Newsletter & Campagnes e-mails avec gabarit officiel MIDH.
+ * Version: 1.9.0
  * Author: MIDH Tech & Architecture
  * Author URI: https://midh-ci.org
  * License: GPL-2.0+
@@ -81,6 +81,8 @@ class MIDH_Headless_Core {
         // Personnalisation avancée de l'interface du Newsroom Studio (Articles & Publications)
         add_filter('manage_posts_columns', array($this, 'customize_article_columns'));
         add_action('manage_posts_custom_column', array($this, 'render_article_custom_column'), 10, 2);
+        add_filter('manage_edit-post_sortable_columns', array($this, 'sortable_article_columns'));
+        add_action('pre_get_posts', array($this, 'sort_articles_by_views'));
         add_filter('post_row_actions', array($this, 'customize_article_row_actions'), 10, 2);
         add_action('all_admin_notices', array($this, 'render_newsroom_header_banner'));
 
@@ -405,6 +407,15 @@ class MIDH_Headless_Core {
                 'type'         => 'string',
             ));
         }
+
+        // Articles & Publications : Compteur de vues
+        register_post_meta('post', 'midh_post_views', array(
+            'show_in_rest' => true,
+            'single'       => true,
+            'type'         => 'integer',
+            'default'      => 0,
+            'sanitize_callback' => 'absint',
+        ));
     }
 
     /**
@@ -497,6 +508,56 @@ class MIDH_Headless_Core {
             'callback'            => array($this, 'get_volunteers_endpoint'),
             'permission_callback' => array($this, 'check_bridge_permission'),
         ));
+
+        // Enregistrement du champ REST 'views' sur les articles WP standards (wp/v2/posts)
+        register_rest_field('post', 'views', array(
+            'get_callback' => function($post_arr) {
+                $post_id = !empty($post_arr['id']) ? (int)$post_arr['id'] : 0;
+                return $post_id ? (int) get_post_meta($post_id, 'midh_post_views', true) : 0;
+            },
+            'schema' => array(
+                'description' => __('Nombre total de vues de l\'article', 'midh-headless'),
+                'type'        => 'integer',
+                'context'     => array('view', 'embed'),
+            ),
+        ));
+
+        // Incrémentation sécurisée des vues d'un article depuis Next.js
+        register_rest_route('midh/v1', '/articles/(?P<id>\d+)/view', array(
+            'methods'             => 'POST',
+            'callback'            => array($this, 'increment_article_view_endpoint'),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'id' => array(
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    }
+                ),
+            ),
+        ));
+    }
+
+    /**
+     * Incrémente le compteur de vues d'un article
+     */
+    public function increment_article_view_endpoint(WP_REST_Request $request) {
+        $post_id = (int) $request->get_param('id');
+        if (!$post_id || get_post_type($post_id) !== 'post' || get_post_status($post_id) !== 'publish') {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Article introuvable ou non publié.'
+            ), 404);
+        }
+
+        $current_views = (int) get_post_meta($post_id, 'midh_post_views', true);
+        $new_views = $current_views + 1;
+        update_post_meta($post_id, 'midh_post_views', $new_views);
+
+        return new WP_REST_Response(array(
+            'success' => true,
+            'id'      => $post_id,
+            'views'   => $new_views
+        ), 200);
     }
 
     public function get_site_options_endpoint() {
@@ -2145,6 +2206,7 @@ class MIDH_Headless_Core {
             $new_columns['categories']     = __('Rubriques', 'midh-headless');
         }
         $new_columns['midh_action_domain'] = __('Axe Thématique', 'midh-headless');
+        $new_columns['midh_views']         = __('Vues', 'midh-headless');
         if (isset($columns['author'])) {
             $new_columns['author']         = __('Auteur', 'midh-headless');
         }
@@ -2155,6 +2217,21 @@ class MIDH_Headless_Core {
         return $new_columns;
     }
 
+    public function sortable_article_columns($columns) {
+        $columns['midh_views'] = 'midh_views';
+        return $columns;
+    }
+
+    public function sort_articles_by_views($query) {
+        if (!is_admin() || !$query->is_main_query()) {
+            return;
+        }
+        if ($query->get('orderby') === 'midh_views') {
+            $query->set('meta_key', 'midh_post_views');
+            $query->set('orderby', 'meta_value_num');
+        }
+    }
+
     public function render_article_custom_column($column, $post_id) {
         if ($column === 'midh_thumbnail') {
             if (has_post_thumbnail($post_id)) {
@@ -2163,6 +2240,9 @@ class MIDH_Headless_Core {
             } else {
                 echo '<div class="midh-table-thumb-wrap midh-table-thumb-empty"><span class="dashicons dashicons-format-image"></span></div>';
             }
+        } elseif ($column === 'midh_views') {
+            $views = (int) get_post_meta($post_id, 'midh_post_views', true);
+            echo '<span class="midh-status-badge badge-primary" style="display:inline-flex;align-items:center;gap:5px;font-weight:700;background:rgba(11,56,39,0.08);color:#0B3827;padding:4px 8px;border-radius:6px;border:1px solid rgba(11,56,39,0.15);"><span class="dashicons dashicons-visibility" style="font-size:16px;width:16px;height:16px;line-height:16px;"></span> ' . number_format_i18n($views) . '</span>';
         } elseif ($column === 'midh_action_domain') {
             $terms = get_the_terms($post_id, 'midh_domain');
             if (!empty($terms) && !is_wp_error($terms)) {

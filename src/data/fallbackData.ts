@@ -236,6 +236,7 @@ export const FALLBACK_ARTICLES: MIDHArticle[] = [
     category: "declarations",
     categoryLabel: "Déclaration officielle",
     isFeatured: true,
+    views: 348,
   },
   {
     id: 2,
@@ -249,6 +250,7 @@ export const FALLBACK_ARTICLES: MIDHArticle[] = [
     category: "rapports",
     categoryLabel: "Rapport d'activité",
     isFeatured: false,
+    views: 215,
   },
   {
     id: 3,
@@ -262,6 +264,7 @@ export const FALLBACK_ARTICLES: MIDHArticle[] = [
     category: "communiques",
     categoryLabel: "Communiqué officiel",
     isFeatured: false,
+    views: 164,
   },
 ];
 

@@ -155,8 +155,14 @@ export default function NewsAndReports({ initialArticles, documents }: NewsAndRe
                 <div className="p-space-lg sm:p-space-xl flex flex-col justify-between flex-grow gap-4">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                      <span className="font-label-md text-label-md text-primary font-bold uppercase tracking-wider">
-                        {currentArticle.formattedDate} · {currentArticle.author || 'MIDH'} · {currentArticle.categoryLabel}
+                      <span className="font-label-md text-label-md text-primary font-bold uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
+                        <span>{currentArticle.formattedDate} · {currentArticle.author || 'MIDH'} · {currentArticle.categoryLabel}</span>
+                        {typeof currentArticle.views === 'number' && (
+                          <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-semibold lowercase">
+                            <span className="material-symbols-outlined text-[13px]">visibility</span>
+                            <span>{currentArticle.views} vues</span>
+                          </span>
+                        )}
                       </span>
 
                       {/* Indicateurs (dots) du carrousel */}
@@ -276,9 +282,17 @@ export default function NewsAndReports({ initialArticles, documents }: NewsAndRe
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-surface-container">
-                  <span className="font-caption text-caption text-tertiary">
-                    {secondaryArticles[0].author || 'MIDH'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-caption text-caption text-tertiary">
+                      {secondaryArticles[0].author || 'MIDH'}
+                    </span>
+                    {typeof secondaryArticles[0].views === 'number' && (
+                      <span className="font-caption text-caption text-tertiary flex items-center gap-1">
+                        · <span className="material-symbols-outlined text-[13px]">visibility</span>
+                        <span>{secondaryArticles[0].views}</span>
+                      </span>
+                    )}
+                  </div>
                   <Link
                     className="inline-flex items-center gap-1 font-label-md text-label-md text-primary font-bold hover:underline"
                     href={`/actualites/${secondaryArticles[0].slug}`}

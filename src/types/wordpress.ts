@@ -83,6 +83,7 @@ export interface MIDHArticle {
   category: PublicationCategory;
   categoryLabel: string;
   isFeatured?: boolean;
+  views?: number;
 }
 
 export interface MIDHTeamMember {

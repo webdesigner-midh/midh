@@ -224,6 +224,10 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
         year: 'numeric',
       });
 
+      const postViews = (post as any).views !== undefined
+        ? Number((post as any).views)
+        : (post.meta?.midh_post_views ? Number(post.meta.midh_post_views) : 0);
+
       return {
         id: post.id,
         title: decodeHtml(post.title?.rendered || 'Sans titre'),
@@ -237,6 +241,7 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
         category: (catSlug as PublicationCategory) || 'actualites',
         categoryLabel: catName,
         isFeatured: post.sticky || false,
+        views: postViews,
       };
     });
 
@@ -269,6 +274,10 @@ export async function getArticleBySlug(slug: string): Promise<MIDHArticle | null
     const catSlug = post._embedded?.['wp:term']?.[0]?.[0]?.slug || 'actualites';
     const catName = post._embedded?.['wp:term']?.[0]?.[0]?.name || 'Actualité';
     const postDate = post.date || new Date().toISOString();
+    const postViews = (post as any).views !== undefined
+      ? Number((post as any).views)
+      : (post.meta?.midh_post_views ? Number(post.meta.midh_post_views) : 0);
+
     return {
       id: post.id,
       title: decodeHtml(post.title?.rendered || 'Sans titre'),
@@ -286,10 +295,36 @@ export async function getArticleBySlug(slug: string): Promise<MIDHArticle | null
       category: (catSlug as PublicationCategory) || 'actualites',
       categoryLabel: catName,
       isFeatured: post.sticky || false,
+      views: postViews,
     };
   }
 
   return null;
+}
+
+/**
+ * Enregistre et incrémente une vue d'article auprès de l'API WordPress MIDH
+ */
+export async function recordArticleView(articleId: number | string): Promise<{ success: boolean; views?: number }> {
+  const cleanId = typeof articleId === 'string' ? parseInt(articleId, 10) : articleId;
+  if (!cleanId || isNaN(cleanId)) {
+    return { success: false };
+  }
+
+  try {
+    const res = await fetchWordPressAPI<{ success: boolean; id: number; views: number }>(
+      `/wp-json/midh/v1/articles/${cleanId}/view`,
+      {
+        method: 'POST',
+      }
+    );
+    if (res && res.success) {
+      return { success: true, views: res.views };
+    }
+  } catch (err) {
+    console.error('Erreur lors de l\'enregistrement de la vue :', err);
+  }
+  return { success: false };
 }
 
 /**
