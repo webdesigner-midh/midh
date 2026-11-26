@@ -36,7 +36,8 @@ interface WPRestRecord {
   title?: { rendered?: string };
   excerpt?: { rendered?: string };
   content?: { rendered?: string };
-  meta?: Record<string, string | undefined>;
+  meta?: Record<string, string | number | undefined>;
+  views?: number | string;
   _embedded?: {
     author?: Array<{ name?: string }>;
     'wp:featuredmedia'?: Array<{ source_url?: string }>;
@@ -224,8 +225,8 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
         year: 'numeric',
       });
 
-      const postViews = (post as any).views !== undefined
-        ? Number((post as any).views)
+      const postViews = post.views !== undefined
+        ? Number(post.views)
         : (post.meta?.midh_post_views ? Number(post.meta.midh_post_views) : 0);
 
       return {
@@ -274,8 +275,8 @@ export async function getArticleBySlug(slug: string): Promise<MIDHArticle | null
     const catSlug = post._embedded?.['wp:term']?.[0]?.[0]?.slug || 'actualites';
     const catName = post._embedded?.['wp:term']?.[0]?.[0]?.name || 'Actualité';
     const postDate = post.date || new Date().toISOString();
-    const postViews = (post as any).views !== undefined
-      ? Number((post as any).views)
+    const postViews = post.views !== undefined
+      ? Number(post.views)
       : (post.meta?.midh_post_views ? Number(post.meta.midh_post_views) : 0);
 
     return {
