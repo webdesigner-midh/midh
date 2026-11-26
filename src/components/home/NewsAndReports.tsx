@@ -100,7 +100,7 @@ export default function NewsAndReports({ initialArticles, documents }: NewsAndRe
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
-            {currentArticle && (
+            {currentArticle ? (
               <>
                 {/* Zone Image Mise en Avant (avec support plein format ou placeholder brandé) */}
                 <div className="relative h-64 sm:h-80 bg-surface-container flex flex-col items-center justify-center overflow-hidden">
@@ -209,6 +209,16 @@ export default function NewsAndReports({ initialArticles, documents }: NewsAndRe
                   </div>
                 </div>
               </>
+            ) : (
+              <div className="p-8 sm:p-14 flex flex-col items-center justify-center text-center gap-3 my-auto">
+                <span className="material-symbols-outlined text-[48px] text-primary/40">newspaper</span>
+                <h3 className="font-title-lg text-lg font-bold text-[#0B3827]">
+                  Aucune publication pour le moment
+                </h3>
+                <p className="font-body-sm text-sm text-secondary max-w-sm">
+                  Les nouveaux communiqués et déclarations officielles publiés dans WordPress s&apos;afficheront automatiquement ici.
+                </p>
+              </div>
             )}
           </div>
 

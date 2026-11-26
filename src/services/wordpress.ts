@@ -213,7 +213,13 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
 
   const wpPosts = await fetchWordPressAPI<WPRestRecord[]>(endpoint);
 
-  if (wpPosts && Array.isArray(wpPosts) && wpPosts.length > 0) {
+  // Si WordPress a répondu avec succès (y compris un tableau vide si l'administrateur a supprimé tous les articles)
+  if (wpPosts && Array.isArray(wpPosts)) {
+    if (wpPosts.length === 0) {
+      // Aucun article publié sur le CMS : ne JAMAIS afficher d'articles fictifs de remplacement
+      return [];
+    }
+
     const mapped = wpPosts.map((post) => {
       const catSlug = post._embedded?.['wp:term']?.[0]?.[0]?.slug || 'actualites';
       const catName = post._embedded?.['wp:term']?.[0]?.[0]?.name || 'Actualité';
@@ -252,10 +258,8 @@ export async function getArticles(category?: PublicationCategory): Promise<MIDHA
     return mapped;
   }
 
-  if (category && category !== 'tous') {
-    return FALLBACK_ARTICLES.filter((a) => a.category === category);
-  }
-  return FALLBACK_ARTICLES;
+  // Si l'API WordPress est inaccessible ou vide, retourner une liste vide (zéro article fictif)
+  return [];
 }
 
 /**
