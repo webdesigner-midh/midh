@@ -585,7 +585,7 @@ export async function getHeroSlides(): Promise<MIDHHeroSlide[]> {
       return valid;
     }
   }
-  return FALLBACK_HERO_SLIDES;
+  return [];
 }
 
 export interface WordPressGalleryResponse {
