@@ -208,19 +208,25 @@ export default function TeamTabs({ team }: TeamTabsProps) {
           ))}
         </div>
       ) : (
-        /* État vide élégant pour les anciennes équipes si WordPress n'en a pas encore */
+        /* État vide élégant pour l'équipe ou les archives si WordPress n'en a pas encore */
         <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-8 sm:p-12 text-center flex flex-col items-center gap-4 max-w-2xl mx-auto animate-in fade-in-50 duration-300">
           <div className="w-16 h-16 rounded-2xl bg-emerald-100/70 text-[#0B3827] flex items-center justify-center">
-            <span className="material-symbols-outlined text-3xl">history_edu</span>
+            <span className="material-symbols-outlined text-3xl">
+              {activeTab === 'actuel' ? 'badge' : 'history_edu'}
+            </span>
           </div>
           <h3 className="font-bold text-xl text-[#0B3827]">
-            Archives des mandats précédents
+            {activeTab === 'actuel'
+              ? "Organigramme en cours d'actualisation"
+              : 'Archives des mandats précédents'}
           </h3>
           <p className="text-sm text-slate-600 leading-relaxed max-w-lg">
-            Les fiches des anciens responsables et bureaux exécutifs ayant servi le MIDH depuis l’an 2000 sont en cours d’intégration et de numérisation par le secrétariat.
+            {activeTab === 'actuel'
+              ? "La composition de l'équipe dirigeante du MIDH sera affichée dès son enregistrement dans le back-office WordPress."
+              : 'Les fiches des anciens responsables et bureaux exécutifs ayant servi le MIDH depuis l’an 2000 sont en cours d’intégration et de numérisation par le secrétariat.'}
           </p>
           <div className="pt-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200/60">
-            🏛️ Consultable dès publication par les administrateurs dans le back-office WordPress.
+            🏛️ Données administrées en temps réel depuis le back-office WordPress.
           </div>
         </div>
       )}

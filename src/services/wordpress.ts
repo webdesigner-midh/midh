@@ -1,10 +1,4 @@
 import {
-  FALLBACK_ARTICLES,
-  FALLBACK_DOCUMENTS,
-  FALLBACK_HERO_SLIDES,
-  FALLBACK_PARTNERS,
-  FALLBACK_PROJECTS,
-  FALLBACK_TEAM,
   OFFICIAL_DOMAINS,
   OFFICIAL_SECTIONS,
   OFFICIAL_SITE_OPTIONS,
@@ -12,7 +6,6 @@ import {
 import {
   GalleryPhoto,
   GalleryVideo,
-  OFFICIAL_GALLERY_PHOTOS,
 } from '@/data/galleryData';
 import {
   MIDHArticle,
@@ -164,7 +157,7 @@ export async function getInterventionDomains(): Promise<MIDHDomainInfo[]> {
 export async function getProjects(): Promise<MIDHProject[]> {
   const wpProjects = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_project?_embed&per_page=20');
   
-  if (wpProjects && Array.isArray(wpProjects) && wpProjects.length > 0) {
+  if (wpProjects && Array.isArray(wpProjects)) {
     return wpProjects.map((item) => {
       const rawExcerpt = item.excerpt?.rendered || '';
       const rawContent = item.content?.rendered || '';
@@ -190,7 +183,7 @@ export async function getProjects(): Promise<MIDHProject[]> {
     });
   }
 
-  return FALLBACK_PROJECTS;
+  return [];
 }
 
 /**
@@ -376,7 +369,7 @@ export async function getArticleViews(articleId: number | string): Promise<{ suc
 export async function getDocuments(): Promise<MIDHDocument[]> {
   // 1. Tente d'abord l'endpoint optimisé MIDH Core
   const customDocs = await fetchWordPressAPI<MIDHDocument[]>('/wp-json/midh/v1/documents');
-  if (customDocs && Array.isArray(customDocs) && customDocs.length > 0) {
+  if (customDocs && Array.isArray(customDocs)) {
     return customDocs.map((doc) => ({
       ...doc,
       title: decodeHtml(doc.title),
@@ -386,7 +379,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
 
   // 2. Tente l'endpoint REST standard WP CPT
   const wpDocs = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_document?_embed&per_page=50');
-  if (wpDocs && Array.isArray(wpDocs) && wpDocs.length > 0) {
+  if (wpDocs && Array.isArray(wpDocs)) {
     return wpDocs.map((doc) => ({
       id: doc.id,
       title: decodeHtml(doc.title?.rendered || 'Document'),
@@ -401,7 +394,7 @@ export async function getDocuments(): Promise<MIDHDocument[]> {
     }));
   }
 
-  return FALLBACK_DOCUMENTS;
+  return [];
 }
 
 /**
@@ -423,7 +416,7 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
     order: number;
   }>>('/wp-json/midh/v1/team');
 
-  if (customTeam && Array.isArray(customTeam) && customTeam.length > 0) {
+  if (customTeam && Array.isArray(customTeam)) {
     return customTeam.map((m) => ({
       id: m.id,
       fullName: decodeHtml(m.fullName || 'Membre du MIDH'),
@@ -446,7 +439,7 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
   // 2. Fallback sur l'API standard /wp-json/wp/v2/midh_team
   const wpTeam = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_team?_embed&per_page=50');
 
-  if (wpTeam && Array.isArray(wpTeam) && wpTeam.length > 0) {
+  if (wpTeam && Array.isArray(wpTeam)) {
     return wpTeam.map((m) => {
       // Résolution intelligente de la photo : meta photo_url, image mise en avant, ou balise img insérée
       let photoUrl = m.meta?.photo_url || m._embedded?.['wp:featuredmedia']?.[0]?.source_url;
@@ -498,7 +491,7 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
     });
   }
 
-  return FALLBACK_TEAM;
+  return [];
 }
 
 /**
@@ -507,7 +500,7 @@ export async function getTeamMembers(): Promise<MIDHTeamMember[]> {
 export async function getPartners(): Promise<MIDHPartner[]> {
   const wpPartners = await fetchWordPressAPI<WPRestRecord[]>('/wp-json/wp/v2/midh_partner?_embed&per_page=50');
 
-  if (wpPartners && Array.isArray(wpPartners) && wpPartners.length > 0) {
+  if (wpPartners && Array.isArray(wpPartners)) {
     return wpPartners.map((p) => {
       const featuredMedia = p._embedded?.['wp:featuredmedia']?.[0]?.source_url;
       const cleanExcerpt = p.excerpt?.rendered
@@ -531,7 +524,7 @@ export async function getPartners(): Promise<MIDHPartner[]> {
     });
   }
 
-  return FALLBACK_PARTNERS;
+  return [];
 }
 
 /**
@@ -563,8 +556,7 @@ export async function getPartnerBySlug(slug: string): Promise<MIDHPartner | null
     };
   }
 
-  const fallback = FALLBACK_PARTNERS.find((p) => p.slug === slug || String(p.id) === slug);
-  return fallback || null;
+  return null;
 }
 
 /**
@@ -675,21 +667,16 @@ export async function getGalleryData(): Promise<{
     const homePhotos = photos.filter((p) => p.showOnHome);
 
     return {
-      photos: photos.length > 0 ? photos : OFFICIAL_GALLERY_PHOTOS,
+      photos,
       videos,
-      homePhotos:
-        homePhotos.length > 0
-          ? homePhotos
-          : photos.length > 0
-          ? photos.slice(0, 6)
-          : OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
+      homePhotos: homePhotos.length > 0 ? homePhotos : photos.slice(0, 6),
     };
   }
 
   return {
-    photos: OFFICIAL_GALLERY_PHOTOS,
+    photos: [],
     videos: [],
-    homePhotos: OFFICIAL_GALLERY_PHOTOS.slice(0, 6),
+    homePhotos: [],
   };
 }
 
