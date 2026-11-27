@@ -51,9 +51,8 @@ export const MIDH_DEPARTMENTS: Record<
 
 // Destinataires automatiquement placés en copie lors d'un message adressé à info@midh-ci.org
 export const AUTO_CC_COORDINATION = [
-  'direx@midh-ci.org',
-  'president@midh-ci.org',
   'secretaire@midh-ci.org',
+  'tresorier@midh-ci.org',
 ];
 
 /**
@@ -93,7 +92,7 @@ export async function sendContactNotification({
 
   if (targetDept.isGeneral || targetDept.email === 'info@midh-ci.org') {
     // Règle automatique : lorsque l'email est envoyé à info@midh-ci.org,
-    // direx@, president@ et secretaire@ sont automatiquement mis en copie (Cc).
+    // secretaire@midh-ci.org et tresorier@midh-ci.org sont automatiquement mis en copie (Cc).
     toRecipients = getRecipients();
     ccRecipients = [...AUTO_CC_COORDINATION];
   } else {

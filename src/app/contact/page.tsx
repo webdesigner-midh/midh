@@ -342,58 +342,31 @@ export default function ContactPage() {
                   />
                 </div>
 
-              {/* Choix du service destinataire */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="department" className="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
-                  <span>Pôle ou Service destinataire</span>
-                  <span className="text-caption text-tertiary font-normal">Aiguillage du message</span>
-                </label>
-                <div className="relative">
-                  <select
-                    id="department"
-                    name="department"
-                    value={formData.department}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="subject" className="font-label-md text-label-md text-on-surface font-semibold">
+                    Objet de votre demande <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    id="subject"
+                    name="subject"
+                    required
+                    value={formData.subject}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
-                  >
-                    <option value="general">Coordination Générale (info@midh-ci.org) — Par défaut</option>
-                    <option value="direx">Direction Exécutive (direx@midh-ci.org)</option>
-                    <option value="president">Présidence du MIDH (president@midh-ci.org)</option>
-                    <option value="secretaire">Secrétariat Général (secretaire@midh-ci.org)</option>
-                    <option value="tresorier">Trésorerie Générale (tresorier@midh-ci.org)</option>
-                  </select>
-                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none text-[20px]">
-                    arrow_drop_down
-                  </span>
-                </div>
-                {formData.department === 'general' ? (
-                  <span className="text-caption text-emerald-800">
-                    💡 Les messages adressés à la coordination sont automatiquement notifiés à la Direction Exécutive, la Présidence et le Secrétariat Général en copie certifiée.
-                  </span>
-                ) : (
-                  <span className="text-caption text-slate-500">
-                    Votre message sera directement adressé au pôle sélectionné.
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="subject" className="font-label-md text-label-md text-on-surface font-semibold">
-                  Objet de votre demande <span className="text-red-600">*</span>
-                </label>
-                <input
-                  id="subject"
-                  name="subject"
-                  required
-                  value={formData.subject}
-                  onChange={handleChange}
-                  placeholder="Ex. Demande d'assistance juridique"
-                  className="w-full px-4 py-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                    placeholder="Ex. Demande d'assistance juridique"
+                    className="w-full px-4 py-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
                   {fieldErrors.subject && (
                     <span className="text-caption text-red-600">{fieldErrors.subject[0]}</span>
                   )}
                 </div>
+              </div>
+
+              {/* Information de routage certifié institutionnel */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60 flex items-start gap-2.5 text-xs text-emerald-900">
+                <span className="material-symbols-outlined text-[18px] text-emerald-700 shrink-0 mt-0.5">verified_user</span>
+                <span>
+                  Votre message est transmis directement à la coordination officielle (<strong>info@midh-ci.org</strong>) avec copie automatique au Secrétariat Général et à la Trésorerie.
+                </span>
               </div>
 
               <div className="flex flex-col gap-1.5">
