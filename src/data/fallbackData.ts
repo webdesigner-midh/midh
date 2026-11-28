@@ -20,11 +20,11 @@ export const OFFICIAL_SITE_OPTIONS: MIDHSiteOptions = {
   whatsapp: "+225 01 01 49 87 39",
   email: "info@midh-ci.org",
   socialLinks: {
-    facebook: "https://facebook.com/midh.ci",
+    facebook: "https://www.facebook.com/profile.php?id=61597184933442",
     instagram: "https://instagram.com/midh.ci",
     linkedin: "https://linkedin.com/company/midh-ci",
     tiktok: "https://tiktok.com/@midh.ci",
-    youtube: "https://youtube.com/@midh-ci",
+    youtube: "https://www.youtube.com/@ONGMIDH",
   },
   institutional: {
     heroTag: "Présentation Institutionnelle",

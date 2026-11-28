@@ -22,7 +22,7 @@ export default function Footer() {
             <a
               aria-label="Page Facebook officielle du MIDH"
               className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-emerald-300 hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-2 group"
-              href="https://facebook.com/midh.ci"
+              href="https://www.facebook.com/profile.php?id=61597184933442"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -64,7 +64,7 @@ export default function Footer() {
             <a
               aria-label="Chaîne YouTube officielle du MIDH"
               className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-emerald-300 hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-2 group"
-              href="https://youtube.com/@midh-ci"
+              href="https://www.youtube.com/@ONGMIDH"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -39,10 +39,10 @@ export default function Header() {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', href: 'https://facebook.com/midh.ci', icon: '/icons/facebook.png' },
+    { name: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61597184933442', icon: '/icons/facebook.png' },
     { name: 'Instagram', href: 'https://instagram.com/midh.ci', icon: '/icons/instagram.png' },
     { name: 'TikTok', href: 'https://tiktok.com/@midh.ci', icon: '/icons/tiktok.png' },
-    { name: 'YouTube', href: 'https://youtube.com/@midh-ci', icon: '/icons/youtube.png' },
+    { name: 'YouTube', href: 'https://www.youtube.com/@ONGMIDH', icon: '/icons/youtube.png' },
   ];
 
   const isActive = (href: string) => {
