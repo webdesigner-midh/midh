@@ -543,10 +543,10 @@ export async function getPartners(): Promise<MIDHPartner[]> {
 
       return {
         id: p.id,
-        name: p.title?.rendered || 'Partenaire',
+        name: decodeHtml(p.title?.rendered || 'Partenaire'),
         slug: p.slug || `partenaire-${p.id}`,
-        logoUrl: featuredMedia || p.meta?.logo_url,
-        featuredImage: featuredMedia || p.meta?.featured_image || p.meta?.logo_url,
+        logoUrl: sanitizeUrl(featuredMedia || p.meta?.logo_url || ''),
+        featuredImage: sanitizeUrl(featuredMedia || p.meta?.featured_image || p.meta?.logo_url || ''),
         type: (p.meta?.type as MIDHPartner['type']) || 'technique',
         typeLabel: p.meta?.type_label || (p.meta?.type === 'bailleur' ? 'Bailleur Institutionnel' : p.meta?.type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'),
         websiteUrl: p.meta?.website_url,
@@ -565,6 +565,14 @@ export async function getPartners(): Promise<MIDHPartner[]> {
  * Récupère un partenaire spécifique par son slug
  */
 export async function getPartnerBySlug(slug: string): Promise<MIDHPartner | null> {
+  // 1. Chercher d'abord dans la liste de tous les partenaires
+  const partners = await getPartners();
+  const found = partners.find((p) => p.slug === slug || String(p.id) === slug);
+  if (found) {
+    return found;
+  }
+
+  // 2. Si pas encore présent, interroger directement l'API WordPress par slug
   const wpPartners = await fetchWordPressAPI<WPRestRecord[]>(`/wp-json/wp/v2/midh_partner?slug=${encodeURIComponent(slug)}&_embed`);
 
   if (wpPartners && Array.isArray(wpPartners) && wpPartners.length > 0) {
@@ -576,10 +584,10 @@ export async function getPartnerBySlug(slug: string): Promise<MIDHPartner | null
 
     return {
       id: p.id,
-      name: p.title?.rendered || 'Partenaire',
-      slug: p.slug,
-      logoUrl: featuredMedia || p.meta?.logo_url,
-      featuredImage: featuredMedia || p.meta?.featured_image || p.meta?.logo_url,
+      name: decodeHtml(p.title?.rendered || 'Partenaire'),
+      slug: p.slug || `partenaire-${p.id}`,
+      logoUrl: sanitizeUrl(featuredMedia || p.meta?.logo_url || ''),
+      featuredImage: sanitizeUrl(featuredMedia || p.meta?.featured_image || p.meta?.logo_url || ''),
       type: (p.meta?.type as MIDHPartner['type']) || 'technique',
       typeLabel: p.meta?.type_label || (p.meta?.type === 'bailleur' ? 'Bailleur Institutionnel' : p.meta?.type === 'societe_civile' ? 'Société Civile' : 'Partenaire Technique'),
       websiteUrl: p.meta?.website_url,

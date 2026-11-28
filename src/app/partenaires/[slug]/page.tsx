@@ -20,25 +20,31 @@ function sanitizePartnerHtml(html: string): string {
 }
 
 export async function generateMetadata({ params }: PartnerPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const partner = await getPartnerBySlug(slug);
+  try {
+    const { slug } = await params;
+    const partner = await getPartnerBySlug(slug);
 
-  if (!partner) {
+    if (!partner) {
+      return {
+        title: 'Partenaire introuvable | MIDH',
+      };
+    }
+
     return {
-      title: 'Partenaire introuvable | MIDH',
+      title: `${partner.name} — Partenaires Institutionnels | MIDH`,
+      description: partner.excerpt || partner.description || 'Partenaire officiel du Mouvement Ivoirien des Droits Humains.',
+      openGraph: {
+        title: `${partner.name} — MIDH`,
+        description: partner.excerpt || partner.description,
+        type: 'article',
+        images: partner.featuredImage ? [{ url: partner.featuredImage }] : [],
+      },
+    };
+  } catch {
+    return {
+      title: 'Partenaires | MIDH',
     };
   }
-
-  return {
-    title: `${partner.name} — Partenaires Institutionnels | MIDH`,
-    description: partner.excerpt || partner.description || 'Partenaire officiel du Mouvement Ivoirien des Droits Humains.',
-    openGraph: {
-      title: `${partner.name} — MIDH`,
-      description: partner.excerpt || partner.description,
-      type: 'article',
-      images: partner.featuredImage ? [{ url: partner.featuredImage }] : [],
-    },
-  };
 }
 
 export async function generateStaticParams() {
@@ -52,14 +58,15 @@ export default async function PartnerDetailPage({ params }: PartnerPageProps) {
   const { slug } = await params;
   const [partner, allPartners] = await Promise.all([
     getPartnerBySlug(slug),
-    getPartners(),
+    getPartners().catch(() => []),
   ]);
 
   if (!partner) {
     notFound();
   }
 
-  const otherPartners = allPartners.filter((p) => p.slug !== partner.slug && p.id !== partner.id).slice(0, 3);
+  const safePartners = Array.isArray(allPartners) ? allPartners : [];
+  const otherPartners = safePartners.filter((p) => p && p.slug && p.slug !== partner.slug && p.id !== partner.id).slice(0, 3);
   const featuredImg = partner.featuredImage || partner.logoUrl || 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=80';
 
   return (
