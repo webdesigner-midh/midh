@@ -154,6 +154,18 @@ export default function TeamTabs({ team }: TeamTabsProps) {
                     {member.role}
                   </p>
 
+                  {/* Adresse email officielle visible */}
+                  {member.email && (
+                    <a
+                      href={`mailto:${member.email}`}
+                      className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-900 bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/60 px-3 py-1.5 rounded-lg transition-colors group/mail"
+                      title={`Écrire à ${member.fullName}`}
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-emerald-700 group-hover/mail:scale-110 transition-transform">mail</span>
+                      <span className="truncate max-w-[200px]">{member.email}</span>
+                    </a>
+                  )}
+
                   {member.biography ? (
                     <p className="mt-4 text-sm text-slate-600 leading-relaxed font-normal line-clamp-4">
                       {member.biography}

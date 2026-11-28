@@ -191,7 +191,41 @@ export async function getProjects(): Promise<MIDHProject[]> {
  */
 export async function getProjectBySlug(slug: string): Promise<MIDHProject | null> {
   const projects = await getProjects();
-  return projects.find((p) => p.slug === slug) || null;
+  const found = projects.find((p) => p.slug === slug);
+  if (found) {
+    return found;
+  }
+
+  // Si pas encore présent dans la liste paginée, interroger directement l'API WordPress par slug
+  const wpProjects = await fetchWordPressAPI<WPRestRecord[]>(
+    `/wp-json/wp/v2/midh_project?slug=${encodeURIComponent(slug)}&_embed`
+  );
+  if (wpProjects && Array.isArray(wpProjects) && wpProjects.length > 0) {
+    const item = wpProjects[0];
+    const rawExcerpt = item.excerpt?.rendered || '';
+    const rawContent = item.content?.rendered || '';
+    const cleanExcerpt =
+      rawExcerpt.replace(/<[^>]+>/g, '').trim() ||
+      (rawContent.replace(/<[^>]+>/g, '').trim().slice(0, 200) + (rawContent.length > 200 ? '...' : '')) ||
+      '';
+
+    return {
+      id: item.id,
+      title: decodeHtml(item.title?.rendered || 'Projet sans titre'),
+      slug: item.slug,
+      excerpt: cleanExcerpt,
+      content: rawContent,
+      coverImage: sanitizeUrl(item._embedded?.['wp:featuredmedia']?.[0]?.source_url || item.meta?.cover_image),
+      status: (item.meta?.status as MIDHProject['status']) || 'actif',
+      statusLabel: item.meta?.status_label || 'Projet actif',
+      domain: item.meta?.domain || 'bonne-gouvernance',
+      period: item.meta?.period || '',
+      location: item.meta?.location || '',
+      order: item.menu_order || 0,
+    };
+  }
+
+  return null;
 }
 
 /**

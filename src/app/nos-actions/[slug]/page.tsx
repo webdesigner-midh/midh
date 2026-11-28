@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sanitizeRichHtml } from '@/lib/sanitize';
 
+export const revalidate = 30; // Revalidation ISR toutes les 30s
+export const dynamicParams = true; // Permet aux nouveaux projets publiés d'être servis immédiatement
+
 interface ProjectPageProps {
   params: Promise<{ slug: string }>;
 }
